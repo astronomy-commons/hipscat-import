@@ -1,0 +1,13 @@
+## Byte-compiled, execution cache
+__pycache__/
+dask-worker-space
+
+# Distribution / packaging
+.eggs/
+eggs/
+*.egg-info/
+dist/
+build/
+
+# vscode
+.vscode/
