@@ -28,10 +28,10 @@ def _write_shard_file(pixel_data, cache_path, shard_suffix):
 def map_to_pixels(
     input_file,
     file_format,
-    highest_order,
-    ra_column,
-    dec_column,
     shard_suffix,
+    highest_order=10,
+    ra_column="ra",
+    dec_column="dec",
     cache_path=None,
     filter_function=None,
 ):
@@ -53,7 +53,7 @@ def map_to_pixels(
 
     elif file_format == "fits":
         dat = Table.read(input_file, format="fits")
-        data = dd.from_pandas(dat.to_pandas())
+        data = dd.from_pandas(dat.to_pandas(), chunksize=500_000)
     elif file_format == "parquet":
         data = dd.read_parquet(input_file)
     else:
