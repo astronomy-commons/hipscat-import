@@ -121,11 +121,13 @@ def test_good_paths():
             input_path=dc.TEST_BLANK_DATA_DIR,
             input_format="csv",
             output_path=tmp_dir,
+            tmp_dir=tmp_dir,
         )
         assert args.input_path == dc.TEST_BLANK_DATA_DIR
         assert len(args.input_paths) == 1
         assert args.input_paths[0] == dc.TEST_BLANK_CSV
         assert args.output_path == tmp_dir
+        assert args.tmp_dir.startswith(tmp_dir)
 
 
 def test_multiple_files_in_path():
@@ -193,9 +195,19 @@ def test_dask_args():
                 input_format="csv",
                 output_path=tmp_dir,
                 dask_n_workers=-10,
-                dask_threads_per_worker=-10,
+                dask_threads_per_worker=1,
             )
 
+        with pytest.raises(ValueError):
+            args = ImportArguments()
+            args.from_params(
+                catalog_name="catalog",
+                input_path=dc.TEST_BLANK_DATA_DIR,
+                input_format="csv",
+                output_path=tmp_dir,
+                dask_n_workers=1,
+                dask_threads_per_worker=-10,
+            )
 
 def test_healpix_args():
     """Test errors for healpix partitioning arguments"""
@@ -218,3 +230,20 @@ def test_healpix_args():
                 output_path=tmp_dir,
                 pixel_threshold=3,
             )
+
+
+def test_formatted_string():
+    """Test that the human readable string contains our specified arguments"""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        args = ImportArguments()
+        args.from_params(
+            catalog_name="catalog",
+            input_path=dc.TEST_BLANK_DATA_DIR,
+            input_format="csv",
+            output_path=tmp_dir,
+            tmp_dir=tmp_dir,
+        )
+        formatted_string = str(args)
+        assert "catalog" in formatted_string
+        assert "csv" in formatted_string
+        assert tmp_dir in formatted_string        

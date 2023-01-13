@@ -335,7 +335,7 @@ class ImportArguments:
             tmp_prefix = self.dask_tmp
         else:
             tmp_prefix = self.output_path
-        tmp_dir = tempfile.TemporaryDirectory(prefix=tmp_prefix)
+        tmp_dir = tempfile.TemporaryDirectory(dir=tmp_prefix)
         self.tmp_dir = tmp_dir.name
         self.contexts.append(tmp_dir)
 

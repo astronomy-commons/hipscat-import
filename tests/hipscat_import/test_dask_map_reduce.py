@@ -3,11 +3,11 @@
 import os
 import tempfile
 
-import file_testing as ft
 import pytest
 from dask.distributed import Client, LocalCluster
 
 import data_paths as dc
+import file_testing as ft
 import hipscat_import.dask_map_reduce as runner
 from hipscat_import.arguments import ImportArguments
 
@@ -17,6 +17,11 @@ def test_empty_args():
     with pytest.raises(ValueError):
         runner.run(None)
 
+def test_bad_args():
+    """Runner should fail with mis-typed arguments"""
+    args = {"catalog_name": "bad_arg_type"}
+    with pytest.raises(ValueError):
+        runner.run(args)
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_dask_runner():
