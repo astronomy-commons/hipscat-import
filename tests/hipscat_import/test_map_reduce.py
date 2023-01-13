@@ -56,6 +56,7 @@ def test_read_bad_fileformat():
             shard_suffix=0,
         )
 
+
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_read_single_fits():
     """Success case - fits file that exists being read as fits"""
@@ -74,6 +75,7 @@ def test_read_single_fits():
             expected[11] = 131
             npt.assert_array_equal(result, expected)
 
+
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_map_headers_wrong():
     """Test loading the a file with non-default headers (without specifying right headers)"""
@@ -87,6 +89,7 @@ def test_map_headers_wrong():
                     shard_suffix=0,
                     cache_path=tmp_dir,
                 )
+
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_map_headers():
@@ -213,6 +216,7 @@ def test_reduce_order0():
         expected_ids = [*range(700, 831)]
         ft.assert_parquet_file_ids(output_file, "id", expected_ids)
 
+
 def test_reduce_bad_expectation():
     """Test reducing into one large pixel"""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -222,7 +226,7 @@ def test_reduce_bad_expectation():
                 origin_pixel_numbers=[44, 45, 46, 47],
                 destination_pixel_order=0,
                 destination_pixel_number=11,
-                destination_pixel_size=11, ## should be 131
+                destination_pixel_size=11,  ## should be 131
                 output_path=tmp_dir,
                 id_column="id",
             )

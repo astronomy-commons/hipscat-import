@@ -209,6 +209,7 @@ def test_dask_args():
                 dask_threads_per_worker=-10,
             )
 
+
 def test_healpix_args():
     """Test errors for healpix partitioning arguments"""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -246,4 +247,4 @@ def test_formatted_string():
         formatted_string = str(args)
         assert "catalog" in formatted_string
         assert "csv" in formatted_string
-        assert tmp_dir in formatted_string        
+        assert tmp_dir in formatted_string
