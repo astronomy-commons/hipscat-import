@@ -18,6 +18,7 @@ dependencies = [
     "healpy",
     "hipscat",
     "pandas",
+    "pyarrow",
 ]
 
 [project.optional-dependencies]
