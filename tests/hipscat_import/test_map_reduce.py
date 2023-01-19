@@ -3,14 +3,14 @@
 import os
 import tempfile
 
+import data_paths as dc
+import file_testing as ft
 import hipscat.pixel_math as hist
 import numpy.testing as npt
 import pyarrow as pa
 import pytest
 from dask.distributed import Client, LocalCluster
 
-import data_paths as dc
-import file_testing as ft
 import hipscat_import.map_reduce as mr
 
 
@@ -21,6 +21,9 @@ def test_read_empty_filename():
             input_file="",
             file_format="parquet",
             shard_suffix=0,
+            highest_order=10,
+            ra_column="ra",
+            dec_column="dec",
         )
 
 
@@ -44,6 +47,9 @@ def test_read_directory():
             input_file=dc.TEST_DATA_DIR,
             file_format="parquet",
             shard_suffix=0,
+            highest_order=0,
+            ra_column="ra",
+            dec_column="dec",
         )
 
 
@@ -54,6 +60,9 @@ def test_read_bad_fileformat():
             input_file=dc.TEST_BLANK_CSV,
             file_format="foo",
             shard_suffix=0,
+            highest_order=0,
+            ra_column="ra",
+            dec_column="dec",
         )
 
 
@@ -69,6 +78,8 @@ def test_read_single_fits():
                 highest_order=0,
                 shard_suffix=0,
                 cache_path=tmp_dir,
+                ra_column="ra",
+                dec_column="dec",
             )
             assert len(result) == 12
             expected = hist.empty_histogram(0)
@@ -88,6 +99,9 @@ def test_map_headers_wrong():
                     file_format="csv",
                     shard_suffix=0,
                     cache_path=tmp_dir,
+                    highest_order=0,
+                    ra_column="ra",
+                    dec_column="dec",
                 )
 
 

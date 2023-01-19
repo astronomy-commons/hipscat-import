@@ -29,9 +29,9 @@ def map_to_pixels(
     input_file,
     file_format,
     shard_suffix,
-    highest_order=10,
-    ra_column="ra",
-    dec_column="dec",
+    highest_order,
+    ra_column,
+    dec_column,
     cache_path=None,
     filter_function=None,
 ):
@@ -52,8 +52,9 @@ def map_to_pixels(
         data = dd.read_csv(input_file)
 
     elif file_format == "fits":
-        dat = Table.read(input_file, format="fits")
-        data = dd.from_pandas(dat.to_pandas(), chunksize=500_000)
+        data = dd.from_pandas(
+            Table.read(input_file, format="fits").to_pandas(), chunksize=500_000
+        )
     elif file_format == "parquet":
         data = dd.read_parquet(input_file)
     else:

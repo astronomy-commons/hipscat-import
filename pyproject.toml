@@ -18,7 +18,12 @@ dependencies = [
     "healpy",
     "hipscat",
     "pandas",
-    "pytest",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest", 
+    "pytest-cov",
 ]
 
 [metadata]
