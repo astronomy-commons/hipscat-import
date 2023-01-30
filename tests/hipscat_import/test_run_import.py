@@ -3,12 +3,12 @@
 import os
 import tempfile
 
+import data_paths as dc
+import file_testing as ft
 import pytest
 from dask.distributed import Client, LocalCluster
 
-import data_paths as dc
-import file_testing as ft
-import hipscat_import.dask_map_reduce as runner
+import hipscat_import.run_import as runner
 from hipscat_import.arguments import ImportArguments
 
 

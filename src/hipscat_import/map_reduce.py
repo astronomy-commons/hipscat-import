@@ -56,7 +56,7 @@ def map_to_pixels(
             Table.read(input_file, format="fits").to_pandas(), chunksize=500_000
         )
     elif file_format == "parquet":
-        data = dd.read_parquet(input_file)
+        data = dd.read_parquet(input_file, engine="pyarrow")
     else:
         raise NotImplementedError(f"File Format: {file_format} not supported")
 

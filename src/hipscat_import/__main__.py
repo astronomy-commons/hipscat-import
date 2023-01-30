@@ -2,7 +2,7 @@
 
 import sys
 
-import hipscat_import.dask_map_reduce as runner
+import hipscat_import.run_import as runner
 from hipscat_import.arguments import ImportArguments
 
 if __name__ == "__main__":

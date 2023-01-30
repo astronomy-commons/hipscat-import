@@ -9,7 +9,7 @@ import hipscat_import.map_reduce as mr
 from hipscat_import.arguments import ImportArguments
 
 
-def _generate_histogram(args, client):
+def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
     futures = []
@@ -83,7 +83,7 @@ def run(args):
 def run_with_client(args, client):
     """Importer, where the client context may out-live the runner"""
     _validate_args(args)
-    raw_histogram = _generate_histogram(args, client)
+    raw_histogram = _map_pixels(args, client)
     pixel_map = pixel_math.generate_alignment(
         raw_histogram, args.highest_healpix_order, args.pixel_threshold
     )
