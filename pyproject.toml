@@ -21,6 +21,7 @@ dependencies = [
     "pyarrow",
 ]
 
+# On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
 [project.optional-dependencies]
 test = [
     "pytest", 
@@ -33,10 +34,5 @@ long_description = { file = "README.md" }
 url = "https://github.com/astronomy-commons/hipscat-import"
 
 [build-system]
-requires = [
-    "setuptools>=61",
-    "wheel",
-    "setuptools_scm[toml]>=7.0.0",
-    "setuptools_scm_git_archive"
-]
+requires = ["setuptools","wheel"]
 build-backend = "setuptools.build_meta"
