@@ -29,6 +29,7 @@ class ImportArguments:
         self.debug_stats_only = False
 
         self.filter_function = None
+        self.schema_file = None
 
         self.progress_bar = True
         self.dask_tmp = ""
@@ -233,6 +234,7 @@ class ImportArguments:
         pixel_threshold=1_000_000,
         debug_stats_only=False,
         filter_function=None,
+        schema_file=None,
         tmp_dir="",
         progress_bar=True,
         dask_tmp="",
@@ -258,6 +260,7 @@ class ImportArguments:
         self.filter_function = (
             filter_function if filter_function else passthrough_filter_function
         )
+        self.schema_file = schema_file
 
         self.tmp_dir = tmp_dir
         self.progress_bar = progress_bar

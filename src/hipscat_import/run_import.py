@@ -25,6 +25,7 @@ def _map_pixels(args, client):
                 dec_column=args.dec_column,
                 shard_suffix=i,
                 cache_path=None if args.debug_stats_only else args.tmp_dir,
+                schema_file=args.schema_file,
             )
         )
     if args.progress_bar:
