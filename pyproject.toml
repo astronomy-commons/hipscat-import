@@ -19,6 +19,7 @@ dependencies = [
     "hipscat",
     "pandas",
     "pyarrow",
+    "tqdm",
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
