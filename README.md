@@ -15,6 +15,6 @@ $ pip install -e .
 ### Installing dev dependencies on Mac
 
 ```bash
-$ pip install '.[dev]'
+$ pip install -e '.[dev]'
 ```
 (Make sure to include the single quotes)
