@@ -1,9 +1,9 @@
 """Import a set of non-hipscat files using dask for parallelization"""
 
 import hipscat.io.write_metadata as io
-import hipscat.pixel_math as pixel_math
 import numpy as np
 from dask.distributed import Client, as_completed
+from hipscat import pixel_math
 from tqdm import tqdm
 
 import hipscat_import.map_reduce as mr
