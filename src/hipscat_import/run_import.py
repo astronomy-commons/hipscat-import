@@ -90,7 +90,7 @@ def run_with_client(args, client):
     _validate_args(args)
     raw_histogram = _map_pixels(args, client)
 
-    step_progress = tqdm(total=2, desc="Binning  ", disable=(not args.progress_bar))
+    step_progress = tqdm(total=2, desc="Binning  ", disable=not args.progress_bar)
     pixel_map = pixel_math.generate_alignment(
         raw_histogram, args.highest_healpix_order, args.pixel_threshold
     )
@@ -105,7 +105,7 @@ def run_with_client(args, client):
         _reduce_pixels(args, destination_pixel_map, client)
 
     # All done - write out the metadata
-    step_progress = tqdm(total=3, desc="Finishing", disable=(not args.progress_bar))
+    step_progress = tqdm(total=3, desc="Finishing", disable=not args.progress_bar)
     io.write_legacy_metadata(args, raw_histogram, pixel_map)
     step_progress.update(1)
     io.write_catalog_info(args, raw_histogram)
