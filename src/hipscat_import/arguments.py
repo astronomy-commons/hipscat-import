@@ -8,6 +8,7 @@ import pandas as pd
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches
 
+
 class ImportArguments:
     """Container class for holding partitioning arguments"""
 
@@ -335,7 +336,8 @@ class ImportArguments:
             tmp_prefix = self.dask_tmp
         else:
             tmp_prefix = self.output_path
-        tmp_dir = tempfile.TemporaryDirectory(dir=tmp_prefix) # pylint: disable=consider-using-with
+        # pylint: disable=consider-using-with
+        tmp_dir = tempfile.TemporaryDirectory(dir=tmp_prefix)
         self.tmp_dir = tmp_dir.name
         self.contexts.append(tmp_dir)
 
@@ -360,10 +362,6 @@ class ImportArguments:
             f"  tmp_dir {self.tmp_dir}\n"
         )
         return formatted_string
-
-    def __del__(self):
-        for context in self.contexts:
-            del context
 
 
 def passthrough_filter_function(data: pd.DataFrame) -> pd.DataFrame:

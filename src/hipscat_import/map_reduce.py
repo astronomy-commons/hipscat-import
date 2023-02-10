@@ -13,6 +13,7 @@ from hipscat.io import paths
 HIPSCAT_PIXEL_COLUMN = "hipscat_pixel"
 # pylint: disable=too-many-locals,too-many-arguments
 
+
 def _write_shard_file(pixel_data, cache_path, shard_suffix):
     # Get pixel number from column, check they're all the same, and remove the column
     pixel_number = pixel_data[HIPSCAT_PIXEL_COLUMN].iloc[0]
