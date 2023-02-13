@@ -6,6 +6,8 @@ import tempfile
 
 import pandas as pd
 
+# pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches
+
 
 class ImportArguments:
     """Container class for holding partitioning arguments"""
@@ -292,7 +294,6 @@ class ImportArguments:
 
     def check_paths(self):
         """Check existence and permissions on provided path arguments"""
-        # TODO: handle non-posix files/paths
         if (not self.input_path and not self.input_file_list) or (
             self.input_path and self.input_file_list
         ):
@@ -338,6 +339,7 @@ class ImportArguments:
             tmp_prefix = self.dask_tmp
         else:
             tmp_prefix = self.output_path
+        # pylint: disable=consider-using-with
         tmp_dir = tempfile.TemporaryDirectory(dir=tmp_prefix)
         self.tmp_dir = tmp_dir.name
         self.contexts.append(tmp_dir)

@@ -10,7 +10,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from astropy.table import Table
+from hipscat import pixel_math
+from hipscat.io import paths
 
+# pylint: disable=too-many-locals,too-many-arguments
 
 def map_to_pixels(
     input_file,
