@@ -13,6 +13,10 @@ TEST_BLANK_CSV = os.path.join(TEST_BLANK_DATA_DIR, "blank.csv")
 # ./empty - no files
 TEST_EMPTY_DATA_DIR = os.path.join(TEST_DATA_DIR, "empty")
 
+# ./mixed_schema - input files with mixed schema
+TEST_MIXED_SCHEMA_DIR = os.path.join(TEST_DATA_DIR, "mixed_schema")
+TEST_MIXED_SCHEMA_PARQUET = os.path.join(TEST_MIXED_SCHEMA_DIR, "schema.parquet")
+
 # ./small_sky - all points in one 0-order pixel
 TEST_SMALL_SKY_DATA_DIR = os.path.join(TEST_DATA_DIR, "small_sky")
 TEST_SMALL_SKY_CSV = os.path.join(TEST_SMALL_SKY_DATA_DIR, "catalog.csv")
