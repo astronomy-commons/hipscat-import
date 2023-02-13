@@ -59,6 +59,7 @@ def map_to_pixels(
     # Set up the data we want (filter and find pixel)
     if filter_function:
         data = filter_function(data)
+        data.reset_index(inplace=True)
     mapped_pixels = hp.ang2pix(
         2**highest_order,
         data[ra_column].values,
