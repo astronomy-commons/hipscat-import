@@ -45,30 +45,29 @@ def test_dask_runner():
 
             runner.run_with_client(args, client)
 
-        # Check that the legacy metadata file exists, and contains correct object data
+        # Check that the catalog metadata file exists
         expected_lines = [
             "{",
-            '    "cat_name": "small_sky",',
+            '    "catalog_name": "small_sky",',
+            r'    "version": "[.\d]+.*",',  # version matches digits
+            r'    "generation_date": "[.\d]+",',  # date matches date format
             '    "ra_kw": "ra",',
             '    "dec_kw": "dec",',
             '    "id_kw": "id",',
-            '    "n_sources": 131,',
-            '    "pix_threshold": 1000000,',
-            r'    "urls": \[',
-            r'        ".*/small_sky_parts/catalog.*.csv"',
-            r'        ".*/small_sky_parts/catalog.*.csv"',
-            r'        ".*/small_sky_parts/catalog.*.csv"',
-            r'        ".*/small_sky_parts/catalog.*.csv"',
-            r'        ".*/small_sky_parts/catalog.*.csv"',
-            "    ],",
-            '    "hips": {',
-            r'        "0": \[',
-            "            11",
-            "        ]",
-            "    }",
+            '    "total_objects": 131,',
+            '    "origin_healpix_order": 1',
+            '    "pixel_threshold": 1000000',
             "}",
         ]
-        metadata_filename = os.path.join(args.catalog_path, "small_sky_meta.json")
+        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+        ft.assert_text_file_matches(expected_lines, metadata_filename)
+
+        # Check that the partition info file exists
+        expected_lines = [
+            "order,pixel,num_objects",
+            "0,11,131",
+        ]
+        metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
         ft.assert_text_file_matches(expected_lines, metadata_filename)
 
         # Check that the catalog parquet file exists and contains correct object IDs
@@ -101,7 +100,7 @@ def test_dask_runner_stats_only():
 
             runner.run_with_client(args, client)
 
-        metadata_filename = os.path.join(args.catalog_path, "small_sky_meta.json")
+        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
         assert os.path.exists(metadata_filename)
 
         # Check that the catalog parquet file DOES NOT exist
