@@ -31,6 +31,7 @@ class ImportArguments:
         self.debug_stats_only = False
 
         self.filter_function = None
+        self.schema_file = None
 
         self.progress_bar = True
         self.dask_tmp = ""
@@ -77,6 +78,13 @@ class ImportArguments:
             help="explicit list of input files, comma-separated",
             default="",
             type=str,
+        )
+        group.add_argument(
+            "--schema_file",
+            help="parquet file that contains field names and types",
+            default=None,
+            type=str,
+
         )
 
         # ===========            INPUT COLUMNS            ===========
@@ -213,6 +221,7 @@ class ImportArguments:
             highest_healpix_order=args.highest_healpix_order,
             pixel_threshold=args.pixel_threshold,
             debug_stats_only=args.debug_stats_only,
+            schema_file=args.schema_file,
             tmp_dir=args.tmp_dir,
             progress_bar=args.progress_bar,
             dask_tmp=args.dask_tmp,
@@ -235,6 +244,7 @@ class ImportArguments:
         pixel_threshold=1_000_000,
         debug_stats_only=False,
         filter_function=None,
+        schema_file=None,
         tmp_dir="",
         progress_bar=True,
         dask_tmp="",
@@ -260,6 +270,7 @@ class ImportArguments:
         self.filter_function = (
             filter_function if filter_function else passthrough_filter_function
         )
+        self.schema_file = schema_file
 
         self.tmp_dir = tmp_dir
         self.progress_bar = progress_bar

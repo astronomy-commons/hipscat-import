@@ -45,39 +45,38 @@ def test_dask_runner():
 
             runner.run_with_client(args, client)
 
-            # Check that the legacy metadata file exists, and contains correct object data
-            expected_lines = [
-                "{",
-                '    "cat_name": "small_sky",',
-                '    "ra_kw": "ra",',
-                '    "dec_kw": "dec",',
-                '    "id_kw": "id",',
-                '    "n_sources": 131,',
-                '    "pix_threshold": 1000000,',
-                r'    "urls": \[',
-                r'        ".*/small_sky_parts/catalog.*.csv"',
-                r'        ".*/small_sky_parts/catalog.*.csv"',
-                r'        ".*/small_sky_parts/catalog.*.csv"',
-                r'        ".*/small_sky_parts/catalog.*.csv"',
-                r'        ".*/small_sky_parts/catalog.*.csv"',
-                "    ],",
-                '    "hips": {',
-                r'        "0": \[',
-                "            11",
-                "        ]",
-                "    }",
-                "}",
-            ]
-            metadata_filename = os.path.join(args.catalog_path, "small_sky_meta.json")
-            ft.assert_text_file_matches(expected_lines, metadata_filename)
+        # Check that the catalog metadata file exists
+        expected_lines = [
+            "{",
+            '    "catalog_name": "small_sky",',
+            r'    "version": "[.\d]+.*",',  # version matches digits
+            r'    "generation_date": "[.\d]+",',  # date matches date format
+            '    "ra_kw": "ra",',
+            '    "dec_kw": "dec",',
+            '    "id_kw": "id",',
+            '    "total_objects": 131,',
+            '    "origin_healpix_order": 1',
+            '    "pixel_threshold": 1000000',
+            "}",
+        ]
+        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+        ft.assert_text_file_matches(expected_lines, metadata_filename)
 
-            # Check that the catalog parquet file exists and contains correct object IDs
-            output_file = os.path.join(
-                args.catalog_path, "Norder0/Npix11", "catalog.parquet"
-            )
+        # Check that the partition info file exists
+        expected_lines = [
+            "order,pixel,num_objects",
+            "0,11,131",
+        ]
+        metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
+        ft.assert_text_file_matches(expected_lines, metadata_filename)
 
-            expected_ids = [*range(700, 831)]
-            ft.assert_parquet_file_ids(output_file, "id", expected_ids)
+        # Check that the catalog parquet file exists and contains correct object IDs
+        output_file = os.path.join(
+            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
+        )
+
+        expected_ids = [*range(700, 831)]
+        ft.assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -101,12 +100,41 @@ def test_dask_runner_stats_only():
 
             runner.run_with_client(args, client)
 
-            metadata_filename = os.path.join(args.catalog_path, "small_sky_meta.json")
-            assert os.path.exists(metadata_filename)
+        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+        assert os.path.exists(metadata_filename)
 
-            # Check that the catalog parquet file DOES NOT exist
-            output_file = os.path.join(
-                args.catalog_path, "Norder0/Npix11", "catalog.parquet"
-            )
+        # Check that the catalog parquet file DOES NOT exist
+        output_file = os.path.join(
+            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
+        )
 
-            assert not os.path.exists(output_file)
+        assert not os.path.exists(output_file)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_dask_runner_mixed_schema_csv():
+    """Test basic execution, with a mixed schema"""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        args = ImportArguments()
+        args.from_params(
+            catalog_name="mixed_csv",
+            input_path=dc.TEST_MIXED_SCHEMA_DIR,
+            input_format="csv",
+            output_path=tmp_dir,
+            dask_tmp=tmp_dir,
+            highest_healpix_order=1,
+            schema_file=dc.TEST_MIXED_SCHEMA_PARQUET,
+            progress_bar=False,
+        )
+
+        with LocalCluster(n_workers=1, threads_per_worker=1) as cluster:
+            client = Client(cluster)
+
+            runner.run_with_client(args, client)
+
+        # Check that the catalog parquet file exists
+        output_file = os.path.join(
+            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
+        )
+
+        ft.assert_parquet_file_ids(output_file, "id", [*range(700, 708)])

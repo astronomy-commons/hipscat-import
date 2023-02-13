@@ -2,29 +2,14 @@
 
 import os
 
-import dask.dataframe as dd
 import healpy as hp
-import pyarrow as pa
-import pyarrow.parquet as pq
+import numpy as np
+import pandas as pd
 from astropy.table import Table
 from hipscat import pixel_math
 from hipscat.io import paths
 
-HIPSCAT_PIXEL_COLUMN = "hipscat_pixel"
 # pylint: disable=too-many-locals,too-many-arguments
-
-
-def _write_shard_file(pixel_data, cache_path, shard_suffix):
-    # Get pixel number from column, check they're all the same, and remove the column
-    pixel_number = pixel_data[HIPSCAT_PIXEL_COLUMN].iloc[0]
-    assert (pixel_data[HIPSCAT_PIXEL_COLUMN] == pixel_number).all()
-    pixel_data = pixel_data.drop(columns=[HIPSCAT_PIXEL_COLUMN])
-
-    pixel_dir = os.path.join(cache_path, f"pixel_{pixel_number}")
-    os.makedirs(pixel_dir, exist_ok=True)
-    output_file = os.path.join(pixel_dir, f"shard_{shard_suffix}.parquet")
-    pixel_data.to_parquet(output_file)
-
 
 def map_to_pixels(
     input_file,
@@ -35,6 +20,7 @@ def map_to_pixels(
     dec_column,
     cache_path=None,
     filter_function=None,
+    schema_file=None,
 ):
     """Map a file of input objects to their healpix pixels."""
 
@@ -50,14 +36,17 @@ def map_to_pixels(
 
     # Load file using appropriate mechanism
     if "csv" in file_format:
-        data = dd.read_csv(input_file)
+        if schema_file:
+            schema_parquet = pd.read_parquet(schema_file)
+            data = pd.read_csv(input_file, dtype=schema_parquet.dtypes.to_dict())
+        else:
+            data = pd.read_csv(input_file)
 
     elif file_format == "fits":
-        data = dd.from_pandas(
-            Table.read(input_file, format="fits").to_pandas(), chunksize=500_000
-        )
+        data = Table.read(input_file, format="fits").to_pandas()
     elif file_format == "parquet":
-        data = dd.read_parquet(input_file, engine="pyarrow")
+        data = pd.read_parquet(input_file, engine="pyarrow")
+        data.reset_index(inplace=True)
     else:
         raise NotImplementedError(f"File Format: {file_format} not supported")
 
@@ -70,28 +59,29 @@ def map_to_pixels(
     # Set up the data we want (filter and find pixel)
     if filter_function:
         data = filter_function(data)
-    data[HIPSCAT_PIXEL_COLUMN] = hp.ang2pix(
+    mapped_pixels = hp.ang2pix(
         2**highest_order,
         data[ra_column].values,
         data[dec_column].values,
         lonlat=True,
         nest=True,
     )
+    mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
+    histo[mapped_pixel] += count_at_pixel.astype(np.ulonglong)
 
-    data = data.compute()
-
-    # Output a shard file per pixel
     if cache_path:
-        data.groupby([HIPSCAT_PIXEL_COLUMN]).apply(
-            _write_shard_file, cache_path, shard_suffix
-        )
+        for pixel in mapped_pixel:
+            data_indexes = np.where(mapped_pixels == pixel)
+            filtered_data = data.filter(items=data_indexes[0].tolist(), axis=0)
 
-    # Populate our histogram
-    counts = data.hipscat_pixel.value_counts()
-    counts.columns = [HIPSCAT_PIXEL_COLUMN, "counts"]
-    for index, count in counts.items():
-        histo[index] = count
+            pixel_dir = os.path.join(cache_path, f"pixel_{pixel}")
+            os.makedirs(pixel_dir, exist_ok=True)
+            output_file = os.path.join(pixel_dir, f"shard_{shard_suffix}.parquet")
+            filtered_data.to_parquet(output_file)
+        del filtered_data, data_indexes
 
+    ## Pesky memory!
+    del data, mapped_pixels, mapped_pixel, count_at_pixel
     return histo
 
 
@@ -114,20 +104,18 @@ def reduce_pixel_shards(
         output_path, destination_pixel_order, destination_pixel_number
     )
 
-    input_directories = []
-
+    tables = []
     for pixel in origin_pixel_numbers:
         pixel_dir = os.path.join(cache_path, f"pixel_{pixel}")
-        input_directories.append(pixel_dir)
 
-    tables = []
-    for path in input_directories:
-        tables.append(pq.read_table(path))
-    merged_table = pa.concat_tables(tables)
+        for file in os.listdir(pixel_dir):
+            tables.append(
+                pd.read_parquet(os.path.join(pixel_dir, file), engine="pyarrow")
+            )
+
+    merged_table = pd.concat(tables, ignore_index=True, sort=False)
     if id_column:
-        merged_table = merged_table.sort_by(id_column)
-
-    pq.write_table(merged_table, where=destination_file)
+        merged_table = merged_table.sort_values(by=id_column)
 
     rows_written = len(merged_table)
 
@@ -137,3 +125,7 @@ def reduce_pixel_shards(
             f"({destination_pixel_order}, {destination_pixel_number})."
             f" Expected {destination_pixel_size}, wrote {rows_written}"
         )
+
+    merged_table.to_parquet(destination_file)
+
+    del merged_table, tables

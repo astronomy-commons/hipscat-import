@@ -1,0 +1,5 @@
+id,ra,dec,ra_error,dec_error,comment,code
+704,326.5,-45.5,0,0,star,good
+705,335.5,-32.5,0,0,galaxy,bad
+706,297.5,-36.5,0,0,satellite,just-ok
+707,308.5,-69.5,0,0,comet,unknown
