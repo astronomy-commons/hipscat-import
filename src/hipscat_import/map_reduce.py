@@ -3,12 +3,8 @@
 import os
 
 import healpy as hp
-import hipscat.io.paths as paths
-import hipscat.pixel_math as pixel_math
 import numpy as np
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 from astropy.table import Table
 from hipscat import pixel_math
 from hipscat.io import paths
