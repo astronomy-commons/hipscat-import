@@ -151,6 +151,7 @@ def test_map_small_sky_order0(small_sky_single_file):
         expected_ids = [*range(700, 831)]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 
+
 def test_map_small_sky_chunk1(small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object one row at a time"""
 
@@ -159,8 +160,6 @@ def test_map_small_sky_chunk1(small_sky_single_file):
             for chunk in reader:
                 chunk.reset_index(inplace=True)
                 yield chunk
-        
-
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
@@ -187,6 +186,7 @@ def test_map_small_sky_chunk1(small_sky_single_file):
         file_name = os.path.join(tmp_dir, "pixel_11", "shard_0_130.parquet")
         expected_ids = [830]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
+
 
 def test_map_small_sky_part_order1(small_sky_file0):
     """

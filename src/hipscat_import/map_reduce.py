@@ -37,6 +37,7 @@ def map_to_pixels(
     histo = pixel_math.empty_histogram(highest_order)
 
     for chunk_number, data in enumerate(file_reader_generator(input_file)):
+        data.reset_index(inplace=True)
         if not all(x in data.columns for x in required_columns):
             raise ValueError(
                 f"Invalid column names in input file: {ra_column}, {dec_column} not in {input_file}"
@@ -55,7 +56,6 @@ def map_to_pixels(
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.ulonglong)
 
-
         if cache_path:
             for pixel in mapped_pixel:
                 data_indexes = np.where(mapped_pixels == pixel)
@@ -63,7 +63,9 @@ def map_to_pixels(
 
                 pixel_dir = os.path.join(cache_path, f"pixel_{pixel}")
                 os.makedirs(pixel_dir, exist_ok=True)
-                output_file = os.path.join(pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet")
+                output_file = os.path.join(
+                    pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
+                )
                 filtered_data.to_parquet(output_file)
             del filtered_data, data_indexes
 
