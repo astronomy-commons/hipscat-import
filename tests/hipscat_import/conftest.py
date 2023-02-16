@@ -15,6 +15,7 @@ def dask_client():
 # pylint: disable=missing-function-docstring, redefined-outer-name
 TEST_DIR = os.path.dirname(__file__)
 
+
 @pytest.fixture
 def test_data_dir():
     return os.path.join(TEST_DIR, "data")

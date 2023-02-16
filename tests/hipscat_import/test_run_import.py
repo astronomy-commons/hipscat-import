@@ -4,6 +4,7 @@ import os
 import tempfile
 
 import file_testing as ft
+import pandas as pd
 import pytest
 
 import hipscat_import.run_import as runner
@@ -73,7 +74,6 @@ def test_dask_runner(dask_client, small_sky_parts_dir):
         ft.assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir):
     """Test basic execution, without generating catalog parquet outputs."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -106,6 +106,11 @@ def test_dask_runner_mixed_schema_csv(
     dask_client, mixed_schema_csv_dir, mixed_schema_csv_parquet
 ):
     """Test basic execution, with a mixed schema"""
+
+    def parquet_schema_csv_types_reader(input_file):
+        schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
+        yield pd.read_csv(input_file, dtype=schema_parquet.dtypes.to_dict())
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         args = ImportArguments(
             catalog_name="mixed_csv",
@@ -114,7 +119,7 @@ def test_dask_runner_mixed_schema_csv(
             output_path=tmp_dir,
             dask_tmp=tmp_dir,
             highest_healpix_order=1,
-            schema_file=mixed_schema_csv_parquet,
+            file_reader_generator=parquet_schema_csv_types_reader,
             progress_bar=False,
         )
 

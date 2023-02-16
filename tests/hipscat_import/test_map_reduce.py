@@ -6,10 +6,12 @@ import tempfile
 import file_testing as ft
 import hipscat.pixel_math as hist
 import numpy.testing as npt
+import pandas as pd
 import pyarrow as pa
 import pytest
 
 import hipscat_import.map_reduce as mr
+from hipscat_import.file_readers import csv_reader, fits_reader, parquet_reader
 
 
 def test_read_empty_filename():
@@ -17,7 +19,7 @@ def test_read_empty_filename():
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
             input_file="",
-            file_format="parquet",
+            file_reader_generator=parquet_reader,
             shard_suffix=0,
             highest_order=10,
             ra_column="ra",
@@ -30,7 +32,7 @@ def test_read_wrong_fileformat(small_sky_file0):
     with pytest.raises(pa.lib.ArrowInvalid):
         mr.map_to_pixels(
             input_file=small_sky_file0,
-            file_format="parquet",
+            file_reader_generator=parquet_reader,
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
@@ -43,7 +45,7 @@ def test_read_directory(test_data_dir):
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
             input_file=test_data_dir,
-            file_format="parquet",
+            file_reader_generator=parquet_reader,
             shard_suffix=0,
             highest_order=0,
             ra_column="ra",
@@ -56,7 +58,7 @@ def test_read_bad_fileformat(blank_data_file):
     with pytest.raises(NotImplementedError):
         mr.map_to_pixels(
             input_file=blank_data_file,
-            file_format="foo",
+            file_reader_generator=None,
             shard_suffix=0,
             highest_order=0,
             ra_column="ra",
@@ -64,13 +66,12 @@ def test_read_bad_fileformat(blank_data_file):
         )
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_read_single_fits(formats_fits):
     """Success case - fits file that exists being read as fits"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=formats_fits,
-            file_format="fits",
+            file_reader_generator=fits_reader,
             highest_order=0,
             shard_suffix=0,
             cache_path=tmp_dir,
@@ -83,14 +84,13 @@ def test_read_single_fits(formats_fits):
         npt.assert_array_equal(result, expected)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_map_headers_wrong(formats_headers_csv):
     """Test loading the a file with non-default headers (without specifying right headers)"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with pytest.raises(ValueError):
             mr.map_to_pixels(
                 input_file=formats_headers_csv,
-                file_format="csv",
+                file_reader_generator=csv_reader,
                 shard_suffix=0,
                 cache_path=tmp_dir,
                 highest_order=0,
@@ -99,13 +99,12 @@ def test_map_headers_wrong(formats_headers_csv):
             )
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_map_headers(formats_headers_csv):
     """Test loading the a file with non-default headers"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=formats_headers_csv,
-            file_format="csv",
+            file_reader_generator=csv_reader,
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
@@ -120,21 +119,20 @@ def test_map_headers(formats_headers_csv):
         npt.assert_array_equal(result, expected)
         assert (result == expected).all()
 
-        file_name = os.path.join(tmp_dir, "pixel_11", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_11", "shard_0_0.parquet")
         expected_ids = [*range(700, 708)]
         ft.assert_parquet_file_ids(file_name, "object_id", expected_ids)
 
-        file_name = os.path.join(tmp_dir, "pixel_1", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_1", "shard_0_0.parquet")
         assert not os.path.exists(file_name)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_map_small_sky_order0(small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=small_sky_single_file,
-            file_format="csv",
+            file_reader_generator=csv_reader,
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
@@ -149,12 +147,47 @@ def test_map_small_sky_order0(small_sky_single_file):
         npt.assert_array_equal(result, expected)
         assert (result == expected).all()
 
-        file_name = os.path.join(tmp_dir, "pixel_11", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_11", "shard_0_0.parquet")
         expected_ids = [*range(700, 831)]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 
+def test_map_small_sky_chunk1(small_sky_single_file):
+    """Test loading the small sky catalog and partitioning each object one row at a time"""
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    def csv_single_line_reader(input_file):
+        with pd.read_csv(input_file, chunksize=1) as reader:
+            for chunk in reader:
+                chunk.reset_index(inplace=True)
+                yield chunk
+        
+
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        result = mr.map_to_pixels(
+            input_file=small_sky_single_file,
+            file_reader_generator=csv_single_line_reader,
+            highest_order=0,
+            ra_column="ra",
+            dec_column="dec",
+            shard_suffix=0,
+            cache_path=tmp_dir,
+        )
+
+        assert len(result) == 12
+
+        expected = hist.empty_histogram(0)
+        expected[11] = 131
+        npt.assert_array_equal(result, expected)
+        assert (result == expected).all()
+
+        file_name = os.path.join(tmp_dir, "pixel_11", "shard_0_0.parquet")
+        expected_ids = [700]
+        ft.assert_parquet_file_ids(file_name, "id", expected_ids)
+
+        file_name = os.path.join(tmp_dir, "pixel_11", "shard_0_130.parquet")
+        expected_ids = [830]
+        ft.assert_parquet_file_ids(file_name, "id", expected_ids)
+
 def test_map_small_sky_part_order1(small_sky_file0):
     """
     Test loading a small portion of the small sky catalog and
@@ -163,7 +196,7 @@ def test_map_small_sky_part_order1(small_sky_file0):
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=small_sky_file0,
-            file_format="csv",
+            file_reader_generator=csv_reader,
             highest_order=1,
             ra_column="ra",
             dec_column="dec",
@@ -180,22 +213,22 @@ def test_map_small_sky_part_order1(small_sky_file0):
         assert (result == expected).all()
 
         # Pixel 44 - contains 5 objects
-        file_name = os.path.join(tmp_dir, "pixel_44", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_44", "shard_0_0.parquet")
         expected_ids = [703, 707, 716, 718, 723]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 
         # Pixel 45 - contains 7 objects
-        file_name = os.path.join(tmp_dir, "pixel_45", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_45", "shard_0_0.parquet")
         expected_ids = [704, 705, 710, 719, 720, 722, 724]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 
         # Pixel 46 - contains 11 objects
-        file_name = os.path.join(tmp_dir, "pixel_46", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_46", "shard_0_0.parquet")
         expected_ids = [700, 701, 706, 708, 709, 711, 712, 713, 714, 715, 717]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 
         # Pixel 47 - contains 2 objects
-        file_name = os.path.join(tmp_dir, "pixel_47", "shard_0.parquet")
+        file_name = os.path.join(tmp_dir, "pixel_47", "shard_0_0.parquet")
         expected_ids = [702, 721]
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 

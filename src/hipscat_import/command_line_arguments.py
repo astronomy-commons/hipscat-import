@@ -40,12 +40,6 @@ def parse_command_line(cl_args):
         default="",
         type=str,
     )
-    group.add_argument(
-        "--schema_file",
-        help="parquet file that contains field names and types",
-        default=None,
-        type=str,
-    )
 
     # ===========            INPUT COLUMNS            ===========
     group = parser.add_argument_group(
@@ -181,7 +175,6 @@ def parse_command_line(cl_args):
         highest_healpix_order=args.highest_healpix_order,
         pixel_threshold=args.pixel_threshold,
         debug_stats_only=args.debug_stats_only,
-        schema_file=args.schema_file,
         tmp_dir=args.tmp_dir,
         progress_bar=args.progress_bar,
         dask_tmp=args.dask_tmp,

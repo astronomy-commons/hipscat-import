@@ -6,6 +6,8 @@ import tempfile
 
 import pandas as pd
 
+from hipscat_import.file_readers import get_file_reader
+
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
 
 
@@ -27,7 +29,7 @@ class ImportArguments:
         pixel_threshold=1_000_000,
         debug_stats_only=False,
         filter_function=None,
-        schema_file=None,
+        file_reader_generator=None,
         tmp_dir="",
         progress_bar=True,
         dask_tmp="",
@@ -54,7 +56,11 @@ class ImportArguments:
         self.filter_function = (
             filter_function if filter_function else passthrough_filter_function
         )
-        self.schema_file = schema_file
+        self.file_reader_generator = (
+            file_reader_generator
+            if file_reader_generator
+            else get_file_reader(self.input_format)
+        )
 
         self.tmp_dir = tmp_dir
         self.progress_bar = progress_bar

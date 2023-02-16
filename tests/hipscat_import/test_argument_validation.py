@@ -158,7 +158,7 @@ def test_good_paths_empty_args(blank_data_dir):
             input_format="csv",
             output_path=tmp_dir,
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(NotImplementedError):
             ImportArguments(
                 catalog_name="catalog",
                 input_path=blank_data_dir,
