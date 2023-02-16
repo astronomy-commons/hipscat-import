@@ -29,8 +29,7 @@ def test_bad_args():
 def test_dask_runner():
     """Test basic execution."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="small_sky",
             input_path=dc.TEST_SMALL_SKY_PARTS_DATA_DIR,
             input_format="csv",
@@ -83,8 +82,7 @@ def test_dask_runner():
 def test_dask_runner_stats_only():
     """Test basic execution, without generating catalog parquet outputs."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="small_sky",
             input_path=dc.TEST_SMALL_SKY_PARTS_DATA_DIR,
             input_format="csv",
@@ -115,8 +113,7 @@ def test_dask_runner_stats_only():
 def test_dask_runner_mixed_schema_csv():
     """Test basic execution, with a mixed schema"""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="mixed_csv",
             input_path=dc.TEST_MIXED_SCHEMA_DIR,
             input_format="csv",

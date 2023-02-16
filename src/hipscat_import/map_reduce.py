@@ -11,6 +11,7 @@ from hipscat.io import paths
 
 # pylint: disable=too-many-locals,too-many-arguments
 
+
 def map_to_pixels(
     input_file,
     file_format,

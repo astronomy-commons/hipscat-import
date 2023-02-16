@@ -3,9 +3,7 @@
 import sys
 
 import hipscat_import.run_import as runner
-from hipscat_import.arguments import ImportArguments
+from hipscat_import.command_line_arguments import parse_command_line
 
 if __name__ == "__main__":
-    args = ImportArguments()
-    args.from_command_line(sys.argv[1:])
-    runner.run(args)
+    runner.run(parse_command_line(sys.argv[1:]))

@@ -3,17 +3,16 @@
 
 import tempfile
 
+import data_paths as dc
 import pytest
 
-import data_paths as dc
 from hipscat_import.arguments import ImportArguments
 
 
 def test_none():
     """No arguments provided. Should error for required args."""
-    args = ImportArguments()
     with pytest.raises(ValueError):
-        args.from_params()
+        ImportArguments()
 
 
 def test_empty_required():
@@ -22,8 +21,7 @@ def test_empty_required():
 
         ## Input path is missing
         with pytest.raises(ValueError):
-            args = ImportArguments()
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path="",
                 input_format="csv",
@@ -32,8 +30,7 @@ def test_empty_required():
 
         ## Output path is missing
         with pytest.raises(ValueError):
-            args = ImportArguments()
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="csv",
@@ -43,10 +40,9 @@ def test_empty_required():
 
 def test_invalid_paths():
     """Required arguments are provided, but paths aren't found."""
-    args = ImportArguments()
     with tempfile.TemporaryDirectory() as tmp_dir:
         ## Prove that it works with required args
-        args.from_params(
+        ImportArguments(
             catalog_name="catalog",
             input_path=dc.TEST_BLANK_DATA_DIR,
             output_path=tmp_dir,
@@ -55,7 +51,7 @@ def test_invalid_paths():
 
         ## Bad output path
         with pytest.raises(FileNotFoundError):
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 output_path="path",
@@ -64,7 +60,7 @@ def test_invalid_paths():
 
         ## Bad input path
         with pytest.raises(FileNotFoundError):
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path="path",
                 output_path=tmp_dir,
@@ -73,7 +69,7 @@ def test_invalid_paths():
 
         ## Input path has no files
         with pytest.raises(FileNotFoundError):
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_EMPTY_DATA_DIR,
                 output_path=tmp_dir,
@@ -82,7 +78,7 @@ def test_invalid_paths():
 
         ## Bad input file
         with pytest.raises(FileNotFoundError):
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_file_list=["path"],
                 output_path=tmp_dir,
@@ -92,10 +88,9 @@ def test_invalid_paths():
 
 def test_output_overwrite():
     """Test that we can write to existing directory, but not one with contents"""
-    args = ImportArguments()
 
     with pytest.raises(ValueError):
-        args.from_params(
+        ImportArguments(
             catalog_name="blank",
             input_path=dc.TEST_BLANK_DATA_DIR,
             output_path=dc.TEST_DATA_DIR,
@@ -103,7 +98,7 @@ def test_output_overwrite():
         )
 
     ## No error with overwrite flag
-    args.from_params(
+    ImportArguments(
         catalog_name="blank",
         input_path=dc.TEST_BLANK_DATA_DIR,
         output_path=dc.TEST_DATA_DIR,
@@ -115,8 +110,7 @@ def test_output_overwrite():
 def test_good_paths():
     """Required arguments are provided, and paths are found."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="catalog",
             input_path=dc.TEST_BLANK_DATA_DIR,
             input_format="csv",
@@ -133,8 +127,7 @@ def test_good_paths():
 def test_multiple_files_in_path():
     """Required arguments are provided, and paths are found."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="catalog",
             input_path=dc.TEST_SMALL_SKY_PARTS_DATA_DIR,
             input_format="csv",
@@ -147,8 +140,7 @@ def test_multiple_files_in_path():
 def test_single_debug_file():
     """Required arguments are provided, and paths are found."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="catalog",
             input_file_list=[dc.TEST_FORMATS_HEADERS_CSV],
             input_format="csv",
@@ -161,22 +153,21 @@ def test_single_debug_file():
 def test_good_paths_empty_args():
     """Paths are good. Remove some required arguments"""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="catalog",
             input_path=dc.TEST_BLANK_DATA_DIR,
             input_format="csv",
             output_path=tmp_dir,
         )
         with pytest.raises(ValueError):
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="",  ## empty
                 output_path=tmp_dir,
             )
         with pytest.raises(ValueError):
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="csv",
@@ -188,8 +179,7 @@ def test_dask_args():
     """Test errors for dask arguments"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with pytest.raises(ValueError):
-            args = ImportArguments()
-            args.from_params(
+            args = ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="csv",
@@ -199,8 +189,7 @@ def test_dask_args():
             )
 
         with pytest.raises(ValueError):
-            args = ImportArguments()
-            args.from_params(
+            args = ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="csv",
@@ -214,8 +203,7 @@ def test_healpix_args():
     """Test errors for healpix partitioning arguments"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with pytest.raises(ValueError):
-            args = ImportArguments()
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="csv",
@@ -223,8 +211,7 @@ def test_healpix_args():
                 highest_healpix_order=30,
             )
         with pytest.raises(ValueError):
-            args = ImportArguments()
-            args.from_params(
+            ImportArguments(
                 catalog_name="catalog",
                 input_path=dc.TEST_BLANK_DATA_DIR,
                 input_format="csv",
@@ -236,8 +223,7 @@ def test_healpix_args():
 def test_formatted_string():
     """Test that the human readable string contains our specified arguments"""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments()
-        args.from_params(
+        args = ImportArguments(
             catalog_name="catalog",
             input_path=dc.TEST_BLANK_DATA_DIR,
             input_format="csv",
