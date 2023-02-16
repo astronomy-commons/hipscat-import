@@ -3,10 +3,8 @@
 import os
 import tempfile
 
-import data_paths as dc
 import file_testing as ft
 import pytest
-from dask.distributed import Client, LocalCluster
 
 import hipscat_import.run_import as runner
 from hipscat_import.arguments import ImportArguments
@@ -26,12 +24,12 @@ def test_bad_args():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_dask_runner():
+def test_dask_runner(dask_client, small_sky_parts_dir):
     """Test basic execution."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         args = ImportArguments(
             catalog_name="small_sky",
-            input_path=dc.TEST_SMALL_SKY_PARTS_DATA_DIR,
+            input_path=small_sky_parts_dir,
             input_format="csv",
             output_path=tmp_dir,
             dask_tmp=tmp_dir,
@@ -39,10 +37,7 @@ def test_dask_runner():
             progress_bar=False,
         )
 
-        with LocalCluster(n_workers=1, threads_per_worker=1) as cluster:
-            client = Client(cluster)
-
-            runner.run_with_client(args, client)
+        runner.run_with_client(args, dask_client)
 
         # Check that the catalog metadata file exists
         expected_lines = [
@@ -79,12 +74,12 @@ def test_dask_runner():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_dask_runner_stats_only():
+def test_dask_runner_stats_only(dask_client, small_sky_parts_dir):
     """Test basic execution, without generating catalog parquet outputs."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         args = ImportArguments(
             catalog_name="small_sky",
-            input_path=dc.TEST_SMALL_SKY_PARTS_DATA_DIR,
+            input_path=small_sky_parts_dir,
             input_format="csv",
             output_path=tmp_dir,
             dask_tmp=tmp_dir,
@@ -93,10 +88,7 @@ def test_dask_runner_stats_only():
             debug_stats_only=True,
         )
 
-        with LocalCluster(n_workers=1, threads_per_worker=1) as cluster:
-            client = Client(cluster)
-
-            runner.run_with_client(args, client)
+        runner.run_with_client(args, dask_client)
 
         metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
         assert os.path.exists(metadata_filename)
@@ -110,24 +102,23 @@ def test_dask_runner_stats_only():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_dask_runner_mixed_schema_csv():
+def test_dask_runner_mixed_schema_csv(
+    dask_client, mixed_schema_csv_dir, mixed_schema_csv_parquet
+):
     """Test basic execution, with a mixed schema"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         args = ImportArguments(
             catalog_name="mixed_csv",
-            input_path=dc.TEST_MIXED_SCHEMA_DIR,
+            input_path=mixed_schema_csv_dir,
             input_format="csv",
             output_path=tmp_dir,
             dask_tmp=tmp_dir,
             highest_healpix_order=1,
-            schema_file=dc.TEST_MIXED_SCHEMA_PARQUET,
+            schema_file=mixed_schema_csv_parquet,
             progress_bar=False,
         )
 
-        with LocalCluster(n_workers=1, threads_per_worker=1) as cluster:
-            client = Client(cluster)
-
-            runner.run_with_client(args, client)
+        runner.run_with_client(args, dask_client)
 
         # Check that the catalog parquet file exists
         output_file = os.path.join(

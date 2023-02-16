@@ -3,7 +3,6 @@
 import os
 import tempfile
 
-import data_paths as dc
 import file_testing as ft
 import hipscat.pixel_math as hist
 import numpy.testing as npt
@@ -26,11 +25,11 @@ def test_read_empty_filename():
         )
 
 
-def test_read_wrong_fileformat():
+def test_read_wrong_fileformat(small_sky_file0):
     """CSV file attempting to be read as parquet"""
     with pytest.raises(pa.lib.ArrowInvalid):
         mr.map_to_pixels(
-            input_file=dc.TEST_SMALL_SKY_CSV,
+            input_file=small_sky_file0,
             file_format="parquet",
             highest_order=0,
             ra_column="ra_mean",
@@ -39,11 +38,11 @@ def test_read_wrong_fileformat():
         )
 
 
-def test_read_directory():
+def test_read_directory(test_data_dir):
     """Provide directory, not file"""
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
-            input_file=dc.TEST_DATA_DIR,
+            input_file=test_data_dir,
             file_format="parquet",
             shard_suffix=0,
             highest_order=0,
@@ -52,11 +51,11 @@ def test_read_directory():
         )
 
 
-def test_read_bad_fileformat():
+def test_read_bad_fileformat(blank_data_file):
     """Unsupported file format"""
     with pytest.raises(NotImplementedError):
         mr.map_to_pixels(
-            input_file=dc.TEST_BLANK_CSV,
+            input_file=blank_data_file,
             file_format="foo",
             shard_suffix=0,
             highest_order=0,
@@ -66,11 +65,11 @@ def test_read_bad_fileformat():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_read_single_fits():
+def test_read_single_fits(formats_fits):
     """Success case - fits file that exists being read as fits"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
-            input_file=dc.TEST_FORMATS_FITS,
+            input_file=formats_fits,
             file_format="fits",
             highest_order=0,
             shard_suffix=0,
@@ -85,12 +84,12 @@ def test_read_single_fits():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_map_headers_wrong():
+def test_map_headers_wrong(formats_headers_csv):
     """Test loading the a file with non-default headers (without specifying right headers)"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with pytest.raises(ValueError):
             mr.map_to_pixels(
-                input_file=dc.TEST_FORMATS_HEADERS_CSV,
+                input_file=formats_headers_csv,
                 file_format="csv",
                 shard_suffix=0,
                 cache_path=tmp_dir,
@@ -101,11 +100,11 @@ def test_map_headers_wrong():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_map_headers():
+def test_map_headers(formats_headers_csv):
     """Test loading the a file with non-default headers"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
-            input_file=dc.TEST_FORMATS_HEADERS_CSV,
+            input_file=formats_headers_csv,
             file_format="csv",
             highest_order=0,
             ra_column="ra_mean",
@@ -130,11 +129,11 @@ def test_map_headers():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_map_small_sky_order0():
+def test_map_small_sky_order0(small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
-            input_file=dc.TEST_SMALL_SKY_CSV,
+            input_file=small_sky_single_file,
             file_format="csv",
             highest_order=0,
             ra_column="ra",
@@ -156,14 +155,14 @@ def test_map_small_sky_order0():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_map_small_sky_part_order1():
+def test_map_small_sky_part_order1(small_sky_file0):
     """
     Test loading a small portion of the small sky catalog and
     partitioning objects into four smaller buckets
     """
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
-            input_file=dc.TEST_SMALL_SKY_PART0_CSV,
+            input_file=small_sky_file0,
             file_format="csv",
             highest_order=1,
             ra_column="ra",
@@ -201,11 +200,11 @@ def test_map_small_sky_part_order1():
         ft.assert_parquet_file_ids(file_name, "id", expected_ids)
 
 
-def test_reduce_order0():
+def test_reduce_order0(parquet_shards_dir):
     """Test reducing into one large pixel"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         mr.reduce_pixel_shards(
-            cache_path=dc.TEST_PARQUET_SHARDS_DIR,
+            cache_path=parquet_shards_dir,
             origin_pixel_numbers=[44, 45, 46, 47],
             destination_pixel_order=0,
             destination_pixel_number=11,
@@ -220,12 +219,12 @@ def test_reduce_order0():
         ft.assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-def test_reduce_bad_expectation():
+def test_reduce_bad_expectation(parquet_shards_dir):
     """Test reducing into one large pixel"""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with pytest.raises(ValueError):
             mr.reduce_pixel_shards(
-                cache_path=dc.TEST_PARQUET_SHARDS_DIR,
+                cache_path=parquet_shards_dir,
                 origin_pixel_numbers=[44, 45, 46, 47],
                 destination_pixel_order=0,
                 destination_pixel_number=11,
