@@ -6,7 +6,7 @@ import tempfile
 
 import pandas as pd
 
-# pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches
+# pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
 
 
 class ImportArguments:
