@@ -2,7 +2,6 @@
 
 import tempfile
 
-import data_paths as dc
 import pytest
 
 from hipscat_import.command_line_arguments import parse_command_line
@@ -29,37 +28,37 @@ def test_invalid_path():
         parse_command_line(bad_path_args)
 
 
-def test_good_paths():
+def test_good_paths(blank_data_dir):
     """Required arguments are provided, and paths are found."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         good_args = [
             "--catalog_name",
             "catalog",
             "--input_path",
-            dc.TEST_BLANK_DATA_DIR,
+            blank_data_dir,
             "--output_path",
             tmp_dir,
             "--input_format",
             "csv",
         ]
         args = parse_command_line(good_args)
-        assert args.input_path == dc.TEST_BLANK_DATA_DIR
+        assert args.input_path == blank_data_dir
         assert args.output_path == tmp_dir
 
 
-def test_good_paths_short_names():
+def test_good_paths_short_names(blank_data_dir):
     """Required arguments are provided, using short names for arguments."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         good_args = [
             "-c",
             "catalog",
             "-i",
-            dc.TEST_BLANK_DATA_DIR,
+            blank_data_dir,
             "-o",
             tmp_dir,
             "-fmt",
             "csv",
         ]
         args = parse_command_line(good_args)
-        assert args.input_path == dc.TEST_BLANK_DATA_DIR
+        assert args.input_path == blank_data_dir
         assert args.output_path == tmp_dir
