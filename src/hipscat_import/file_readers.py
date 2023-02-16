@@ -1,6 +1,8 @@
 """File reading generators for common file types."""
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 from astropy.table import Table
 
 
@@ -17,8 +19,8 @@ def get_file_reader(file_format):
 
 
 def csv_reader(input_file):
-    """Read chunks of 1million rows in a CSV"""
-    with pd.read_csv(input_file, chunksize=1_000_000) as reader:
+    """Read chunks of 500k rows in a CSV"""
+    with pd.read_csv(input_file, chunksize=500_000) as reader:
         for chunk in reader:
             yield chunk
 
@@ -29,5 +31,7 @@ def fits_reader(input_file):
 
 
 def parquet_reader(input_file):
-    """This should read smaller row groups of a parquet file."""
-    yield pd.read_parquet(input_file, engine="pyarrow")
+    """Read chunks of 500k rows in a parquet file."""
+    parquet_file = pq.read_table(input_file)
+    for smaller_table in parquet_file.to_batches(max_chunksize=500_000):
+        yield pa.Table.from_batches([smaller_table]).to_pandas()
