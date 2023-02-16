@@ -2,34 +2,31 @@
 
 import tempfile
 
+import data_paths as dc
 import pytest
 
-import data_paths as dc
-from hipscat_import.arguments import ImportArguments
+from hipscat_import.command_line_arguments import parse_command_line
 
 
 def test_none():
     """No arguments provided. Should error for required args."""
     empty_args = []
-    args = ImportArguments()
     with pytest.raises(ValueError):
-        args.from_command_line(empty_args)
+        parse_command_line(empty_args)
 
 
 def test_invalid_arguments():
     """Arguments are ill-formed."""
     bad_form_args = ["catalog", "path", "path"]
-    args = ImportArguments()
     with pytest.raises(SystemExit):
-        args.from_command_line(bad_form_args)
+        parse_command_line(bad_form_args)
 
 
 def test_invalid_path():
     """Required arguments are provided, but paths aren't found."""
     bad_path_args = ["-c", "catalog", "-i", "path", "-o", "path"]
-    args = ImportArguments()
     with pytest.raises(FileNotFoundError):
-        args.from_command_line(bad_path_args)
+        parse_command_line(bad_path_args)
 
 
 def test_good_paths():
@@ -45,8 +42,7 @@ def test_good_paths():
             "--input_format",
             "csv",
         ]
-        args = ImportArguments()
-        args.from_command_line(good_args)
+        args = parse_command_line(good_args)
         assert args.input_path == dc.TEST_BLANK_DATA_DIR
         assert args.output_path == tmp_dir
 
@@ -64,7 +60,6 @@ def test_good_paths_short_names():
             "-fmt",
             "csv",
         ]
-        args = ImportArguments()
-        args.from_command_line(good_args)
+        args = parse_command_line(good_args)
         assert args.input_path == dc.TEST_BLANK_DATA_DIR
         assert args.output_path == tmp_dir
