@@ -9,6 +9,7 @@ import pytest
 
 import hipscat_import.run_import as runner
 from hipscat_import.arguments import ImportArguments
+from hipscat_import.file_readers import CsvReader
 
 
 def test_empty_args():
@@ -107,11 +108,8 @@ def test_dask_runner_mixed_schema_csv(
 ):
     """Test basic execution, with a mixed schema"""
 
-    def parquet_schema_csv_types_reader(input_file):
-        schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
-        yield pd.read_csv(input_file, dtype=schema_parquet.dtypes.to_dict())
-
     with tempfile.TemporaryDirectory() as tmp_dir:
+        schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
         args = ImportArguments(
             catalog_name="mixed_csv",
             input_path=mixed_schema_csv_dir,
@@ -119,7 +117,9 @@ def test_dask_runner_mixed_schema_csv(
             output_path=tmp_dir,
             dask_tmp=tmp_dir,
             highest_healpix_order=1,
-            file_reader_generator=parquet_schema_csv_types_reader,
+            file_reader=CsvReader(
+                chunksize=1, type_map=schema_parquet.dtypes.to_dict()
+            ).read,
             progress_bar=False,
         )
 

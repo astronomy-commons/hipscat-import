@@ -19,7 +19,7 @@ def _map_pixels(args, client):
             client.submit(
                 mr.map_to_pixels,
                 input_file=file_path,
-                file_reader_generator=args.file_reader_generator,
+                file_reader=args.file_reader,
                 filter_function=args.filter_function,
                 highest_order=args.highest_healpix_order,
                 ra_column=args.ra_column,

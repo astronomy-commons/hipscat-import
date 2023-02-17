@@ -13,7 +13,7 @@ from hipscat.io import paths
 
 def map_to_pixels(
     input_file,
-    file_reader_generator,
+    file_reader,
     shard_suffix,
     highest_order,
     ra_column,
@@ -30,13 +30,13 @@ def map_to_pixels(
         raise FileNotFoundError(
             f"Directory found at path - requires regular file: {input_file}"
         )
-    if not file_reader_generator:
+    if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
     required_columns = [ra_column, dec_column]
     histo = pixel_math.empty_histogram(highest_order)
 
-    for chunk_number, data in enumerate(file_reader_generator(input_file)):
+    for chunk_number, data in enumerate(file_reader(input_file)):
         data.reset_index(inplace=True)
         if not all(x in data.columns for x in required_columns):
             raise ValueError(

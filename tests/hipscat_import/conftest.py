@@ -52,6 +52,11 @@ def formats_headers_csv(test_data_dir):
 
 
 @pytest.fixture
+def formats_pipe_csv(test_data_dir):
+    return os.path.join(test_data_dir, "test_formats", "pipe_delimited.csv")
+
+
+@pytest.fixture
 def formats_fits(test_data_dir):
     return os.path.join(test_data_dir, "test_formats", "small_sky.fits")
 
@@ -69,6 +74,11 @@ def small_sky_file0(test_data_dir):
 @pytest.fixture
 def parquet_shards_dir(test_data_dir):
     return os.path.join(test_data_dir, "parquet_shards")
+
+
+@pytest.fixture
+def parquet_shards_shard_44_0(test_data_dir):
+    return os.path.join(test_data_dir, "parquet_shards", "pixel_44", "shard_0.parquet")
 
 
 @pytest.fixture

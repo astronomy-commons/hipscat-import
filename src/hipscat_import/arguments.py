@@ -29,7 +29,7 @@ class ImportArguments:
         pixel_threshold=1_000_000,
         debug_stats_only=False,
         filter_function=None,
-        file_reader_generator=None,
+        file_reader=None,
         tmp_dir="",
         progress_bar=True,
         dask_tmp="",
@@ -56,10 +56,8 @@ class ImportArguments:
         self.filter_function = (
             filter_function if filter_function else passthrough_filter_function
         )
-        self.file_reader_generator = (
-            file_reader_generator
-            if file_reader_generator
-            else get_file_reader(self.input_format)
+        self.file_reader = (
+            file_reader if file_reader else get_file_reader(self.input_format)
         )
 
         self.tmp_dir = tmp_dir
