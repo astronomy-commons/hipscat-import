@@ -1,8 +1,22 @@
 """Test dataframe-generating file readers"""
 import numpy as np
 import pandas as pd
+import pytest
 
-from hipscat_import.file_readers import CsvReader, ParquetReader, fits_reader
+from hipscat_import.file_readers import (
+    CsvReader,
+    ParquetReader,
+    fits_reader,
+    get_file_reader,
+)
+
+
+def test_unknown_file_type():
+    """File reader factory method should fail for unknown file types"""
+    with pytest.raises(NotImplementedError):
+        get_file_reader("")
+    with pytest.raises(NotImplementedError):
+        get_file_reader("unknown")
 
 
 def test_csv_reader(small_sky_single_file):
@@ -80,7 +94,7 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv):
             type_map={
                 "letters": object,
                 "ints": int,
-                "empty": 'Int64',
+                "empty": "Int64",
                 "numeric": int,
             },
         ).read(formats_pipe_csv)

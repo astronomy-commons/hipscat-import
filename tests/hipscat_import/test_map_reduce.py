@@ -10,7 +10,7 @@ import pyarrow as pa
 import pytest
 
 import hipscat_import.map_reduce as mr
-from hipscat_import.file_readers import CsvReader, ParquetReader, fits_reader
+from hipscat_import.file_readers import get_file_reader
 
 
 def test_read_empty_filename():
@@ -18,7 +18,7 @@ def test_read_empty_filename():
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
             input_file="",
-            file_reader=ParquetReader().read,
+            file_reader=get_file_reader("parquet"),
             shard_suffix=0,
             highest_order=10,
             ra_column="ra",
@@ -31,7 +31,7 @@ def test_read_wrong_fileformat(small_sky_file0):
     with pytest.raises(pa.lib.ArrowInvalid):
         mr.map_to_pixels(
             input_file=small_sky_file0,
-            file_reader=ParquetReader().read,
+            file_reader=get_file_reader("parquet"),
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
@@ -44,7 +44,7 @@ def test_read_directory(test_data_dir):
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
             input_file=test_data_dir,
-            file_reader=ParquetReader().read,
+            file_reader=get_file_reader("parquet"),
             shard_suffix=0,
             highest_order=0,
             ra_column="ra",
@@ -70,7 +70,7 @@ def test_read_single_fits(formats_fits):
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=formats_fits,
-            file_reader=fits_reader,
+            file_reader=get_file_reader("fits"),
             highest_order=0,
             shard_suffix=0,
             cache_path=tmp_dir,
@@ -89,7 +89,7 @@ def test_map_headers_wrong(formats_headers_csv):
         with pytest.raises(ValueError):
             mr.map_to_pixels(
                 input_file=formats_headers_csv,
-                file_reader=CsvReader().read,
+                file_reader=get_file_reader("csv"),
                 shard_suffix=0,
                 cache_path=tmp_dir,
                 highest_order=0,
@@ -103,7 +103,7 @@ def test_map_headers(formats_headers_csv):
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=formats_headers_csv,
-            file_reader=CsvReader().read,
+            file_reader=get_file_reader("csv"),
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
@@ -131,7 +131,7 @@ def test_map_small_sky_order0(small_sky_single_file):
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=small_sky_single_file,
-            file_reader=CsvReader().read,
+            file_reader=get_file_reader("csv"),
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
@@ -159,7 +159,7 @@ def test_map_small_sky_part_order1(small_sky_file0):
     with tempfile.TemporaryDirectory() as tmp_dir:
         result = mr.map_to_pixels(
             input_file=small_sky_file0,
-            file_reader=CsvReader().read,
+            file_reader=get_file_reader("csv"),
             highest_order=1,
             ra_column="ra",
             dec_column="dec",

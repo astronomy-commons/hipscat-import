@@ -9,7 +9,7 @@ import pytest
 
 import hipscat_import.run_import as runner
 from hipscat_import.arguments import ImportArguments
-from hipscat_import.file_readers import CsvReader
+from hipscat_import.file_readers import get_file_reader
 
 
 def test_empty_args():
@@ -117,9 +117,9 @@ def test_dask_runner_mixed_schema_csv(
             output_path=tmp_dir,
             dask_tmp=tmp_dir,
             highest_healpix_order=1,
-            file_reader=CsvReader(
-                chunksize=1, type_map=schema_parquet.dtypes.to_dict()
-            ).read,
+            file_reader=get_file_reader(
+                "csv", chunksize=1, type_map=schema_parquet.dtypes.to_dict()
+            ),
             progress_bar=False,
         )
 

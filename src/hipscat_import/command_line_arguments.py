@@ -1,6 +1,7 @@
 import argparse
 
 from hipscat_import.arguments import ImportArguments
+from hipscat_import.file_readers import get_file_reader
 
 
 def parse_command_line(cl_args):
@@ -41,6 +42,40 @@ def parse_command_line(cl_args):
         type=str,
     )
 
+    # ===========           READER ARGUMENTS           ===========
+    group = parser.add_argument_group("READER")
+    group.add_argument(
+        "--schema_file",
+        help="parquet file that contains field names and types to be used when reading a CSV file",
+        default=None,
+        type=str,
+    )
+    group.add_argument(
+        "--header_rows",
+        help="number of rows of header in a CSV. if 0, there are only data rows",
+        default=1,
+        type=int,
+    )
+    group.add_argument(
+        "--column_names",
+        help="comma-separated list of names of columns. "
+        "used in the absence of a header row or to rename columns",
+        default=None,
+        type=str,
+    )
+    group.add_argument(
+        "--separator",
+        help="field delimiter in text or CSV file",
+        default=",",
+        type=str,
+    )
+    group.add_argument(
+        "--chunksize",
+        help="number of input rows to process in a chunk. recommend using"
+        " a smaller chunk size for input with wider rows",
+        default=500_000,
+        type=int,
+    )
     # ===========            INPUT COLUMNS            ===========
     group = parser.add_argument_group(
         "INPUT COLUMNS",
@@ -175,6 +210,14 @@ def parse_command_line(cl_args):
         highest_healpix_order=args.highest_healpix_order,
         pixel_threshold=args.pixel_threshold,
         debug_stats_only=args.debug_stats_only,
+        file_reader=get_file_reader(
+            args.input_format,
+            chunksize=args.chunksize,
+            header=args.header_rows if args.header_rows != 0 else None,
+            schema_file=args.schema_file,
+            column_names=(args.column_names.split(",") if args.column_names else None),
+            separator=args.separator,
+        ),
         tmp_dir=args.tmp_dir,
         progress_bar=args.progress_bar,
         dask_tmp=args.dask_tmp,
