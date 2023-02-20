@@ -19,14 +19,13 @@ def _map_pixels(args, client):
             client.submit(
                 mr.map_to_pixels,
                 input_file=file_path,
-                file_format=args.input_format,
+                file_reader=args.file_reader,
                 filter_function=args.filter_function,
                 highest_order=args.highest_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
                 shard_suffix=i,
                 cache_path=None if args.debug_stats_only else args.tmp_dir,
-                schema_file=args.schema_file,
             )
         )
 
