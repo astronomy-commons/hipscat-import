@@ -68,6 +68,8 @@ repos:
             "-sn", # Don't display the score
           ]
 
+
+    # Analyze the code style and report code that doesn't adhere.
   - repo: local
     hooks:
       - id: sphinx-build
