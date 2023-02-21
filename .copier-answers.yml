@@ -1,7 +1,10 @@
 # Changes here will be overwritten by Copier
-_commit: v0.0.3
-_src_path: gh:lincc-frameworks/python-project-template
+_commit: 1.2.0-2-g2cb067a
+_src_path: python-project-template/
 author_email: delucchi@andrew.cmu.edu
-author_name: Melissa DeLucchi
-module_name: hipscat-import
+author_name: LINCC-Frameworks
+create_example_module: false
+module_name: hipscat_import
+preferred_linter: pylint
 project_name: hipscat-import
+use_isort: true

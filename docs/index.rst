@@ -1,9 +1,8 @@
-.. hipscat-import documentation master file, created by
-   sphinx-quickstart on Thu Feb  2 12:58:01 2023.
+.. hipscat_import documentation main file.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to hipscat-import's documentation!
+Welcome to hipscat_import's documentation!
 ========================================================================================
 
 .. toctree::
