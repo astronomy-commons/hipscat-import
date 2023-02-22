@@ -83,7 +83,7 @@ class ImportArguments:
         if not 0 <= self.highest_healpix_order <= 10:
             raise ValueError("highest_healpix_order should be between 0 and 10")
         if not 100 <= self.pixel_threshold <= 1_000_000:
-            raise ValueError("pixel_threshold should be between 0 and 1,000,000")
+            raise ValueError("pixel_threshold should be between 100 and 1,000,000")
 
         if self.dask_n_workers <= 0:
             raise ValueError("dask_n_workers should be greather than 0")

@@ -11,7 +11,8 @@ from hipscat import pixel_math
 
 
 def read_histogram(tmp_path, highest_healpix_order):
-    """Read a numpy array at the indicated directory. Otherwise, return histogram of appropriate shape."""
+    """Read a numpy array at the indicated directory.
+    Otherwise, return histogram of appropriate shape."""
     if os.path.exists(os.path.join(tmp_path, "mapping_histogram.csv")):
         return np.loadtxt(
             os.path.join(tmp_path, "mapping_histogram.csv"),

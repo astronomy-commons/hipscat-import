@@ -58,7 +58,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
 
     if rf.is_reducing_done(args.tmp_path):
         return
-    
+
     reduced_keys = rf.read_reducing_keys(args.tmp_path)
 
     futures = []
@@ -104,7 +104,7 @@ def run(args):
         local_directory=args.dask_tmp,
         n_workers=args.dask_n_workers,
         threads_per_worker=args.dask_threads_per_worker,
-    ) as client:
+    ) as client:  # pragma: no cover
         run_with_client(args, client)
 
 
@@ -137,4 +137,4 @@ def run_with_client(args, client):
     step_progress.update(1)
     step_progress.close()
 
-    # rf.clean_resume_files(args.tmp_path)
+    rf.clean_resume_files(args.tmp_path)

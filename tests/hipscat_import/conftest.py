@@ -89,3 +89,8 @@ def mixed_schema_csv_dir(test_data_dir):
 @pytest.fixture
 def mixed_schema_csv_parquet(test_data_dir):
     return os.path.join(test_data_dir, "mixed_schema", "schema.parquet")
+
+
+@pytest.fixture
+def resume_dir(test_data_dir):
+    return os.path.join(test_data_dir, "resume")

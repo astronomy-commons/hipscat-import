@@ -1,0 +1,5 @@
+02/22/2023, 11:19:03	/home/delucchi/git/resume/tests/hipscat_import/data/small_sky_parts/catalog_01_of_05.csv
+02/22/2023, 11:19:03	/home/delucchi/git/resume/tests/hipscat_import/data/small_sky_parts/catalog_02_of_05.csv
+02/22/2023, 11:19:03	/home/delucchi/git/resume/tests/hipscat_import/data/small_sky_parts/catalog_00_of_05.csv
+02/22/2023, 11:19:03	/home/delucchi/git/resume/tests/hipscat_import/data/small_sky_parts/catalog_04_of_05.csv
+02/22/2023, 11:19:03	/home/delucchi/git/resume/tests/hipscat_import/data/small_sky_parts/catalog_03_of_05.csv
