@@ -97,8 +97,8 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir):
             "order,pixel,num_objects",
             "0,11,131",
         ]
-        metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
-        ft.assert_text_file_matches(expected_partition_lines, metadata_filename)
+        partition_filename = os.path.join(args.catalog_path, "partition_info.csv")
+        ft.assert_text_file_matches(expected_partition_lines, partition_filename)
 
         # Check that the catalog parquet file exists and contains correct object IDs
         output_file = os.path.join(
@@ -134,7 +134,7 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir):
         runner.run_with_client(args, dask_client)
 
         ft.assert_text_file_matches(expected_metadata_lines, metadata_filename)
-        ft.assert_text_file_matches(expected_partition_lines, metadata_filename)
+        ft.assert_text_file_matches(expected_partition_lines, partition_filename)
         ft.assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
