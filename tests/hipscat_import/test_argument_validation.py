@@ -7,6 +7,8 @@ import pytest
 
 from hipscat_import.arguments import ImportArguments
 
+# pylint: disable=protected-access
+
 
 def test_none():
     """No arguments provided. Should error for required args."""
@@ -63,6 +65,7 @@ def test_invalid_paths(blank_data_dir, empty_data_dir):
                 catalog_name="catalog",
                 input_path="path",
                 output_path=tmp_dir,
+                overwrite=True,
                 input_format="csv",
             )
 
@@ -72,6 +75,7 @@ def test_invalid_paths(blank_data_dir, empty_data_dir):
                 catalog_name="catalog",
                 input_path=empty_data_dir,
                 output_path=tmp_dir,
+                overwrite=True,
                 input_format="csv",
             )
 
@@ -80,6 +84,7 @@ def test_invalid_paths(blank_data_dir, empty_data_dir):
             ImportArguments(
                 catalog_name="catalog",
                 input_file_list=["path"],
+                overwrite=True,
                 output_path=tmp_dir,
                 input_format="csv",
             )
@@ -116,11 +121,11 @@ def test_good_paths(blank_data_dir, blank_data_file):
             output_path=tmp_dir,
             tmp_dir=tmp_dir,
         )
-        assert args.input_path == blank_data_dir
+        assert args._input_path == blank_data_dir
         assert len(args.input_paths) == 1
         assert args.input_paths[0] == blank_data_file
-        assert args.output_path == tmp_dir
-        assert args.tmp_dir.startswith(tmp_dir)
+        assert args._output_path == tmp_dir
+        assert args.tmp_path.startswith(tmp_dir)
 
 
 def test_multiple_files_in_path(small_sky_parts_dir):
@@ -132,7 +137,7 @@ def test_multiple_files_in_path(small_sky_parts_dir):
             input_format="csv",
             output_path=tmp_dir,
         )
-        assert args.input_path == small_sky_parts_dir
+        assert args._input_path == small_sky_parts_dir
         assert len(args.input_paths) == 5
 
 

@@ -26,6 +26,59 @@ def test_bad_args():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_resume_dask_runner(dask_client, small_sky_parts_dir, test_data_dir):
+    """Test basic execution."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        args = ImportArguments(
+            catalog_name="resume",
+            input_path=small_sky_parts_dir,
+            input_format="csv",
+            output_path=test_data_dir,
+            dask_tmp=tmp_dir,
+            tmp_dir=test_data_dir,
+            overwrite=True,
+            resume=True,
+            highest_healpix_order=0,
+            progress_bar=False,
+        )
+
+        runner.run_with_client(args, dask_client)
+
+        # Check that the catalog metadata file exists
+        expected_lines = [
+            "{",
+            '    "catalog_name": "resume",',
+            r'    "version": "[.\d]+.*",',  # version matches digits
+            r'    "generation_date": "[.\d]+",',  # date matches date format
+            '    "ra_kw": "ra",',
+            '    "dec_kw": "dec",',
+            '    "id_kw": "id",',
+            '    "total_objects": 131,',
+            '    "origin_healpix_order": 0',
+            '    "pixel_threshold": 1000000',
+            "}",
+        ]
+        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+        ft.assert_text_file_matches(expected_lines, metadata_filename)
+
+        # Check that the partition info file exists
+        expected_lines = [
+            "order,pixel,num_objects",
+            "0,11,131",
+        ]
+        metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
+        ft.assert_text_file_matches(expected_lines, metadata_filename)
+
+        # Check that the catalog parquet file exists and contains correct object IDs
+        output_file = os.path.join(
+            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
+        )
+
+        expected_ids = [*range(700, 831)]
+        ft.assert_parquet_file_ids(output_file, "id", expected_ids)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_dask_runner(dask_client, small_sky_parts_dir):
     """Test basic execution."""
     with tempfile.TemporaryDirectory() as tmp_dir:
