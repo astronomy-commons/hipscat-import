@@ -3,7 +3,6 @@
 import os
 import tempfile
 
-import file_testing as ft
 import pandas as pd
 import pytest
 
@@ -26,7 +25,9 @@ def test_bad_args():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_dask_runner(dask_client, small_sky_parts_dir):
+def test_dask_runner(
+    dask_client, small_sky_parts_dir, assert_parquet_file_ids, assert_text_file_matches
+):
     """Test basic execution."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         args = ImportArguments(
@@ -56,7 +57,7 @@ def test_dask_runner(dask_client, small_sky_parts_dir):
             "}",
         ]
         metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-        ft.assert_text_file_matches(expected_lines, metadata_filename)
+        assert_text_file_matches(expected_lines, metadata_filename)
 
         # Check that the partition info file exists
         expected_lines = [
@@ -64,7 +65,7 @@ def test_dask_runner(dask_client, small_sky_parts_dir):
             "0,11,131",
         ]
         metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
-        ft.assert_text_file_matches(expected_lines, metadata_filename)
+        assert_text_file_matches(expected_lines, metadata_filename)
 
         # Check that the catalog parquet file exists and contains correct object IDs
         output_file = os.path.join(
@@ -72,7 +73,7 @@ def test_dask_runner(dask_client, small_sky_parts_dir):
         )
 
         expected_ids = [*range(700, 831)]
-        ft.assert_parquet_file_ids(output_file, "id", expected_ids)
+        assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir):
@@ -104,7 +105,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir):
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_dask_runner_mixed_schema_csv(
-    dask_client, mixed_schema_csv_dir, mixed_schema_csv_parquet
+    dask_client, mixed_schema_csv_dir, mixed_schema_csv_parquet, assert_parquet_file_ids
 ):
     """Test basic execution, with a mixed schema"""
 
@@ -130,4 +131,4 @@ def test_dask_runner_mixed_schema_csv(
             args.catalog_path, "Norder0/Npix11", "catalog.parquet"
         )
 
-        ft.assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
+        assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
