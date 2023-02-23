@@ -38,6 +38,10 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir):
             os.path.join(resume_dir, "intermediate"),
             temp_path,
         )
+        for file_index in range(0, 5):
+            rf.write_mapping_key(
+                temp_path, f"{small_sky_parts_dir}/catalog_0{file_index}_of_05.csv"
+            )
 
         shutil.copytree(
             os.path.join(resume_dir, "Norder0"),
