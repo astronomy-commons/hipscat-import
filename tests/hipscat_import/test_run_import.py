@@ -1,7 +1,6 @@
 """Test full exection of the dask-parallelized runner"""
 
 import os
-import tempfile
 
 import pandas as pd
 import pytest
@@ -26,109 +25,108 @@ def test_bad_args():
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_dask_runner(
-    dask_client, small_sky_parts_dir, assert_parquet_file_ids, assert_text_file_matches
+    dask_client,
+    small_sky_parts_dir,
+    assert_parquet_file_ids,
+    assert_text_file_matches,
+    tmp_path,
 ):
     """Test basic execution."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments(
-            catalog_name="small_sky",
-            input_path=small_sky_parts_dir,
-            input_format="csv",
-            output_path=tmp_dir,
-            dask_tmp=tmp_dir,
-            highest_healpix_order=1,
-            progress_bar=False,
-        )
+    args = ImportArguments(
+        catalog_name="small_sky",
+        input_path=small_sky_parts_dir,
+        input_format="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+    )
 
-        runner.run_with_client(args, dask_client)
+    runner.run_with_client(args, dask_client)
 
-        # Check that the catalog metadata file exists
-        expected_lines = [
-            "{",
-            '    "catalog_name": "small_sky",',
-            r'    "version": "[.\d]+.*",',  # version matches digits
-            r'    "generation_date": "[.\d]+",',  # date matches date format
-            '    "ra_kw": "ra",',
-            '    "dec_kw": "dec",',
-            '    "id_kw": "id",',
-            '    "total_objects": 131,',
-            '    "origin_healpix_order": 1',
-            '    "pixel_threshold": 1000000',
-            "}",
-        ]
-        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-        assert_text_file_matches(expected_lines, metadata_filename)
+    # Check that the catalog metadata file exists
+    expected_lines = [
+        "{",
+        '    "catalog_name": "small_sky",',
+        r'    "version": "[.\d]+.*",',  # version matches digits
+        r'    "generation_date": "[.\d]+",',  # date matches date format
+        '    "ra_kw": "ra",',
+        '    "dec_kw": "dec",',
+        '    "id_kw": "id",',
+        '    "total_objects": 131,',
+        '    "origin_healpix_order": 1',
+        '    "pixel_threshold": 1000000',
+        "}",
+    ]
+    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+    assert_text_file_matches(expected_lines, metadata_filename)
 
-        # Check that the partition info file exists
-        expected_lines = [
-            "order,pixel,num_objects",
-            "0,11,131",
-        ]
-        metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
-        assert_text_file_matches(expected_lines, metadata_filename)
+    # Check that the partition info file exists
+    expected_lines = [
+        "order,pixel,num_objects",
+        "0,11,131",
+    ]
+    metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
+    assert_text_file_matches(expected_lines, metadata_filename)
 
-        # Check that the catalog parquet file exists and contains correct object IDs
-        output_file = os.path.join(
-            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
-        )
+    # Check that the catalog parquet file exists and contains correct object IDs
+    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
 
-        expected_ids = [*range(700, 831)]
-        assert_parquet_file_ids(output_file, "id", expected_ids)
+    expected_ids = [*range(700, 831)]
+    assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-def test_dask_runner_stats_only(dask_client, small_sky_parts_dir):
+def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     """Test basic execution, without generating catalog parquet outputs."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        args = ImportArguments(
-            catalog_name="small_sky",
-            input_path=small_sky_parts_dir,
-            input_format="csv",
-            output_path=tmp_dir,
-            dask_tmp=tmp_dir,
-            highest_healpix_order=1,
-            progress_bar=False,
-            debug_stats_only=True,
-        )
+    args = ImportArguments(
+        catalog_name="small_sky",
+        input_path=small_sky_parts_dir,
+        input_format="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+        debug_stats_only=True,
+    )
 
-        runner.run_with_client(args, dask_client)
+    runner.run_with_client(args, dask_client)
 
-        metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-        assert os.path.exists(metadata_filename)
+    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+    assert os.path.exists(metadata_filename)
 
-        # Check that the catalog parquet file DOES NOT exist
-        output_file = os.path.join(
-            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
-        )
+    # Check that the catalog parquet file DOES NOT exist
+    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
 
-        assert not os.path.exists(output_file)
+    assert not os.path.exists(output_file)
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_dask_runner_mixed_schema_csv(
-    dask_client, mixed_schema_csv_dir, mixed_schema_csv_parquet, assert_parquet_file_ids
+    dask_client,
+    mixed_schema_csv_dir,
+    mixed_schema_csv_parquet,
+    assert_parquet_file_ids,
+    tmp_path,
 ):
     """Test basic execution, with a mixed schema"""
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
-        args = ImportArguments(
-            catalog_name="mixed_csv",
-            input_path=mixed_schema_csv_dir,
-            input_format="csv",
-            output_path=tmp_dir,
-            dask_tmp=tmp_dir,
-            highest_healpix_order=1,
-            file_reader=get_file_reader(
-                "csv", chunksize=1, type_map=schema_parquet.dtypes.to_dict()
-            ),
-            progress_bar=False,
-        )
+    schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
+    args = ImportArguments(
+        catalog_name="mixed_csv",
+        input_path=mixed_schema_csv_dir,
+        input_format="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        file_reader=get_file_reader(
+            "csv", chunksize=1, type_map=schema_parquet.dtypes.to_dict()
+        ),
+        progress_bar=False,
+    )
 
-        runner.run_with_client(args, dask_client)
+    runner.run_with_client(args, dask_client)
 
-        # Check that the catalog parquet file exists
-        output_file = os.path.join(
-            args.catalog_path, "Norder0/Npix11", "catalog.parquet"
-        )
+    # Check that the catalog parquet file exists
+    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
 
-        assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
+    assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
