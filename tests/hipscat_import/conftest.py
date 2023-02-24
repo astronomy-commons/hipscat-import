@@ -98,6 +98,8 @@ def mixed_schema_csv_parquet(test_data_dir):
 def resume_dir(test_data_dir):
     return os.path.join(test_data_dir, "resume")
 
+
+@pytest.fixture
 def assert_text_file_matches():
     def assert_text_file_matches(expected_lines, file_name):
         """Convenience method to read a text file and compare the contents, line for line.

@@ -26,7 +26,14 @@ def test_bad_args():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir, tmp_path):
+def test_resume_dask_runner(
+    dask_client,
+    small_sky_parts_dir,
+    resume_dir,
+    tmp_path,
+    assert_text_file_matches,
+    assert_parquet_file_ids,
+):
     """Test execution in the presence of some resume files."""
     ## First, copy over our intermediate files.
     ## This prevents overwriting source-controlled resume files.
@@ -42,7 +49,7 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir, tmp_pa
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder0"),
-        os.path.join(tmp_dir, "resume", "Norder0"),
+        os.path.join(tmp_path, "resume", "Norder0"),
     )
 
     with pytest.raises(ValueError):
@@ -91,7 +98,7 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir, tmp_pa
         "}",
     ]
     metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    ft.assert_text_file_matches(expected_metadata_lines, metadata_filename)
+    assert_text_file_matches(expected_metadata_lines, metadata_filename)
 
     # Check that the partition info file exists
     expected_partition_lines = [
@@ -99,15 +106,13 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir, tmp_pa
         "0,11,131",
     ]
     partition_filename = os.path.join(args.catalog_path, "partition_info.csv")
-    ft.assert_text_file_matches(expected_partition_lines, partition_filename)
+    assert_text_file_matches(expected_partition_lines, partition_filename)
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(
-        args.catalog_path, "Norder0/Npix11", "catalog.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
 
     expected_ids = [*range(700, 831)]
-    ft.assert_parquet_file_ids(output_file, "id", expected_ids)
+    assert_parquet_file_ids(output_file, "id", expected_ids)
 
     ## Re-running the pipeline with fully done intermediate files
     ## should result in no changes to output files.
@@ -134,9 +139,9 @@ def test_resume_dask_runner(dask_client, small_sky_parts_dir, resume_dir, tmp_pa
 
     runner.run_with_client(args, dask_client)
 
-    ft.assert_text_file_matches(expected_metadata_lines, metadata_filename)
-    ft.assert_text_file_matches(expected_partition_lines, partition_filename)
-    ft.assert_parquet_file_ids(output_file, "id", expected_ids)
+    assert_text_file_matches(expected_metadata_lines, metadata_filename)
+    assert_text_file_matches(expected_partition_lines, partition_filename)
+    assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
