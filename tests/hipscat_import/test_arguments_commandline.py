@@ -1,6 +1,5 @@
 """Tests of command line argument validation"""
 
-import tempfile
 
 import pytest
 
@@ -30,37 +29,38 @@ def test_invalid_path():
         parse_command_line(bad_path_args)
 
 
-def test_good_paths(blank_data_dir):
+def test_good_paths(blank_data_dir, tmp_path):
     """Required arguments are provided, and paths are found."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        good_args = [
-            "--catalog_name",
-            "catalog",
-            "--input_path",
-            blank_data_dir,
-            "--output_path",
-            tmp_dir,
-            "--input_format",
-            "csv",
-        ]
-        args = parse_command_line(good_args)
-        assert args._input_path == blank_data_dir
-        assert args._output_path == tmp_dir
+    tmp_path_name = str(tmp_path)
+    good_args = [
+        "--catalog_name",
+        "catalog",
+        "--input_path",
+        blank_data_dir,
+        "--output_path",
+        tmp_path_name,
+        "--input_format",
+        "csv",
+    ]
+    args = parse_command_line(good_args)
+    assert args._input_path == blank_data_dir
+    assert args._output_path == tmp_path_name
 
 
-def test_good_paths_short_names(blank_data_dir):
+def test_good_paths_short_names(blank_data_dir, tmp_path):
     """Required arguments are provided, using short names for arguments."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        good_args = [
-            "-c",
-            "catalog",
-            "-i",
-            blank_data_dir,
-            "-o",
-            tmp_dir,
-            "-fmt",
-            "csv",
-        ]
-        args = parse_command_line(good_args)
-        assert args._input_path == blank_data_dir
-        assert args._output_path == tmp_dir
+    tmp_path_name = str(tmp_path)
+    good_args = [
+        "-c",
+        "catalog",
+        "-i",
+        blank_data_dir,
+        "-o",
+        tmp_path_name,
+        "-fmt",
+        "csv",
+    ]
+    args = parse_command_line(good_args)
+    assert args._input_path == blank_data_dir
+    assert args._output_path == tmp_path_name
+
