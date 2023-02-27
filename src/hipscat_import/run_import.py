@@ -8,18 +8,18 @@ from hipscat import pixel_math
 from tqdm import tqdm
 
 import hipscat_import.map_reduce as mr
-import hipscat_import.resume_files as rf
+import hipscat_import.resume_files as resume
 from hipscat_import.arguments import ImportArguments
 
 
 def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
-    raw_histogram = rf.read_histogram(args.tmp_path, args.highest_healpix_order)
-    if rf.is_mapping_done(args.tmp_path):
+    raw_histogram = resume.read_histogram(args.tmp_path, args.highest_healpix_order)
+    if resume.is_mapping_done(args.tmp_path):
         return raw_histogram
 
-    mapped_paths = rf.read_mapping_keys(args.tmp_path)
+    mapped_paths = set(resume.read_mapping_keys(args.tmp_path))
 
     futures = []
     for i, file_path in enumerate(args.input_paths):
@@ -47,19 +47,20 @@ def _map_pixels(args, client):
         disable=(not args.progress_bar),
     ):
         raw_histogram = np.add(raw_histogram, result)
-        rf.write_histogram(args.tmp_path, raw_histogram)
-        rf.write_mapping_key(args.tmp_path, future.key)
-    rf.set_mapping_done(args.tmp_path)
+        resume.write_mapping_start_key(args.tmp_path, future.key)
+        resume.write_histogram(args.tmp_path, raw_histogram)
+        resume.write_mapping_done_key(args.tmp_path, future.key)
+    resume.set_mapping_done(args.tmp_path)
     return raw_histogram
 
 
 def _reduce_pixels(args, destination_pixel_map, client):
     """Loop over destination pixels and merge into parquet files"""
 
-    if rf.is_reducing_done(args.tmp_path):
+    if resume.is_reducing_done(args.tmp_path):
         return
 
-    reduced_keys = rf.read_reducing_keys(args.tmp_path)
+    reduced_keys = resume.read_reducing_keys(args.tmp_path)
 
     futures = []
     for destination_pixel, source_pixels in destination_pixel_map.items():
@@ -85,8 +86,8 @@ def _reduce_pixels(args, destination_pixel_map, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        rf.write_reducing_key(args.tmp_path, future.key)
-    rf.set_reducing_done(args.tmp_path)
+        resume.write_reducing_key(args.tmp_path, future.key)
+    resume.set_reducing_done(args.tmp_path)
 
 
 def _validate_args(args):
@@ -137,4 +138,4 @@ def run_with_client(args, client):
     step_progress.update(1)
     step_progress.close()
 
-    rf.clean_resume_files(args.tmp_path)
+    resume.clean_resume_files(args.tmp_path)

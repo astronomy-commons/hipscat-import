@@ -8,28 +8,25 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from hipscat import pixel_math
+from numpy import frombuffer
 
 
 def read_histogram(tmp_path, highest_healpix_order):
     """Read a numpy array at the indicated directory.
     Otherwise, return histogram of appropriate shape."""
-    if os.path.exists(os.path.join(tmp_path, "mapping_histogram.csv")):
-        return np.loadtxt(
-            os.path.join(tmp_path, "mapping_histogram.csv"),
-            dtype=np.ulonglong,
-            delimiter=",",
-        )
+    file_name = os.path.join(tmp_path, "mapping_histogram.binary")
+    if os.path.exists(file_name):
+        with open(file_name, "rb") as file_handle:
+            return frombuffer(file_handle.read(), dtype=np.ulonglong)
     return pixel_math.empty_histogram(highest_healpix_order)
 
 
 def write_histogram(tmp_path, raw_histogram):
     """overwrite existing raw histogram with updated values."""
-    np.savetxt(
-        os.path.join(tmp_path, "mapping_histogram.csv"),
-        raw_histogram,
-        fmt="%i",
-        delimiter=",",
-    )
+
+    file_name = os.path.join(tmp_path, "mapping_histogram.binary")
+    with open(file_name, "wb+") as file_handle:
+        file_handle.write(raw_histogram.data)
 
 
 def is_mapping_done(tmp_path):
@@ -54,7 +51,13 @@ def set_reducing_done(tmp_path):
 
 def read_mapping_keys(tmp_path):
     """Read keys from mapping log file"""
-    return _read_log_keys(os.path.join(tmp_path, "mapping_log.txt"))
+    mapping_start_keys = _read_log_keys(os.path.join(tmp_path, "mapping_start_log.txt"))
+    mapping_done_keys = _read_log_keys(os.path.join(tmp_path, "mapping_done_log.txt"))
+    if len(mapping_done_keys) != len(mapping_start_keys):
+        raise ValueError(
+            "Resume logs are corrupted. Delete temp directory and restart import pipeline."
+        )
+    return mapping_start_keys
 
 
 def read_reducing_keys(tmp_path):
@@ -71,13 +74,18 @@ def _read_log_keys(file_name):
             header=None,
             names=["time", "key"],
         )
-        return mapping_log["key"].values
+        return mapping_log["key"].tolist()
     return []
 
 
-def write_mapping_key(tmp_path, key):
+def write_mapping_start_key(tmp_path, key):
     """Append single key to mapping log file"""
-    _write_log_key(os.path.join(tmp_path, "mapping_log.txt"), key)
+    _write_log_key(os.path.join(tmp_path, "mapping_start_log.txt"), key)
+
+
+def write_mapping_done_key(tmp_path, key):
+    """Append single key to mapping log file"""
+    _write_log_key(os.path.join(tmp_path, "mapping_done_log.txt"), key)
 
 
 def write_reducing_key(tmp_path, key):

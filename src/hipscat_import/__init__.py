@@ -14,7 +14,8 @@ from .resume_files import (
     set_mapping_done,
     set_reducing_done,
     write_histogram,
-    write_mapping_key,
+    write_mapping_done_key,
+    write_mapping_start_key,
     write_reducing_key,
 )
 from .run_import import run, run_with_client

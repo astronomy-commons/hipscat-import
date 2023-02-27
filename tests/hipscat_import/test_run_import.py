@@ -43,7 +43,10 @@ def test_resume_dask_runner(
         temp_path,
     )
     for file_index in range(0, 5):
-        rf.write_mapping_key(
+        rf.write_mapping_start_key(
+            temp_path, f"{small_sky_parts_dir}/catalog_0{file_index}_of_05.csv"
+        )
+        rf.write_mapping_done_key(
             temp_path, f"{small_sky_parts_dir}/catalog_0{file_index}_of_05.csv"
         )
 
