@@ -60,7 +60,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
     if resume.is_reducing_done(args.tmp_path):
         return
 
-    reduced_keys = resume.read_reducing_keys(args.tmp_path)
+    reduced_keys = set(resume.read_reducing_keys(args.tmp_path))
 
     futures = []
     for destination_pixel, source_pixels in destination_pixel_map.items():
