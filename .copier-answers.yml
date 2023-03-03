@@ -1,8 +1,8 @@
 # Changes here will be overwritten by Copier
 _commit: v1.2.1
 _src_path: gh:lincc-frameworks/python-project-template
-author_email: delucchi@andrew.cmu.edu
-author_name: LINCC-Frameworks
+author_email: lincc-frameworks-team@lists.lsst.org
+author_name: LINCC Frameworks
 create_example_module: false
 module_name: hipscat_import
 preferred_linter: pylint
