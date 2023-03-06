@@ -23,7 +23,6 @@ def read_histogram(tmp_path, highest_healpix_order):
 
 def write_histogram(tmp_path, raw_histogram):
     """overwrite existing raw histogram with updated values."""
-
     file_name = os.path.join(tmp_path, "mapping_histogram.binary")
     with open(file_name, "wb+") as file_handle:
         file_handle.write(raw_histogram.data)
