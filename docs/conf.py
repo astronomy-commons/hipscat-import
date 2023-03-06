@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.abspath("../src/"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "hipscat-import"
-copyright = "2023, LINCC-Frameworks"
-author = "LINCC-Frameworks"
+copyright = "2023, LINCC Frameworks"
+author = "LINCC Frameworks"
 release = version("hipscat-import")
 # for example take major/minor
 version = ".".join(release.split(".")[:2])
