@@ -114,13 +114,24 @@ def parse_command_line(cl_args):
     )
     group.add_argument(
         "--overwrite",
-        help="if set, the any existing catalog data will be overwritten",
+        help="if set, any existing catalog data will be overwritten",
         action="store_true",
     )
     group.add_argument(
         "--no_overwrite",
         help="if set, the pipeline will exit if existing output is found",
         dest="overwrite",
+        action="store_false",
+    )
+    group.add_argument(
+        "--resume",
+        help="if set, the pipeline will try to resume from a previous failed pipeline progress",
+        action="store_true",
+    )
+    group.add_argument(
+        "--no_resume",
+        help="if set, the pipeline will exit if existing intermediate files are found",
+        dest="resume",
         action="store_false",
     )
 

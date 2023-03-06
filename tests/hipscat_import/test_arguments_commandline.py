@@ -5,6 +5,8 @@ import pytest
 
 from hipscat_import.command_line_arguments import parse_command_line
 
+# pylint: disable=protected-access
+
 
 def test_none():
     """No arguments provided. Should error for required args."""
@@ -41,8 +43,8 @@ def test_good_paths(blank_data_dir, tmp_path):
         "csv",
     ]
     args = parse_command_line(good_args)
-    assert args.input_path == blank_data_dir
-    assert args.output_path == tmp_path_name
+    assert args._input_path == blank_data_dir
+    assert args._output_path == tmp_path_name
 
 
 def test_good_paths_short_names(blank_data_dir, tmp_path):
@@ -59,5 +61,5 @@ def test_good_paths_short_names(blank_data_dir, tmp_path):
         "csv",
     ]
     args = parse_command_line(good_args)
-    assert args.input_path == blank_data_dir
-    assert args.output_path == tmp_path_name
+    assert args._input_path == blank_data_dir
+    assert args._output_path == tmp_path_name

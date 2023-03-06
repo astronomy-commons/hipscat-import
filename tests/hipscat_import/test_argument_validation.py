@@ -5,6 +5,8 @@ import pytest
 
 from hipscat_import.arguments import ImportArguments
 
+# pylint: disable=protected-access
+
 
 def test_none():
     """No arguments provided. Should error for required args."""
@@ -58,6 +60,7 @@ def test_invalid_paths(blank_data_dir, empty_data_dir, tmp_path):
             catalog_name="catalog",
             input_path="path",
             output_path=tmp_path,
+            overwrite=True,
             input_format="csv",
         )
 
@@ -67,6 +70,7 @@ def test_invalid_paths(blank_data_dir, empty_data_dir, tmp_path):
             catalog_name="catalog",
             input_path=empty_data_dir,
             output_path=tmp_path,
+            overwrite=True,
             input_format="csv",
         )
 
@@ -75,6 +79,7 @@ def test_invalid_paths(blank_data_dir, empty_data_dir, tmp_path):
         ImportArguments(
             catalog_name="catalog",
             input_file_list=["path"],
+            overwrite=True,
             output_path=tmp_path,
             input_format="csv",
         )
@@ -103,18 +108,20 @@ def test_output_overwrite(test_data_dir, blank_data_dir):
 
 def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     """Required arguments are provided, and paths are found."""
+    tmp_path_str = str(tmp_path)
     args = ImportArguments(
         catalog_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
-        output_path=tmp_path,
-        tmp_dir=tmp_path,
+        output_path=tmp_path_str,
+        tmp_dir=tmp_path_str,
     )
-    assert args.input_path == blank_data_dir
+    assert args._input_path == blank_data_dir
     assert len(args.input_paths) == 1
     assert args.input_paths[0] == blank_data_file
-    assert args.output_path == tmp_path
-    assert args.tmp_dir.startswith(str(tmp_path))
+    assert args._output_path == tmp_path_str
+    assert args._tmp_dir.startswith(tmp_path_str)
+    assert args.tmp_path.startswith(tmp_path_str)
 
 
 def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
@@ -125,7 +132,7 @@ def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
         input_format="csv",
         output_path=tmp_path,
     )
-    assert args.input_path == small_sky_parts_dir
+    assert args._input_path == small_sky_parts_dir
     assert len(args.input_paths) == 5
 
 
