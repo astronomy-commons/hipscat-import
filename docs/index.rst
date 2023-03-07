@@ -1,12 +1,27 @@
-.. hipscat_import documentation main file.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to hipscat_import's documentation!
+HiPSCat Import
 ========================================================================================
 
-.. toctree::
-   :hidden:
+Utility for ingesting large survey data into HiPSCat structure.
 
-   Home page <self>
+.. toctree::
+   :maxdepth: 1
+   :caption: Importing Catalogs
+
+   guide/overview
+   guide/command_line
+   guide/resume
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Example Catalogs
+
+   catalogs/overview
+   catalogs/allwise
+   catalogs/neowise
+   catalogs/tic
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Developers
+
    API Reference <autoapi/index>
