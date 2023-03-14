@@ -201,7 +201,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
         id_column="id",
     )
 
-    output_file = os.path.join(tmp_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)

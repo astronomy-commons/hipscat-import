@@ -26,6 +26,7 @@ def test_bad_args():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
 def test_resume_dask_runner(
     dask_client,
     small_sky_parts_dir,
@@ -44,15 +45,17 @@ def test_resume_dask_runner(
     )
     for file_index in range(0, 5):
         rf.write_mapping_start_key(
-            temp_path, f"{small_sky_parts_dir}/catalog_0{file_index}_of_05.csv"
+            temp_path,
+            os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv"),
         )
         rf.write_mapping_done_key(
-            temp_path, f"{small_sky_parts_dir}/catalog_0{file_index}_of_05.csv"
+            temp_path,
+            os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv"),
         )
 
     shutil.copytree(
-        os.path.join(resume_dir, "Norder0"),
-        os.path.join(tmp_path, "resume", "Norder0"),
+        os.path.join(resume_dir, "Norder=0"),
+        os.path.join(tmp_path, "resume", "Norder=0"),
     )
 
     with pytest.raises(ValueError):
@@ -92,6 +95,7 @@ def test_resume_dask_runner(
         '    "catalog_name": "resume",',
         r'    "version": "[.\d]+.*",',  # version matches digits
         r'    "generation_date": "[.\d]+",',  # date matches date format
+        '    "epoch": "J2000",',
         '    "ra_kw": "ra",',
         '    "dec_kw": "dec",',
         '    "id_kw": "id",',
@@ -112,7 +116,9 @@ def test_resume_dask_runner(
     assert_text_file_matches(expected_partition_lines, partition_filename)
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -148,6 +154,7 @@ def test_resume_dask_runner(
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
 def test_dask_runner(
     dask_client,
     small_sky_parts_dir,
@@ -174,6 +181,7 @@ def test_dask_runner(
         '    "catalog_name": "small_sky",',
         r'    "version": "[.\d]+.*",',  # version matches digits
         r'    "generation_date": "[.\d]+",',  # date matches date format
+        '    "epoch": "J2000",',
         '    "ra_kw": "ra",',
         '    "dec_kw": "dec",',
         '    "id_kw": "id",',
@@ -194,12 +202,15 @@ def test_dask_runner(
     assert_text_file_matches(expected_lines, metadata_filename)
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
+@pytest.mark.timeout(5)
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     """Test basic execution, without generating catalog parquet outputs."""
     args = ImportArguments(
@@ -219,12 +230,15 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     assert os.path.exists(metadata_filename)
 
     # Check that the catalog parquet file DOES NOT exist
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
 
     assert not os.path.exists(output_file)
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
 def test_dask_runner_mixed_schema_csv(
     dask_client,
     mixed_schema_csv_dir,
@@ -251,6 +265,8 @@ def test_dask_runner_mixed_schema_csv(
     runner.run_with_client(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
 
     assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
