@@ -24,4 +24,5 @@ Utility for ingesting large survey data into HiPSCat structure.
    :maxdepth: 1
    :caption: Developers
 
+   guide/contributing
    API Reference <autoapi/index>
