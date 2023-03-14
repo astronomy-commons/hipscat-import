@@ -52,8 +52,8 @@ def test_resume_dask_runner(
         )
 
     shutil.copytree(
-        os.path.join(resume_dir, "Norder0"),
-        os.path.join(tmp_path, "resume", "Norder0"),
+        os.path.join(resume_dir, "Norder=0"),
+        os.path.join(tmp_path, "resume", "Norder=0"),
     )
 
     with pytest.raises(ValueError):
@@ -114,7 +114,7 @@ def test_resume_dask_runner(
     assert_text_file_matches(expected_partition_lines, partition_filename)
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
