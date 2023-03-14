@@ -5,7 +5,7 @@ Find (or make) a new GitHub issue
 -------------------------------------------------------------------------------
 
 Add yourself as the assignee on an existing issue so that we know who's working 
-on what. ( If you're not actively working on an issue, unassign yourself).
+on what. (If you're not actively working on an issue, unassign yourself).
 
 If there isn't an issue for the work you want to do, please create one and include
 a description.
