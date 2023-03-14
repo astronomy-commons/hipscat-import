@@ -16,6 +16,7 @@ class ImportArguments:
     def __init__(
         self,
         catalog_name="",
+        epoch="J2000",
         input_path="",
         input_format="parquet",
         input_file_list=None,
@@ -37,6 +38,7 @@ class ImportArguments:
         dask_threads_per_worker=1,
     ):
         self.catalog_name = catalog_name
+        self.epoch = epoch
         self._input_path = input_path
         self.input_format = input_format
         self._input_file_list = input_file_list
