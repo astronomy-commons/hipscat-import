@@ -26,6 +26,7 @@ def test_bad_args():
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
 def test_resume_dask_runner(
     dask_client,
     small_sky_parts_dir,
@@ -92,6 +93,7 @@ def test_resume_dask_runner(
         '    "catalog_name": "resume",',
         r'    "version": "[.\d]+.*",',  # version matches digits
         r'    "generation_date": "[.\d]+",',  # date matches date format
+        '    "epoch": "J2000",',
         '    "ra_kw": "ra",',
         '    "dec_kw": "dec",',
         '    "id_kw": "id",',
@@ -148,6 +150,7 @@ def test_resume_dask_runner(
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
 def test_dask_runner(
     dask_client,
     small_sky_parts_dir,
@@ -174,6 +177,7 @@ def test_dask_runner(
         '    "catalog_name": "small_sky",',
         r'    "version": "[.\d]+.*",',  # version matches digits
         r'    "generation_date": "[.\d]+",',  # date matches date format
+        '    "epoch": "J2000",',
         '    "ra_kw": "ra",',
         '    "dec_kw": "dec",',
         '    "id_kw": "id",',
@@ -194,12 +198,13 @@ def test_dask_runner(
     assert_text_file_matches(expected_lines, metadata_filename)
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(args.catalog_path, "Norder=0/Dir=0/Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
+@pytest.mark.timeout(5)
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     """Test basic execution, without generating catalog parquet outputs."""
     args = ImportArguments(
@@ -225,6 +230,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
 def test_dask_runner_mixed_schema_csv(
     dask_client,
     mixed_schema_csv_dir,
@@ -251,6 +257,6 @@ def test_dask_runner_mixed_schema_csv(
     runner.run_with_client(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(args.catalog_path, "Norder0/Npix11", "catalog.parquet")
+    output_file = os.path.join(args.catalog_path, "Norder=0/Dir=0/Npix=11.parquet")
 
     assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
