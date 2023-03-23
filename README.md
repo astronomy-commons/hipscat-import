@@ -8,7 +8,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/testing-and-coverage.yml)
 ![Read the Docs](https://img.shields.io/readthedocs/hipscat-import)
 
-HiPSCat import - Utility for ingesting large survey data into HiPSCat structure.
+## HiPSCat import - Utility for ingesting large survey data into HiPSCat structure.
 
 Check out our [ReadTheDocs site](https://hipscat-import.readthedocs.io/en/latest/)
 for more information on partitioning, installation, and contributing.
