@@ -1,5 +1,7 @@
 """File reading generators for common file types."""
 
+import abc
+
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -26,16 +28,37 @@ def get_file_reader(
             column_names=column_names,
             type_map=type_map,
             separator=separator,
-        ).read
+        )
     if file_format == "fits":
-        return fits_reader
+        return FitsReader()
     if file_format == "parquet":
-        return ParquetReader(chunksize=chunksize).read
+        return ParquetReader(chunksize=chunksize)
 
     raise NotImplementedError(f"File Format: {file_format} not supported")
 
 
-class CsvReader:
+class InputReader(abc.ABC):
+    """Base class for chunking file readers."""
+
+    @abc.abstractmethod
+    def read(self, input_file):
+        """Read the input file, or chunk of the input file.
+
+        Args:
+            input_file(str) path to the input file.
+        Yields:
+            DataFrame containing chunk of file info.
+        """
+
+    @abc.abstractmethod
+    def provenance_info(self) -> dict:
+        """Create dictionary of parameters for provenance tracking.
+        Returns:
+            dictionary with all argument_name -> argument_value as key -> value pairs.
+        """
+
+
+class CsvReader(InputReader):
     """CSV reader for the most common CSV reading arguments."""
 
     def __init__(
@@ -57,7 +80,7 @@ class CsvReader:
     def read(self, input_file):
         """Read CSV using chunked file reader"""
         if self.schema_file:
-            schema_parquet = pd.read_parquet(self.schema_file)
+            schema_parquet = pd.read_parquet(self.schema_file, use_nullable_dtypes=True)
 
         use_column_names = None
         if self.column_names:
@@ -82,13 +105,35 @@ class CsvReader:
             for chunk in reader:
                 yield chunk
 
+    def provenance_info(self) -> dict:
+        str_type_map = {}
+        if self.type_map:
+            str_type_map = {key: str(value) for (key, value) in self.type_map.items()}
+        provenance_info = {
+            "input_reader_type": "CsvReader",
+            "chunksize": self.chunksize,
+            "header": self.header,
+            "schema_file": self.schema_file,
+            "separator": self.separator,
+            "column_names": self.column_names,
+            "type_map": str_type_map,
+        }
+        return provenance_info
 
-def fits_reader(input_file):
-    """Read the whole fits file and return"""
-    yield Table.read(input_file, format="fits").to_pandas()
+
+class FitsReader(InputReader):
+    """Simple, non-chunked FITS file reader."""
+
+    def read(self, input_file):
+        """Read the whole fits file and return"""
+        yield Table.read(input_file, format="fits").to_pandas()
+
+    def provenance_info(self) -> dict:
+        provenance_info = {"input_reader_type": "FitsReader"}
+        return provenance_info
 
 
-class ParquetReader:
+class ParquetReader(InputReader):
     """Parquet reader for the most common Parquet reading arguments."""
 
     def __init__(
@@ -102,3 +147,10 @@ class ParquetReader:
         parquet_file = pq.read_table(input_file)
         for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
             yield pa.Table.from_batches([smaller_table]).to_pandas()
+
+    def provenance_info(self) -> dict:
+        provenance_info = {
+            "input_reader_type": "ParquetReader",
+            "chunksize": self.chunksize,
+        }
+        return provenance_info

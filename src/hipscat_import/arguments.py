@@ -2,8 +2,10 @@
 
 import glob
 import os
+from importlib.metadata import version
 
 import pandas as pd
+from hipscat.catalog import CatalogParameters
 
 from hipscat_import.file_readers import get_file_reader
 
@@ -151,6 +153,65 @@ class ImportArguments:
                     " choose a different directory or use --resume flag"
                 )
         os.makedirs(self.tmp_path, exist_ok=True)
+
+    def to_catalog_parameters(self) -> CatalogParameters:
+        """Convert importing arguments into hipscat catalog parameters.
+
+        Returns:
+            CatalogParameters for catalog being created.
+        """
+        return CatalogParameters(
+            catalog_name=self.catalog_name,
+            input_paths=self.input_paths,
+            input_format=self.input_format,
+            output_path=self._output_path,
+            highest_healpix_order=self.highest_healpix_order,
+            pixel_threshold=self.pixel_threshold,
+            epoch=self.epoch,
+            ra_column=self.ra_column,
+            dec_column=self.dec_column,
+        )
+
+    def provenance_info(self) -> dict:
+        """Fill all known information in a dictionary for provenance tracking.
+
+        Returns:
+            dictionary with all argument_name -> argument_value as key -> value pairs.
+        """
+        runtime_args = {
+            "catalog_name": self.catalog_name,
+            "epoch": self.epoch,
+            "input_path": str(self._input_path),
+            "input_paths": self.input_paths,
+            "input_format": self.input_format,
+            "input_file_list": self._input_file_list,
+            "ra_column": self.ra_column,
+            "dec_column": self.dec_column,
+            "id_column": self.id_column,
+            "output_path": str(self._output_path),
+            "overwrite": self.overwrite,
+            "resume": self.resume,
+            "highest_healpix_order": self.highest_healpix_order,
+            "pixel_threshold": self.pixel_threshold,
+            "debug_stats_only": self.debug_stats_only,
+            "catalog_path": self.catalog_path,
+            "tmp_path": str(self.tmp_path),
+            "progress_bar": self.progress_bar,
+            "dask_tmp": str(self.dask_tmp),
+            "dask_n_workers": self.dask_n_workers,
+            "dask_threads_per_worker": self.dask_threads_per_worker,
+            "file_reader_info": self.file_reader.provenance_info(),
+        }
+        runtime_args["uses_filter_function"] = (
+            self.filter_function != passthrough_filter_function
+        )
+        provenance_info = {
+            "tool_name": "hipscat_import",
+            "version": version("hipscat-import"),
+            "runtime_args": runtime_args,
+        }
+
+        return provenance_info
 
     def __str__(self):
         formatted_string = (

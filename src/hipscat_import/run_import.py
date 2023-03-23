@@ -130,11 +130,11 @@ def run_with_client(args, client):
 
     # All done - write out the metadata
     step_progress = tqdm(total=3, desc="Finishing", disable=not args.progress_bar)
-    io.write_legacy_metadata(args, raw_histogram, pixel_map)
+    io.write_provenance_info(args.to_catalog_parameters(), args.provenance_info())
     step_progress.update(1)
-    io.write_catalog_info(args, raw_histogram)
+    io.write_catalog_info(args.to_catalog_parameters(), raw_histogram)
     step_progress.update(1)
-    io.write_partition_info(args, destination_pixel_map)
+    io.write_partition_info(args.to_catalog_parameters(), destination_pixel_map)
     step_progress.update(1)
     step_progress.close()
 
