@@ -215,6 +215,19 @@ def test_healpix_args(blank_data_dir, tmp_path):
         )
 
 
+def test_to_catalog_parameters(blank_data_dir, tmp_path):
+    """Verify creation of catalog parameters for catalog to be created."""
+    args = ImportArguments(
+        catalog_name="catalog",
+        input_path=blank_data_dir,
+        input_format="csv",
+        output_path=tmp_path,
+        tmp_dir=tmp_path,
+    )
+    catalog_parameters = args.to_catalog_parameters()
+    assert catalog_parameters.catalog_name == args.catalog_name
+
+
 def test_formatted_string(blank_data_dir, tmp_path):
     """Test that the human readable string contains our specified arguments"""
     args = ImportArguments(

@@ -36,7 +36,7 @@ def map_to_pixels(
     required_columns = [ra_column, dec_column]
     histo = pixel_math.empty_histogram(highest_order)
 
-    for chunk_number, data in enumerate(file_reader(input_file)):
+    for chunk_number, data in enumerate(file_reader.read(input_file)):
         data.reset_index(inplace=True)
         if not all(x in data.columns for x in required_columns):
             raise ValueError(

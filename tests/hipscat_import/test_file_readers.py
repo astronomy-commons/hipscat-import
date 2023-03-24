@@ -1,14 +1,16 @@
 """Test dataframe-generating file readers"""
+import os
+
+import hipscat.io.write_metadata as io
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
+from hipscat.catalog import CatalogParameters
 
-from hipscat_import.file_readers import (
-    CsvReader,
-    ParquetReader,
-    fits_reader,
-    get_file_reader,
-)
+from hipscat_import.file_readers import (CsvReader, FitsReader, ParquetReader,
+                                         get_file_reader)
 
 
 def test_unknown_file_type():
@@ -57,7 +59,38 @@ def test_csv_reader_no_headers(small_sky_single_file):
     assert total_chunks == 1
 
 
-def test_csv_reader_pipe_delimited(formats_pipe_csv):
+def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
+    """Verify we can read the csv file without a header row."""
+    small_sky_schema = pa.schema(
+        [
+            pa.field("id", pa.int64()),
+            pa.field("ra", pa.float64()),
+            pa.field("dec", pa.float64()),
+            pa.field("ra_error", pa.float64()),
+            pa.field("dec_error", pa.float64()),
+        ]
+    )
+    schema_file = os.path.join(tmp_path, "metadata.parquet")
+    pq.write_metadata(
+        small_sky_schema,
+        schema_file,
+    )
+
+    frame = next(CsvReader(schema_file=schema_file).read(small_sky_single_file))
+    assert len(frame) == 131
+
+    column_types = frame.dtypes.to_dict()
+    expected_column_types = {
+        "id": pd.Int64Dtype(),
+        "ra": pd.Float64Dtype(),
+        "dec": pd.Float64Dtype(),
+        "ra_error": pd.Float64Dtype(),
+        "dec_error": pd.Float64Dtype(),
+    }
+    assert np.all(column_types == expected_column_types)
+
+
+def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     """Verify we can read a pipe-delimited csv file without a header row."""
     total_chunks = 0
     for frame in CsvReader(header=None, separator="|").read(formats_pipe_csv):
@@ -110,6 +143,54 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv):
     }
     assert np.all(column_types == expected_column_types)
 
+    parquet_schema_types = pa.schema(
+        [
+            pa.field("letters", pa.string()),
+            pa.field("ints", pa.int64()),
+            pa.field("empty", pa.int64()),
+            pa.field("numeric", pa.int64()),
+        ]
+    )
+    schema_file = os.path.join(tmp_path, "metadata.parquet")
+    pq.write_metadata(parquet_schema_types, schema_file)
+
+    frame = next(
+        CsvReader(header=None, separator="|", schema_file=schema_file).read(
+            formats_pipe_csv
+        )
+    )
+
+    assert len(frame) == 3
+    assert np.all(frame["letters"] == ["AA", "BB", "CC"])
+    column_types = frame.dtypes.to_dict()
+    expected_column_types = {
+        "letters": pd.StringDtype(),
+        "ints": pd.Int64Dtype(),
+        "empty": pd.Int64Dtype(),
+        "numeric": pd.Int64Dtype(),
+    }
+    assert np.all(column_types == expected_column_types)
+
+
+def test_csv_reader_provenance_info(tmp_path):
+    """Test that we get some provenance info and it is parseable into JSON."""
+    reader = CsvReader(
+        header=None,
+        separator="|",
+        column_names=["letters", "ints", "empty", "numeric"],
+        type_map={
+            "letters": object,
+            "ints": int,
+            "empty": "Int64",
+            "numeric": int,
+        },
+    )
+    provenance_info = reader.provenance_info()
+    base_catalog_parameters = CatalogParameters(
+        output_path=tmp_path, catalog_name="empty"
+    )
+    io.write_provenance_info(base_catalog_parameters, provenance_info)
+
 
 def test_parquet_reader(parquet_shards_shard_44_0):
     """Verify we can read the parquet file into a single data frame."""
@@ -130,11 +211,31 @@ def test_parquet_reader_chunked(parquet_shards_shard_44_0):
     assert total_chunks == 7
 
 
+def test_parquet_reader_provenance_info(tmp_path):
+    """Test that we get some provenance info and it is parseable into JSON."""
+    reader = ParquetReader(chunksize=1)
+    provenance_info = reader.provenance_info()
+    base_catalog_parameters = CatalogParameters(
+        output_path=tmp_path, catalog_name="empty"
+    )
+    io.write_provenance_info(base_catalog_parameters, provenance_info)
+
+
 def test_read_fits(formats_fits):
     """Success case - fits file that exists being read as fits"""
     total_chunks = 0
-    for frame in fits_reader(formats_fits):
+    for frame in FitsReader().read(formats_fits):
         total_chunks += 1
         assert len(frame) == 131
 
     assert total_chunks == 1
+
+
+def test_fits_reader_provenance_info(tmp_path):
+    """Test that we get some provenance info and it is parseable into JSON."""
+    reader = FitsReader()
+    provenance_info = reader.provenance_info()
+    base_catalog_parameters = CatalogParameters(
+        output_path=tmp_path, catalog_name="empty"
+    )
+    io.write_provenance_info(base_catalog_parameters, provenance_info)
