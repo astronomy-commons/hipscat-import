@@ -199,6 +199,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
         destination_pixel_size=131,
         output_path=tmp_path,
         id_column="id",
+        delete_input_files=False,
     )
 
     output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
@@ -218,4 +219,5 @@ def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
             destination_pixel_size=11,  ## should be 131
             output_path=tmp_path,
             id_column="id",
+            delete_input_files=False,
         )

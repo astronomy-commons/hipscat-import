@@ -17,7 +17,7 @@ def read_histogram(tmp_path, highest_healpix_order):
     file_name = os.path.join(tmp_path, "mapping_histogram.binary")
     if os.path.exists(file_name):
         with open(file_name, "rb") as file_handle:
-            return frombuffer(file_handle.read(), dtype=np.ulonglong)
+            return frombuffer(file_handle.read(), dtype=np.int64)
     return pixel_math.empty_histogram(highest_healpix_order)
 
 

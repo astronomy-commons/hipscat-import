@@ -1,6 +1,7 @@
 """Import a set of non-hipscat files using dask for parallelization"""
 
 import os
+import shutil
 
 import healpy as hp
 import numpy as np
@@ -9,6 +10,10 @@ from hipscat import pixel_math
 from hipscat.io import paths
 
 # pylint: disable=too-many-locals,too-many-arguments
+
+
+def _pixel_directory(cache_path, pixel):
+    return os.path.join(cache_path, f"pixel_{pixel}")
 
 
 def map_to_pixels(
@@ -54,14 +59,14 @@ def map_to_pixels(
             nest=True,
         )
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
-        histo[mapped_pixel] += count_at_pixel.astype(np.ulonglong)
+        histo[mapped_pixel] += count_at_pixel.astype(np.int64)
 
         if cache_path:
             for pixel in mapped_pixel:
                 data_indexes = np.where(mapped_pixels == pixel)
                 filtered_data = data.filter(items=data_indexes[0].tolist(), axis=0)
 
-                pixel_dir = os.path.join(cache_path, f"pixel_{pixel}")
+                pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
                 os.makedirs(pixel_dir, exist_ok=True)
                 output_file = os.path.join(
                     pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
@@ -82,6 +87,7 @@ def reduce_pixel_shards(
     destination_pixel_size,
     output_path,
     id_column,
+    delete_input_files = True,
 ):
     """Reduce sharded source pixels into destination pixels."""
     destination_dir = paths.pixel_directory(
@@ -95,7 +101,7 @@ def reduce_pixel_shards(
 
     tables = []
     for pixel in origin_pixel_numbers:
-        pixel_dir = os.path.join(cache_path, f"pixel_{pixel}")
+        pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
 
         for file in os.listdir(pixel_dir):
             tables.append(
@@ -118,3 +124,9 @@ def reduce_pixel_shards(
     merged_table.to_parquet(destination_file)
 
     del merged_table, tables
+    
+    if delete_input_files:
+        for pixel in origin_pixel_numbers:
+            pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
+
+            shutil.rmtree(pixel_dir, ignore_errors=True)

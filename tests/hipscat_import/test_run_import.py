@@ -109,8 +109,8 @@ def test_resume_dask_runner(
 
     # Check that the partition info file exists
     expected_partition_lines = [
-        "order,pixel,num_objects",
-        "0,11,131",
+        "Norder,Dir,Npix,num_objects",
+        "0,0,11,131",
     ]
     partition_filename = os.path.join(args.catalog_path, "partition_info.csv")
     assert_text_file_matches(expected_partition_lines, partition_filename)
@@ -195,8 +195,8 @@ def test_dask_runner(
 
     # Check that the partition info file exists
     expected_lines = [
-        "order,pixel,num_objects",
-        "0,11,131",
+        "Norder,Dir,Npix,num_objects",
+        "0,0,11,131",
     ]
     metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
     assert_text_file_matches(expected_lines, metadata_filename)
