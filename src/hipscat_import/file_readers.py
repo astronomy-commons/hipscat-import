@@ -122,14 +122,40 @@ class CsvReader(InputReader):
 
 
 class FitsReader(InputReader):
-    """Simple, non-chunked FITS file reader."""
+    """Chunked FITS file reader."""
+
+    def __init__(
+        self,
+        chunksize=500_000,
+        column_names=None,
+        skip_column_names=None,
+    ):
+        self.chunksize = chunksize
+        self.column_names = column_names
+        self.skip_column_names = skip_column_names
 
     def read(self, input_file):
         """Read the whole fits file and return"""
-        yield Table.read(input_file, format="fits").to_pandas()
+        table = Table.read(input_file, memmap=True)
+        if self.column_names:
+            table.keep_columns(self.column_names)
+        elif self.skip_column_names:
+            table.remove_columns(self.skip_column_names)
+
+        total_rows = len(table)
+        read_rows = 0
+
+        while read_rows < total_rows:
+            yield table[read_rows : read_rows + self.chunksize].to_pandas()
+            read_rows += self.chunksize
 
     def provenance_info(self) -> dict:
-        provenance_info = {"input_reader_type": "FitsReader"}
+        provenance_info = {
+            "input_reader_type": "FitsReader",
+            "chunksize": self.chunksize,
+            "column_names": self.column_names,
+            "skip_column_names": self.skip_column_names,
+        }
         return provenance_info
 
 
