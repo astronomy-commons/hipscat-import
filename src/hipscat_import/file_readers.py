@@ -135,7 +135,7 @@ class FitsReader(InputReader):
         self.skip_column_names = skip_column_names
 
     def read(self, input_file):
-        """Read the whole fits file and return"""
+        """Read chunks of rows in a fits file"""
         table = Table.read(input_file, memmap=True)
         if self.column_names:
             table.keep_columns(self.column_names)

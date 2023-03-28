@@ -242,7 +242,7 @@ def test_read_fits_chunked(formats_fits):
 
 
 def test_read_fits_columns(formats_fits):
-    """Success case - fits file that exists being read as fits"""
+    """Success case - column filtering on reading fits file"""
     frame = next(FitsReader(column_names=["id", "ra", "dec"]).read(formats_fits))
     assert list(frame.columns) == ["id", "ra", "dec"]
 
