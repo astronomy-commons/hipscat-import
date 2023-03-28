@@ -87,7 +87,7 @@ def reduce_pixel_shards(
     destination_pixel_size,
     output_path,
     id_column,
-    delete_input_files = True,
+    delete_input_files=True,
 ):
     """Reduce sharded source pixels into destination pixels."""
     destination_dir = paths.pixel_directory(
@@ -124,7 +124,7 @@ def reduce_pixel_shards(
     merged_table.to_parquet(destination_file)
 
     del merged_table, tables
-    
+
     if delete_input_files:
         for pixel in origin_pixel_numbers:
             pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
