@@ -129,13 +129,18 @@ def run_with_client(args, client):
         _reduce_pixels(args, destination_pixel_map, client)
 
     # All done - write out the metadata
-    step_progress = tqdm(total=3, desc="Finishing", disable=not args.progress_bar)
+    step_progress = tqdm(total=6, desc="Finishing", disable=not args.progress_bar)
     io.write_provenance_info(args.to_catalog_parameters(), args.provenance_info())
     step_progress.update(1)
     io.write_catalog_info(args.to_catalog_parameters(), raw_histogram)
     step_progress.update(1)
+    if not args.debug_stats_only:
+        io.write_parquet_metadata(args.catalog_path)
+    step_progress.update(1)
+    io.write_fits_map(args.catalog_path, raw_histogram)
+    step_progress.update(1)
     io.write_partition_info(args.to_catalog_parameters(), destination_pixel_map)
     step_progress.update(1)
-    step_progress.close()
-
     resume.clean_resume_files(args.tmp_path)
+    step_progress.update(1)
+    step_progress.close()
