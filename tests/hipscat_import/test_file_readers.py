@@ -9,8 +9,12 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog import CatalogParameters
 
-from hipscat_import.file_readers import (CsvReader, FitsReader, ParquetReader,
-                                         get_file_reader)
+from hipscat_import.file_readers import (
+    CsvReader,
+    FitsReader,
+    ParquetReader,
+    get_file_reader,
+)
 
 
 def test_unknown_file_type():

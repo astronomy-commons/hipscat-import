@@ -1,37 +1,36 @@
 """Import a set of non-hipscat files using dask for parallelization"""
 
-import os
-import shutil
-
 import healpy as hp
 import numpy as np
 import pandas as pd
 from hipscat import pixel_math
-from hipscat.io import paths
+from hipscat.io import FilePointer, file_io, paths
 
 # pylint: disable=too-many-locals,too-many-arguments
 
 
-def _pixel_directory(cache_path, pixel):
-    return os.path.join(cache_path, f"pixel_{pixel}")
-
+def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
+    dir_number = int(pixel / 10_000) * 10_000
+    return file_io.append_paths_to_pointer(
+        cache_path, f"dir_{dir_number}", f"pixel_{pixel}"
+    )
 
 def map_to_pixels(
-    input_file,
+    input_file: FilePointer,
     file_reader,
     shard_suffix,
     highest_order,
     ra_column,
     dec_column,
-    cache_path=None,
+    cache_path: FilePointer = None,
     filter_function=None,
 ):
     """Map a file of input objects to their healpix pixels."""
 
     # Perform checks on the provided path
-    if not os.path.exists(input_file):
+    if not file_io.does_file_or_directory_exist(input_file):
         raise FileNotFoundError(f"File not found at path: {input_file}")
-    if not os.path.isfile(input_file):
+    if not file_io.is_regular_file(input_file):
         raise FileNotFoundError(
             f"Directory found at path - requires regular file: {input_file}"
         )
@@ -66,9 +65,9 @@ def map_to_pixels(
                 data_indexes = np.where(mapped_pixels == pixel)
                 filtered_data = data.filter(items=data_indexes[0].tolist(), axis=0)
 
-                pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
-                os.makedirs(pixel_dir, exist_ok=True)
-                output_file = os.path.join(
+                pixel_dir = _get_pixel_directory(cache_path, pixel)
+                file_io.make_directory(pixel_dir, exist_ok=True)
+                output_file = file_io.append_paths_to_pointer(
                     pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
                 )
                 filtered_data.to_parquet(output_file)
@@ -93,7 +92,7 @@ def reduce_pixel_shards(
     destination_dir = paths.pixel_directory(
         output_path, destination_pixel_order, destination_pixel_number
     )
-    os.makedirs(destination_dir, exist_ok=True)
+    file_io.make_directory(destination_dir, exist_ok=True)
 
     destination_file = paths.pixel_catalog_file(
         output_path, destination_pixel_order, destination_pixel_number
@@ -101,12 +100,10 @@ def reduce_pixel_shards(
 
     tables = []
     for pixel in origin_pixel_numbers:
-        pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
+        pixel_dir = _get_pixel_directory(cache_path, pixel)
 
-        for file in os.listdir(pixel_dir):
-            tables.append(
-                pd.read_parquet(os.path.join(pixel_dir, file), engine="pyarrow")
-            )
+        for file in file_io.get_directory_contents(pixel_dir):
+            tables.append(pd.read_parquet(file, engine="pyarrow"))
 
     merged_table = pd.concat(tables, ignore_index=True, sort=False)
     if id_column:
@@ -127,6 +124,6 @@ def reduce_pixel_shards(
 
     if delete_input_files:
         for pixel in origin_pixel_numbers:
-            pixel_dir = _pixel_directory(cache_path=cache_path, pixel=pixel)
+            pixel_dir = _get_pixel_directory(cache_path=cache_path, pixel=pixel)
 
             shutil.rmtree(pixel_dir, ignore_errors=True)

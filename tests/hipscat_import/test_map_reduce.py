@@ -113,11 +113,11 @@ def test_map_headers(formats_headers_csv, assert_parquet_file_ids, tmp_path):
     npt.assert_array_equal(result, expected)
     assert (result == expected).all()
 
-    file_name = os.path.join(tmp_path, "pixel_11", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_11", "shard_0_0.parquet")
     expected_ids = [*range(700, 708)]
     assert_parquet_file_ids(file_name, "object_id", expected_ids)
 
-    file_name = os.path.join(tmp_path, "pixel_1", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_1", "shard_0_0.parquet")
     assert not os.path.exists(file_name)
 
 
@@ -140,7 +140,7 @@ def test_map_small_sky_order0(small_sky_single_file, assert_parquet_file_ids, tm
     npt.assert_array_equal(result, expected)
     assert (result == expected).all()
 
-    file_name = os.path.join(tmp_path, "pixel_11", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_11", "shard_0_0.parquet")
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(file_name, "id", expected_ids)
 
@@ -169,22 +169,22 @@ def test_map_small_sky_part_order1(small_sky_file0, assert_parquet_file_ids, tmp
     assert (result == expected).all()
 
     # Pixel 44 - contains 5 objects
-    file_name = os.path.join(tmp_path, "pixel_44", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_44", "shard_0_0.parquet")
     expected_ids = [703, 707, 716, 718, 723]
     assert_parquet_file_ids(file_name, "id", expected_ids)
 
     # Pixel 45 - contains 7 objects
-    file_name = os.path.join(tmp_path, "pixel_45", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_45", "shard_0_0.parquet")
     expected_ids = [704, 705, 710, 719, 720, 722, 724]
     assert_parquet_file_ids(file_name, "id", expected_ids)
 
     # Pixel 46 - contains 11 objects
-    file_name = os.path.join(tmp_path, "pixel_46", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_46", "shard_0_0.parquet")
     expected_ids = [700, 701, 706, 708, 709, 711, 712, 713, 714, 715, 717]
     assert_parquet_file_ids(file_name, "id", expected_ids)
 
     # Pixel 47 - contains 2 objects
-    file_name = os.path.join(tmp_path, "pixel_47", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "dir_0", "pixel_47", "shard_0_0.parquet")
     expected_ids = [702, 721]
     assert_parquet_file_ids(file_name, "id", expected_ids)
 

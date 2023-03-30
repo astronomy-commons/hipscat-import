@@ -1,11 +1,10 @@
 """Utility to hold all arguments required throughout partitioning"""
 
-import glob
-import os
 from importlib.metadata import version
 
 import pandas as pd
 from hipscat.catalog import CatalogParameters
+from hipscat.io import file_io
 
 from hipscat_import.file_readers import get_file_reader
 
@@ -41,16 +40,20 @@ class ImportArguments:
     ):
         self.catalog_name = catalog_name
         self.epoch = epoch
-        self._input_path = input_path
+        self._input_path = file_io.get_file_pointer_from_path(input_path)
         self.input_format = input_format
-        self._input_file_list = input_file_list
+        self._input_file_list = (
+            [file_io.get_file_pointer_from_path(x) for x in input_file_list]
+            if input_file_list
+            else None
+        )
         self.input_paths = []
 
         self.ra_column = ra_column
         self.dec_column = dec_column
         self.id_column = id_column
 
-        self._output_path = output_path
+        self._output_path = file_io.get_file_pointer_from_path(output_path)
         self.overwrite = overwrite
         self.resume = resume
         self.highest_healpix_order = highest_healpix_order
@@ -66,9 +69,9 @@ class ImportArguments:
             file_reader if file_reader else get_file_reader(self.input_format)
         )
 
-        self._tmp_dir = tmp_dir
+        self._tmp_dir = file_io.get_file_pointer_from_path(tmp_dir)
         self.progress_bar = progress_bar
-        self.dask_tmp = dask_tmp
+        self.dask_tmp = file_io.get_file_pointer_from_path(dask_tmp)
         self.dask_n_workers = dask_n_workers
         self.dask_threads_per_worker = dask_threads_per_worker
 
@@ -101,27 +104,31 @@ class ImportArguments:
         ):
             raise ValueError("exactly one of input_path or input_file_list is required")
 
-        if not os.path.exists(self._output_path):
+        if not file_io.does_file_or_directory_exist(self._output_path):
             raise FileNotFoundError(
                 f"output_path ({self._output_path}) not found on local storage"
             )
 
         # Catalog path should not already exist, unless we're overwriting. Create it.
-        self.catalog_path = os.path.join(self._output_path, self.catalog_name)
+        self.catalog_path = file_io.append_paths_to_pointer(
+            self._output_path, self.catalog_name
+        )
         if not self.overwrite:
-            existing_catalog_files = glob.glob(f"{self.catalog_path}/*")
-            if existing_catalog_files:
+            if file_io.directory_has_contents(self.catalog_path):
                 raise ValueError(
                     f"output_path ({self.catalog_path}) contains files."
                     " choose a different directory or use --overwrite flag"
                 )
-        os.makedirs(self.catalog_path, exist_ok=True)
+        file_io.make_directory(self.catalog_path, exist_ok=True)
 
         # Basic checks complete - make more checks and create directories where necessary
         if self._input_path:
-            if not os.path.exists(self._input_path):
+            if not file_io.does_file_or_directory_exist(self._input_path):
                 raise FileNotFoundError("input_path not found on local storage")
-            self.input_paths = glob.glob(f"{self._input_path}/*{self.input_format}")
+            self.input_paths = file_io.find_files_matching_path(
+                self._input_path, f"*{self.input_format}"
+            )
+
             if len(self.input_paths) == 0:
                 raise FileNotFoundError(
                     f"No files matched file pattern: {self._input_path}*{self.input_format} "
@@ -129,30 +136,31 @@ class ImportArguments:
         elif self._input_file_list:
             self.input_paths = self._input_file_list
             for test_path in self.input_paths:
-                if not os.path.exists(test_path):
+                if not file_io.does_file_or_directory_exist(test_path):
                     raise FileNotFoundError(f"{test_path} not found on local storage")
         if not self.input_paths:
             raise FileNotFoundError("No input files found")
         self.input_paths.sort()
 
         if self._tmp_dir:
-            self.tmp_path = os.path.join(
+            self.tmp_path = file_io.append_paths_to_pointer(
                 self._tmp_dir, self.catalog_name, "intermediate"
             )
         elif self.dask_tmp:
-            self.tmp_path = os.path.join(
+            self.tmp_path = file_io.append_paths_to_pointer(
                 self.dask_tmp, self.catalog_name, "intermediate"
             )
         else:
-            self.tmp_path = os.path.join(self.catalog_path, "intermediate")
+            self.tmp_path = file_io.append_paths_to_pointer(
+                self.catalog_path, "intermediate"
+            )
         if not self.resume:
-            existing_tmp_files = glob.glob(f"{self.tmp_path}/*")
-            if existing_tmp_files:
+            if file_io.directory_has_contents(self.tmp_path):
                 raise ValueError(
                     f"tmp_path ({self.tmp_path}) contains intermediate files."
                     " choose a different directory or use --resume flag"
                 )
-        os.makedirs(self.tmp_path, exist_ok=True)
+        file_io.make_directory(self.tmp_path, exist_ok=True)
 
     def to_catalog_parameters(self) -> CatalogParameters:
         """Convert importing arguments into hipscat catalog parameters.
