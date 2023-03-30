@@ -16,10 +16,32 @@ def get_file_reader(
     header="infer",
     schema_file=None,
     column_names=None,
+    skip_column_names=None,
     type_map=None,
     separator=",",
 ):
-    """Get a generator file reader for common file types"""
+    """Get a generator file reader for common file types
+    
+    Args:
+        file_format (str): specifier for the file type and extension.
+            Currently supported formats include: 
+
+            - `csv`, comma separated values. may also be tab- or pipe-delimited
+                    includes `.csv.gz` and other compressed csv files
+            - `fits`, flexible image transport system. often used for astropy tables.
+            - `parquet`, compressed columnar data format
+
+        chunksize (int): number of rows to read in a single iteration.
+        header (int, list of int, None, default 'infer'): for CSV files, rows to
+            use as the header with column names
+        schema_file (str): path to a parquet schema file. if provided, header names
+            and column types will be pulled from the parquet schema metadata.
+        column_names (list[str]): for CSV files, the names of columns if no header
+            is available. for fits files, a list of columns to *keep*.
+        skip_column_names (list[str]): for fits files, a list of columns to remove.
+        type_map (dict): for CSV files, the data types to use for columns
+        separator (str): for CSV files, the character used for separation. 
+    """
     if "csv" in file_format:
         return CsvReader(
             chunksize=chunksize,
@@ -30,7 +52,11 @@ def get_file_reader(
             separator=separator,
         )
     if file_format == "fits":
-        return FitsReader()
+        return FitsReader(
+            chunksize=chunksize,
+            column_names=column_names,
+            skip_column_names=skip_column_names,
+        )
     if file_format == "parquet":
         return ParquetReader(chunksize=chunksize)
 
@@ -53,13 +79,29 @@ class InputReader(abc.ABC):
     @abc.abstractmethod
     def provenance_info(self) -> dict:
         """Create dictionary of parameters for provenance tracking.
+
         Returns:
             dictionary with all argument_name -> argument_value as key -> value pairs.
         """
 
 
 class CsvReader(InputReader):
-    """CSV reader for the most common CSV reading arguments."""
+    """CSV reader for the most common CSV reading arguments.
+
+    This uses `pandas.read_csv`, and you can find more information on 
+    additional arguments in the pandas documentation:
+    https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
+    
+    Attributes:
+        chunksize (int): number of rows to read in a single iteration.
+        header (int, list of int, None, default 'infer'): rows to
+            use as the header with column names
+        schema_file (str): path to a parquet schema file. if provided, header names
+            and column types will be pulled from the parquet schema metadata.
+        column_names (list[str]): the names of columns if no header is available
+        type_map (dict): the data types to use for columns
+        separator (str): the character used for separation. 
+    """
 
     def __init__(
         self,
@@ -125,20 +167,21 @@ class FitsReader(InputReader):
     """Chunked FITS file reader.
 
     There are two column-level arguments for reading fits files:
-    `column_names` and `skip_column_names`. If neither is provided,
-    we will read and process all columns in the fits file.
-    If `column_names` is given, we will use *only* those names, and 
-    `skip_column_names` will be ignored. If `skip_column_names` is 
-    provided, we will remove those columns from processing stages.
+    `column_names` and `skip_column_names`.
     
+        - If neither is provided, we will read and process all columns in the fits file.
+        - If `column_names` is given, we will use *only* those names, and
+          `skip_column_names` will be ignored.
+        - If `skip_column_names` is provided, we will remove those columns from processing stages.
+
     Attributes:
         chunksize (int): number of rows of the file to process at once.
-            For large files, this can prevent loading the entire file 
+            For large files, this can prevent loading the entire file
             into memory at once.
-        column_names (list[str]): list of column names to keep. only use 
+        column_names (list[str]): list of column names to keep. only use
             one of `column_names` or `skip_column_names`
-        skip_column_names (list[str]): list of column names to skip. only use 
-            one of `column_names` or `skip_column_names`    
+        skip_column_names (list[str]): list of column names to skip. only use
+            one of `column_names` or `skip_column_names`
     """
 
     def __init__(
@@ -153,7 +196,7 @@ class FitsReader(InputReader):
 
     def read(self, input_file):
         """Read chunks of rows in a fits file.
-        
+
         Uses astropy table memmap to avoid reading the entire file into memory.
 
         See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
@@ -182,7 +225,13 @@ class FitsReader(InputReader):
 
 
 class ParquetReader(InputReader):
-    """Parquet reader for the most common Parquet reading arguments."""
+    """Parquet reader for the most common Parquet reading arguments.
+    
+    Attributes:
+        chunksize (int): number of rows of the file to process at once.
+            For large files, this can prevent loading the entire file
+            into memory at once.
+    """
 
     def __init__(
         self,

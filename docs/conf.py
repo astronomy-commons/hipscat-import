@@ -41,7 +41,9 @@ add_module_names = False  # Remove namespaces from class/method signatures
 
 autoapi_type = "python"
 autoapi_dirs = ["../src"]
+autoapi_ignore = ["*/__main__.py", "*/_version.py"]
 autoapi_add_toc_tree_entry = False
 autoapi_member_order = "bysource"
 
+napoleon_google_docstring = True
 html_theme = "sphinx_rtd_theme"
