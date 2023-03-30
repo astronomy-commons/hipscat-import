@@ -122,14 +122,62 @@ class CsvReader(InputReader):
 
 
 class FitsReader(InputReader):
-    """Simple, non-chunked FITS file reader."""
+    """Chunked FITS file reader.
+
+    There are two column-level arguments for reading fits files:
+    `column_names` and `skip_column_names`. If neither is provided,
+    we will read and process all columns in the fits file.
+    If `column_names` is given, we will use *only* those names, and 
+    `skip_column_names` will be ignored. If `skip_column_names` is 
+    provided, we will remove those columns from processing stages.
+    
+    Attributes:
+        chunksize (int): number of rows of the file to process at once.
+            For large files, this can prevent loading the entire file 
+            into memory at once.
+        column_names (list[str]): list of column names to keep. only use 
+            one of `column_names` or `skip_column_names`
+        skip_column_names (list[str]): list of column names to skip. only use 
+            one of `column_names` or `skip_column_names`    
+    """
+
+    def __init__(
+        self,
+        chunksize=500_000,
+        column_names=None,
+        skip_column_names=None,
+    ):
+        self.chunksize = chunksize
+        self.column_names = column_names
+        self.skip_column_names = skip_column_names
 
     def read(self, input_file):
-        """Read the whole fits file and return"""
-        yield Table.read(input_file, format="fits").to_pandas()
+        """Read chunks of rows in a fits file.
+        
+        Uses astropy table memmap to avoid reading the entire file into memory.
+
+        See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
+        """
+        table = Table.read(input_file, memmap=True)
+        if self.column_names:
+            table.keep_columns(self.column_names)
+        elif self.skip_column_names:
+            table.remove_columns(self.skip_column_names)
+
+        total_rows = len(table)
+        read_rows = 0
+
+        while read_rows < total_rows:
+            yield table[read_rows : read_rows + self.chunksize].to_pandas()
+            read_rows += self.chunksize
 
     def provenance_info(self) -> dict:
-        provenance_info = {"input_reader_type": "FitsReader"}
+        provenance_info = {
+            "input_reader_type": "FitsReader",
+            "chunksize": self.chunksize,
+            "column_names": self.column_names,
+            "skip_column_names": self.skip_column_names,
+        }
         return provenance_info
 
 

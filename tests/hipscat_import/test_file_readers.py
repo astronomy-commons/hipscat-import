@@ -9,12 +9,8 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog import CatalogParameters
 
-from hipscat_import.file_readers import (
-    CsvReader,
-    FitsReader,
-    ParquetReader,
-    get_file_reader,
-)
+from hipscat_import.file_readers import (CsvReader, FitsReader, ParquetReader,
+                                         get_file_reader)
 
 
 def test_unknown_file_type():
@@ -233,6 +229,27 @@ def test_read_fits(formats_fits):
         assert len(frame) == 131
 
     assert total_chunks == 1
+
+
+def test_read_fits_chunked(formats_fits):
+    """Success case - fits file that exists being read as fits in chunks"""
+    total_chunks = 0
+    for frame in FitsReader(chunksize=1).read(formats_fits):
+        total_chunks += 1
+        assert len(frame) == 1
+
+    assert total_chunks == 131
+
+
+def test_read_fits_columns(formats_fits):
+    """Success case - column filtering on reading fits file"""
+    frame = next(FitsReader(column_names=["id", "ra", "dec"]).read(formats_fits))
+    assert list(frame.columns) == ["id", "ra", "dec"]
+
+    frame = next(
+        FitsReader(skip_column_names=["ra_error", "dec_error"]).read(formats_fits)
+    )
+    assert list(frame.columns) == ["id", "ra", "dec"]
 
 
 def test_fits_reader_provenance_info(tmp_path):
