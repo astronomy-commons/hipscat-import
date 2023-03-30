@@ -21,7 +21,6 @@ def parse_command_line(cl_args):
         "--catalog_name",
         help="short name for the catalog that will be used for the output directory",
         default=None,
-        required=True,
         type=str,
     )
     group.add_argument(
@@ -113,7 +112,6 @@ def parse_command_line(cl_args):
         "--output_path",
         help="path prefix for partitioned output and metadata files",
         default=None,
-        required=True,
         type=str,
     )
     group.add_argument(
