@@ -54,5 +54,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 write_to = "src/hipscat_import/_version.py"
 
+[project.scripts]
+hipscat-import = "hipscat_import.control:main"
+hc = "hipscat_import.control:main"
+
 [tool.pytest.ini_options]
 timeout = 1

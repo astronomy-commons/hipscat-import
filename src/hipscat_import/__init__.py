@@ -2,6 +2,7 @@
 
 from .arguments import ImportArguments
 from .command_line_arguments import parse_command_line
+from .control import main
 from .file_readers import (
     CsvReader,
     FitsReader,
