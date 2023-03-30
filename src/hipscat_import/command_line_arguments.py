@@ -1,3 +1,5 @@
+"""Parse import arguments from command line"""
+
 import argparse
 
 from hipscat_import.arguments import ImportArguments
