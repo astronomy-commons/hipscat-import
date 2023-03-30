@@ -10,6 +10,19 @@ from hipscat.io import FilePointer, file_io, paths
 
 
 def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
+    """Create a path for intermediate pixel data.
+    
+    This will take the form:
+
+        <cache_path>/dir_<directory separator>/pixel_<pixel>
+
+    where the directory separator is calculated using integer division:
+
+        (pixel/10000)*10000
+
+    and exists to mitigate problems on file systems that don't support
+    more than 10_000 children nodes.
+    """
     dir_number = int(pixel / 10_000) * 10_000
     return file_io.append_paths_to_pointer(
         cache_path, f"dir_{dir_number}", f"pixel_{pixel}"
@@ -26,7 +39,29 @@ def map_to_pixels(
     cache_path: FilePointer = None,
     filter_function=None,
 ):
-    """Map a file of input objects to their healpix pixels."""
+    """Map a file of input objects to their healpix pixels.
+    
+    Args:
+        input_file (FilePointer): file to read for catalog data.
+        file_reader (InputReader): instance of input reader that
+            specifies arguments necessary for reading from the input file.
+        shard_suffix (str): unique counter for this input file, used
+            when creating intermediate files
+        highest_order (int): healpix order to use when mapping
+        ra_column (str): where to find right ascension data in the dataframe
+        dec_column (str): where to find declation in the dataframe
+        cache_path (FilePointer): where to write intermediate files.
+            if None, no intermediate files will be written, but healpix
+            stats will be returned
+        filter_function (function pointer): method to perform some filtering
+            or transformation of the input data
+    Returns:
+        one-dimensional numpy array of long integers where the value at each index corresponds
+        to the number of objects found at the healpix pixel.
+    Raises:
+        ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
+        FileNotFoundError: if the file does not exist, or is a directory
+    """
 
     # Perform checks on the provided path
     if not file_io.does_file_or_directory_exist(input_file):
@@ -92,7 +127,25 @@ def reduce_pixel_shards(
     add_hipscat_index=True,
     delete_input_files=True,
 ):
-    """Reduce sharded source pixels into destination pixels."""
+    """Reduce sharded source pixels into destination pixels.
+    
+    Args:
+        cache_path (str): where to read intermediate files
+        origin_pixel_numbers (list[int]): high order pixels, with object
+            data written to intermediate directories.
+        destination_pixel_order (int): order of the final catalog pixel
+        destination_pixel_number (int): pixel number at the above order
+        destination_pixel_size (int): expected number of rows to write
+            for the catalog's final pixel
+        output_path (str): where to write the final catalog pixel data
+        id_column (str): column for survey identifier, or other sortable column
+        delete_input_files (bool): should we delete the intermediate files
+            used as input for this method.
+
+    Raises:
+        ValueError: if the number of rows written doesn't equal provided
+            `destination_pixel_size`    
+    """
     destination_dir = paths.pixel_directory(
         output_path, destination_pixel_order, destination_pixel_number
     )

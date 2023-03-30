@@ -1,4 +1,4 @@
-"""Include all modules in this subdirectory"""
+"""All modules for hipscat-import package"""
 
 from .arguments import ImportArguments
 from .command_line_arguments import parse_command_line
