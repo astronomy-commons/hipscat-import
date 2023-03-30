@@ -198,6 +198,8 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
         destination_pixel_number=11,
         destination_pixel_size=131,
         output_path=tmp_path,
+        ra_column="ra",
+        dec_column="dec",
         id_column="id",
         delete_input_files=False,
     )
@@ -206,6 +208,67 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
+
+
+def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
+    """Test reducing into one large pixel"""
+    mr.reduce_pixel_shards(
+        cache_path=parquet_shards_dir,
+        origin_pixel_numbers=[47],
+        destination_pixel_order=0,
+        destination_pixel_number=11,
+        destination_pixel_size=18,
+        output_path=tmp_path,
+        ra_column="ra",
+        dec_column="dec",
+        id_column="id",
+        delete_input_files=False,
+    )
+
+    output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+
+    expected_ids = [
+        702,
+        721,
+        737,
+        743,
+        754,
+        756,
+        767,
+        778,
+        791,
+        796,
+        798,
+        799,
+        806,
+        814,
+        819,
+        824,
+        825,
+        829,
+    ]
+    assert_parquet_file_ids(output_file, "id", expected_ids)
+    expected_indexes = [
+        13598131468743213056,
+        13560933976658411520,
+        13561582046530240512,
+        13696722494273093632,
+        13588709332114997248,
+        13552942781667737600,
+        13601023174257934336,
+        13557123557418336256,
+        13591216801265483776,
+        13565852277582856192,
+        13553697461939208192,
+        13563711661973438464,
+        13590818251897569280,
+        13560168899495854080,
+        13557816572940124160,
+        13596001812279721984,
+        13564690156971098112,
+        13557377060258709504,
+    ]
+    assert_parquet_file_ids(output_file, "_hipscat_index", expected_indexes)
 
 
 def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
@@ -218,6 +281,8 @@ def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
             destination_pixel_number=11,
             destination_pixel_size=11,  ## should be 131
             output_path=tmp_path,
+            ra_column="ra",
+            dec_column="dec",
             id_column="id",
             delete_input_files=False,
         )
