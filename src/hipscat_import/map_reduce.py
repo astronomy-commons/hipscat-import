@@ -126,4 +126,4 @@ def reduce_pixel_shards(
         for pixel in origin_pixel_numbers:
             pixel_dir = _get_pixel_directory(cache_path=cache_path, pixel=pixel)
 
-            shutil.rmtree(pixel_dir, ignore_errors=True)
+            file_io.remove_directory(pixel_dir, ignore_errors=True)
