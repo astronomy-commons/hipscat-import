@@ -15,6 +15,7 @@ def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
         cache_path, f"dir_{dir_number}", f"pixel_{pixel}"
     )
 
+
 def map_to_pixels(
     input_file: FilePointer,
     file_reader,
@@ -85,7 +86,10 @@ def reduce_pixel_shards(
     destination_pixel_number,
     destination_pixel_size,
     output_path,
+    ra_column,
+    dec_column,
     id_column,
+    add_hipscat_index=True,
     delete_input_files=True,
 ):
     """Reduce sharded source pixels into destination pixels."""
@@ -108,6 +112,11 @@ def reduce_pixel_shards(
     merged_table = pd.concat(tables, ignore_index=True, sort=False)
     if id_column:
         merged_table = merged_table.sort_values(by=id_column)
+    if add_hipscat_index:
+        merged_table["_hipscat_index"] = pixel_math.compute_hipscat_id(
+            merged_table[ra_column].values, merged_table[dec_column].values
+        )
+        merged_table.set_index("_hipscat_index").sort_index()
 
     rows_written = len(merged_table)
 

@@ -115,6 +115,12 @@ def parse_command_line(cl_args):
         type=str,
     )
     group.add_argument(
+        "--add_hipscat_index",
+        help="Option to generate the _hipscat_index column "
+        "a spatially aware index for read and join optimization",
+        action="store_true",
+    )
+    group.add_argument(
         "--overwrite",
         help="if set, any existing catalog data will be overwritten",
         action="store_true",
@@ -218,6 +224,7 @@ def parse_command_line(cl_args):
         ra_column=args.ra_column,
         dec_column=args.dec_column,
         id_column=args.id_column,
+        add_hipscat_index=args.add_hipscat_index,
         output_path=args.output_path,
         overwrite=args.overwrite,
         highest_healpix_order=args.highest_healpix_order,

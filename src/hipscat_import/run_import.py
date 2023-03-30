@@ -77,7 +77,10 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 destination_pixel_number=destination_pixel[1],
                 destination_pixel_size=destination_pixel[2],
                 output_path=args.catalog_path,
+                ra_column=args.ra_column,
+                dec_column=args.dec_column,
                 id_column=args.id_column,
+                add_hipscat_index=args.add_hipscat_index,
             )
         )
     for future in tqdm(

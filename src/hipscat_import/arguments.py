@@ -24,6 +24,7 @@ class ImportArguments:
         ra_column="ra",
         dec_column="dec",
         id_column="id",
+        add_hipscat_index=True,
         output_path="",
         overwrite=False,
         resume=False,
@@ -52,6 +53,7 @@ class ImportArguments:
         self.ra_column = ra_column
         self.dec_column = dec_column
         self.id_column = id_column
+        self.add_hipscat_index = add_hipscat_index
 
         self._output_path = file_io.get_file_pointer_from_path(output_path)
         self.overwrite = overwrite
