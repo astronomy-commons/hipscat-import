@@ -122,7 +122,24 @@ class CsvReader(InputReader):
 
 
 class FitsReader(InputReader):
-    """Chunked FITS file reader."""
+    """Chunked FITS file reader.
+
+    There are two column-level arguments for reading fits files:
+    `column_names` and `skip_column_names`. If neither is provided,
+    we will read and process all columns in the fits file.
+    If `column_names` is given, we will use *only* those names, and 
+    `skip_column_names` will be ignored. If `skip_column_names` is 
+    provided, we will remove those columns from processing stages.
+    
+    Attributes:
+        chunksize (int): number of rows of the file to process at once.
+            For large files, this can prevent loading the entire file 
+            into memory at once.
+        column_names (list[str]): list of column names to keep. only use 
+            one of `column_names` or `skip_column_names`
+        skip_column_names (list[str]): list of column names to skip. only use 
+            one of `column_names` or `skip_column_names`    
+    """
 
     def __init__(
         self,
@@ -135,7 +152,12 @@ class FitsReader(InputReader):
         self.skip_column_names = skip_column_names
 
     def read(self, input_file):
-        """Read chunks of rows in a fits file"""
+        """Read chunks of rows in a fits file.
+        
+        Uses astropy table memmap to avoid reading the entire file into memory.
+
+        See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
+        """
         table = Table.read(input_file, memmap=True)
         if self.column_names:
             table.keep_columns(self.column_names)
