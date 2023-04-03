@@ -9,12 +9,9 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog import CatalogParameters
 
-from hipscat_import.catalog.file_readers import (
-    CsvReader,
-    FitsReader,
-    ParquetReader,
-    get_file_reader,
-)
+from hipscat_import.catalog.file_readers import (CsvReader, FitsReader,
+                                                 ParquetReader,
+                                                 get_file_reader)
 
 
 def test_unknown_file_type():
@@ -97,6 +94,7 @@ def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
 def test_csv_reader_kwargs(small_sky_single_file):
     """Verify we can read the csv file using kwargs passed to read_csv call."""
 
+    ## Input file has 5 columns: ["id", "ra", "dec", "ra_error", "dec_error"]
     frame = next(CsvReader(usecols=["id", "ra", "dec"]).read(small_sky_single_file))
     assert len(frame) == 131
 
