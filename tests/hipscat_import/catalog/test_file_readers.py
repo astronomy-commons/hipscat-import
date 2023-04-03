@@ -94,6 +94,16 @@ def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
     assert np.all(column_types == expected_column_types)
 
 
+def test_csv_reader_kwargs(small_sky_single_file):
+    """Verify we can read the csv file using kwargs passed to read_csv call."""
+
+    frame = next(CsvReader(usecols=["id", "ra", "dec"]).read(small_sky_single_file))
+    assert len(frame) == 131
+
+    assert len(frame.columns) == 3
+    assert np.all(frame.columns == ["id", "ra", "dec"])
+
+
 def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     """Verify we can read a pipe-delimited csv file without a header row."""
     total_chunks = 0

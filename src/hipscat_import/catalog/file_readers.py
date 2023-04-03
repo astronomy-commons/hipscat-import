@@ -19,6 +19,7 @@ def get_file_reader(
     skip_column_names=None,
     type_map=None,
     separator=",",
+    **kwargs,
 ):
     """Get a generator file reader for common file types
 
@@ -50,15 +51,17 @@ def get_file_reader(
             column_names=column_names,
             type_map=type_map,
             separator=separator,
+            **kwargs,
         )
     if file_format == "fits":
         return FitsReader(
             chunksize=chunksize,
             column_names=column_names,
             skip_column_names=skip_column_names,
+            **kwargs,
         )
     if file_format == "parquet":
-        return ParquetReader(chunksize=chunksize)
+        return ParquetReader(chunksize=chunksize, **kwargs)
 
     raise NotImplementedError(f"File Format: {file_format} not supported")
 
@@ -111,6 +114,7 @@ class CsvReader(InputReader):
         column_names=None,
         type_map=None,
         separator=",",
+        **kwargs,
     ):
         self.chunksize = chunksize
         self.header = header
@@ -118,6 +122,7 @@ class CsvReader(InputReader):
         self.column_names = column_names
         self.type_map = type_map
         self.separator = separator
+        self.kwargs = kwargs
 
     def read(self, input_file):
         """Read CSV using chunked file reader"""
@@ -143,6 +148,7 @@ class CsvReader(InputReader):
             header=self.header,
             names=use_column_names,
             dtype=use_type_map,
+            **self.kwargs,
         ) as reader:
             for chunk in reader:
                 yield chunk
@@ -185,14 +191,12 @@ class FitsReader(InputReader):
     """
 
     def __init__(
-        self,
-        chunksize=500_000,
-        column_names=None,
-        skip_column_names=None,
+        self, chunksize=500_000, column_names=None, skip_column_names=None, **kwargs
     ):
         self.chunksize = chunksize
         self.column_names = column_names
         self.skip_column_names = skip_column_names
+        self.kwargs = kwargs
 
     def read(self, input_file):
         """Read chunks of rows in a fits file.
@@ -201,7 +205,7 @@ class FitsReader(InputReader):
 
         See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
         """
-        table = Table.read(input_file, memmap=True)
+        table = Table.read(input_file, memmap=True, **self.kwargs)
         if self.column_names:
             table.keep_columns(self.column_names)
         elif self.skip_column_names:
@@ -233,15 +237,13 @@ class ParquetReader(InputReader):
             into memory at once.
     """
 
-    def __init__(
-        self,
-        chunksize=500_000,
-    ):
+    def __init__(self, chunksize=500_000, **kwargs):
         self.chunksize = chunksize
+        self.kwargs = kwargs
 
     def read(self, input_file):
         """Read chunks of rows in a parquet file."""
-        parquet_file = pq.read_table(input_file)
+        parquet_file = pq.read_table(input_file, **self.kwargs)
         for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
             yield pa.Table.from_batches([smaller_table]).to_pandas()
 
