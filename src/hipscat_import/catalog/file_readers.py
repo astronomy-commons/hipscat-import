@@ -127,7 +127,9 @@ class CsvReader(InputReader):
     def read(self, input_file):
         """Read CSV using chunked file reader"""
         if self.schema_file:
-            schema_parquet = pd.read_parquet(self.schema_file, use_nullable_dtypes=True)
+            schema_parquet = pd.read_parquet(
+                self.schema_file, dtype_backend="numpy_nullable"
+            )
 
         use_column_names = None
         if self.column_names:
