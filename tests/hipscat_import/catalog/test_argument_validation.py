@@ -3,7 +3,7 @@
 
 import pytest
 
-from hipscat_import.arguments import ImportArguments
+from hipscat_import.catalog.arguments import ImportArguments
 
 # pylint: disable=protected-access
 

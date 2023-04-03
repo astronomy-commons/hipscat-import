@@ -11,9 +11,9 @@ from dask.distributed import Client, as_completed
 from hipscat import pixel_math
 from tqdm import tqdm
 
-import hipscat_import.map_reduce as mr
-import hipscat_import.resume_files as resume
-from hipscat_import.arguments import ImportArguments
+import hipscat_import.catalog.map_reduce as mr
+import hipscat_import.catalog.resume_files as resume
+from hipscat_import.catalog.arguments import ImportArguments
 
 
 def _map_pixels(args, client):

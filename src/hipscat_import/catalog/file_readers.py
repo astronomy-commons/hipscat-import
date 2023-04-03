@@ -21,10 +21,10 @@ def get_file_reader(
     separator=",",
 ):
     """Get a generator file reader for common file types
-    
+
     Args:
         file_format (str): specifier for the file type and extension.
-            Currently supported formats include: 
+            Currently supported formats include:
 
             - `csv`, comma separated values. may also be tab- or pipe-delimited
                     includes `.csv.gz` and other compressed csv files
@@ -40,7 +40,7 @@ def get_file_reader(
             is available. for fits files, a list of columns to *keep*.
         skip_column_names (list[str]): for fits files, a list of columns to remove.
         type_map (dict): for CSV files, the data types to use for columns
-        separator (str): for CSV files, the character used for separation. 
+        separator (str): for CSV files, the character used for separation.
     """
     if "csv" in file_format:
         return CsvReader(
@@ -88,10 +88,10 @@ class InputReader(abc.ABC):
 class CsvReader(InputReader):
     """CSV reader for the most common CSV reading arguments.
 
-    This uses `pandas.read_csv`, and you can find more information on 
+    This uses `pandas.read_csv`, and you can find more information on
     additional arguments in the pandas documentation:
     https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
-    
+
     Attributes:
         chunksize (int): number of rows to read in a single iteration.
         header (int, list of int, None, default 'infer'): rows to
@@ -100,7 +100,7 @@ class CsvReader(InputReader):
             and column types will be pulled from the parquet schema metadata.
         column_names (list[str]): the names of columns if no header is available
         type_map (dict): the data types to use for columns
-        separator (str): the character used for separation. 
+        separator (str): the character used for separation.
     """
 
     def __init__(
@@ -168,7 +168,7 @@ class FitsReader(InputReader):
 
     There are two column-level arguments for reading fits files:
     `column_names` and `skip_column_names`.
-    
+
         - If neither is provided, we will read and process all columns in the fits file.
         - If `column_names` is given, we will use *only* those names, and
           `skip_column_names` will be ignored.
@@ -226,7 +226,7 @@ class FitsReader(InputReader):
 
 class ParquetReader(InputReader):
     """Parquet reader for the most common Parquet reading arguments.
-    
+
     Attributes:
         chunksize (int): number of rows of the file to process at once.
             For large files, this can prevent loading the entire file

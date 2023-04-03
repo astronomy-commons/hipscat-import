@@ -2,8 +2,8 @@
 
 import argparse
 
-from hipscat_import.arguments import ImportArguments
-from hipscat_import.file_readers import get_file_reader
+from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.catalog.file_readers import get_file_reader
 
 
 def parse_command_line(cl_args):

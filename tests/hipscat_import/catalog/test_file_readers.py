@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog import CatalogParameters
 
-from hipscat_import.file_readers import (
+from hipscat_import.catalog.file_readers import (
     CsvReader,
     FitsReader,
     ParquetReader,

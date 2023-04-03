@@ -4,7 +4,7 @@ import hipscat.pixel_math as hist
 import numpy.testing as npt
 import pytest
 
-from hipscat_import.resume_files import (
+from hipscat_import.catalog.resume_files import (
     clean_resume_files,
     is_mapping_done,
     is_reducing_done,
