@@ -9,12 +9,9 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog import CatalogParameters
 
-from hipscat_import.catalog.file_readers import (
-    CsvReader,
-    FitsReader,
-    ParquetReader,
-    get_file_reader,
-)
+from hipscat_import.catalog.file_readers import (CsvReader, FitsReader,
+                                                 ParquetReader,
+                                                 get_file_reader)
 
 
 def test_unknown_file_type():
@@ -92,6 +89,17 @@ def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
         "dec_error": pd.Float64Dtype(),
     }
     assert np.all(column_types == expected_column_types)
+
+
+def test_csv_reader_kwargs(small_sky_single_file):
+    """Verify we can read the csv file using kwargs passed to read_csv call."""
+
+    ## Input file has 5 columns: ["id", "ra", "dec", "ra_error", "dec_error"]
+    frame = next(CsvReader(usecols=["id", "ra", "dec"]).read(small_sky_single_file))
+    assert len(frame) == 131
+
+    assert len(frame.columns) == 3
+    assert np.all(frame.columns == ["id", "ra", "dec"])
 
 
 def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
