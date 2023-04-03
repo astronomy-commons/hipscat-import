@@ -6,10 +6,10 @@ import shutil
 import pandas as pd
 import pytest
 
-import hipscat_import.resume_files as rf
-import hipscat_import.run_import as runner
-from hipscat_import.arguments import ImportArguments
-from hipscat_import.file_readers import get_file_reader
+import hipscat_import.catalog.resume_files as rf
+import hipscat_import.catalog.run_import as runner
+from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.catalog.file_readers import get_file_reader
 
 
 def test_empty_args():

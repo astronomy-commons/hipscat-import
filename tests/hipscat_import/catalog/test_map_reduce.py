@@ -7,8 +7,8 @@ import numpy.testing as npt
 import pyarrow as pa
 import pytest
 
-import hipscat_import.map_reduce as mr
-from hipscat_import.file_readers import get_file_reader
+import hipscat_import.catalog.map_reduce as mr
+from hipscat_import.catalog.file_readers import get_file_reader
 
 
 def test_read_empty_filename():

@@ -3,7 +3,7 @@
 
 import pytest
 
-from hipscat_import.command_line_arguments import parse_command_line
+from hipscat_import.catalog.command_line_arguments import parse_command_line
 
 # pylint: disable=protected-access
 

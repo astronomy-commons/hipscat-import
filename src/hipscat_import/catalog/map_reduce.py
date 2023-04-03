@@ -11,7 +11,7 @@ from hipscat.io import FilePointer, file_io, paths
 
 def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
     """Create a path for intermediate pixel data.
-    
+
     This will take the form:
 
         <cache_path>/dir_<directory separator>/pixel_<pixel>
@@ -40,7 +40,7 @@ def map_to_pixels(
     filter_function=None,
 ):
     """Map a file of input objects to their healpix pixels.
-    
+
     Args:
         input_file (FilePointer): file to read for catalog data.
         file_reader (InputReader): instance of input reader that
@@ -128,7 +128,7 @@ def reduce_pixel_shards(
     delete_input_files=True,
 ):
     """Reduce sharded source pixels into destination pixels.
-    
+
     Args:
         cache_path (str): where to read intermediate files
         origin_pixel_numbers (list[int]): high order pixels, with object
@@ -144,7 +144,7 @@ def reduce_pixel_shards(
 
     Raises:
         ValueError: if the number of rows written doesn't equal provided
-            `destination_pixel_size`    
+            `destination_pixel_size`
     """
     destination_dir = paths.pixel_directory(
         output_path, destination_pixel_order, destination_pixel_number

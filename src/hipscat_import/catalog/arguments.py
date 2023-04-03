@@ -6,15 +6,15 @@ import pandas as pd
 from hipscat.catalog import CatalogParameters
 from hipscat.io import file_io
 
-from hipscat_import.file_readers import get_file_reader
+from hipscat_import.catalog.file_readers import get_file_reader
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
 
 
 class ImportArguments:
     """Container class for holding partitioning arguments
-    
-    
+
+
     Attributes:
         catalog_name (str): short, convenient name for the catalog.
         epoch (str): astronomical epoch for the data. defaults to "J2000"
