@@ -35,6 +35,11 @@ def small_sky_single_file(test_data_dir):
 
 
 @pytest.fixture
+def small_sky_source_dir(test_data_dir):
+    return os.path.join(test_data_dir, "small_sky_source")
+
+
+@pytest.fixture
 def blank_data_dir(test_data_dir):
     return os.path.join(test_data_dir, "blank")
 
@@ -156,6 +161,8 @@ def assert_parquet_file_ids():
         data_frame = pd.read_parquet(file_name, engine="pyarrow")
         assert id_column in data_frame.columns
         ids = data_frame[id_column].tolist()
+        ids.sort()
+        expected_ids.sort()
 
         assert len(ids) == len(
             expected_ids
