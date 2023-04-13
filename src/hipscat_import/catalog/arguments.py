@@ -115,7 +115,7 @@ class ImportArguments:
         self.filter_function = (
             filter_function if filter_function else passthrough_filter_function
         )
-        self.file_reader = file_reader 
+        self.file_reader = file_reader
 
         self._tmp_dir = file_io.get_file_pointer_from_path(tmp_dir)
         self.progress_bar = progress_bar
