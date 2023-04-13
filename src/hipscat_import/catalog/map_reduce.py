@@ -2,7 +2,8 @@
 
 import healpy as hp
 import numpy as np
-import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 
@@ -77,7 +78,6 @@ def map_to_pixels(
     histo = pixel_math.empty_histogram(highest_order)
 
     for chunk_number, data in enumerate(file_reader.read(input_file)):
-        data.reset_index(inplace=True)
         if not all(x in data.columns for x in required_columns):
             raise ValueError(
                 f"Invalid column names in input file: {ra_column}, {dec_column} not in {input_file}"
@@ -85,7 +85,6 @@ def map_to_pixels(
         # Set up the data we want (filter and find pixel)
         if filter_function:
             data = filter_function(data)
-            data.reset_index(inplace=True)
         mapped_pixels = hp.ang2pix(
             2**highest_order,
             data[ra_column].values,
@@ -98,8 +97,10 @@ def map_to_pixels(
 
         if cache_path:
             for pixel in mapped_pixel:
-                data_indexes = np.where(mapped_pixels == pixel)
-                filtered_data = data.filter(items=data_indexes[0].tolist(), axis=0)
+                mapped_indexes = np.where(mapped_pixels == pixel)
+                data_indexes = data.index[mapped_indexes[0].tolist()]
+
+                filtered_data = data.filter(items=data_indexes, axis=0)
 
                 pixel_dir = _get_pixel_directory(cache_path, pixel)
                 file_io.make_directory(pixel_dir, exist_ok=True)
@@ -126,6 +127,7 @@ def reduce_pixel_shards(
     id_column,
     add_hipscat_index=True,
     delete_input_files=True,
+    use_schema_file="",
 ):
     """Reduce sharded source pixels into destination pixels.
 
@@ -155,21 +157,20 @@ def reduce_pixel_shards(
         output_path, destination_pixel_order, destination_pixel_number
     )
 
+    schema = None
+    if use_schema_file:
+        schema = file_io.read_parquet_metadata(use_schema_file).schema.to_arrow_schema()
+
     tables = []
     for pixel in origin_pixel_numbers:
         pixel_dir = _get_pixel_directory(cache_path, pixel)
 
-        for file in file_io.get_directory_contents(pixel_dir):
-            tables.append(pd.read_parquet(file, engine="pyarrow"))
+        if schema:
+            tables.append(pq.read_table(pixel_dir, schema=schema))
+        else:
+            tables.append(pq.read_table(pixel_dir))
 
-    merged_table = pd.concat(tables, ignore_index=True, sort=False)
-    if id_column:
-        merged_table = merged_table.sort_values(by=id_column)
-    if add_hipscat_index:
-        merged_table["_hipscat_index"] = pixel_math.compute_hipscat_id(
-            merged_table[ra_column].values, merged_table[dec_column].values
-        )
-        merged_table.set_index("_hipscat_index").sort_index()
+    merged_table = pa.concat_tables(tables)
 
     rows_written = len(merged_table)
 
@@ -180,7 +181,38 @@ def reduce_pixel_shards(
             f" Expected {destination_pixel_size}, wrote {rows_written}"
         )
 
-    merged_table.to_parquet(destination_file)
+    if id_column:
+        merged_table = merged_table.sort_by(id_column)
+    if add_hipscat_index:
+        merged_table = merged_table.append_column(
+            "_hipscat_index",
+            [
+                pixel_math.compute_hipscat_id(
+                    merged_table[ra_column].to_pylist(),
+                    merged_table[dec_column].to_pylist(),
+                )
+            ],
+        )
+        merged_table = merged_table.sort_by("_hipscat_index")
+    merged_table = merged_table.append_column(
+        "Norder",
+        [np.full(rows_written, fill_value=destination_pixel_order, dtype=np.int32)],
+    )
+    merged_table = merged_table.append_column(
+        "Dir",
+        [
+            np.full(
+                rows_written,
+                fill_value=int(destination_pixel_number / 10_000) * 10_000,
+                dtype=np.int32,
+            )
+        ],
+    )
+    merged_table = merged_table.append_column(
+        "Npix",
+        [np.full(rows_written, fill_value=destination_pixel_number, dtype=np.int32)],
+    )
+    pq.write_table(merged_table, where=destination_file)
 
     del merged_table, tables
 

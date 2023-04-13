@@ -62,6 +62,7 @@ class ImportArguments:
         self,
         catalog_name="",
         epoch="J2000",
+        catalog_type="object",
         input_path="",
         input_format="parquet",
         input_file_list=None,
@@ -69,6 +70,7 @@ class ImportArguments:
         dec_column="dec",
         id_column="id",
         add_hipscat_index=True,
+        use_schema_file=None,
         output_path="",
         overwrite=False,
         resume=False,
@@ -85,6 +87,7 @@ class ImportArguments:
     ):
         self.catalog_name = catalog_name
         self.epoch = epoch
+        self.catalog_type = catalog_type
         self._input_path = file_io.get_file_pointer_from_path(input_path)
         self.input_format = input_format
         self._input_file_list = (
@@ -98,6 +101,7 @@ class ImportArguments:
         self.dec_column = dec_column
         self.id_column = id_column
         self.add_hipscat_index = add_hipscat_index
+        self.use_schema_file = use_schema_file
 
         self._output_path = file_io.get_file_pointer_from_path(output_path)
         self.overwrite = overwrite
@@ -111,9 +115,7 @@ class ImportArguments:
         self.filter_function = (
             filter_function if filter_function else passthrough_filter_function
         )
-        self.file_reader = (
-            file_reader if file_reader else get_file_reader(self.input_format)
-        )
+        self.file_reader = file_reader
 
         self._tmp_dir = file_io.get_file_pointer_from_path(tmp_dir)
         self.progress_bar = progress_bar
@@ -133,15 +135,21 @@ class ImportArguments:
         if not self._output_path:
             raise ValueError("output_path is required")
 
-        if not 0 <= self.highest_healpix_order <= 10:
-            raise ValueError("highest_healpix_order should be between 0 and 10")
-        if not 100 <= self.pixel_threshold <= 1_000_000:
-            raise ValueError("pixel_threshold should be between 100 and 1,000,000")
+        if not 0 <= self.highest_healpix_order <= 19:
+            raise ValueError("highest_healpix_order should be between 0 and 19")
+        if not 100 <= self.pixel_threshold <= 10_000_000:
+            raise ValueError("pixel_threshold should be between 100 and 10,000,000")
 
         if self.dask_n_workers <= 0:
             raise ValueError("dask_n_workers should be greather than 0")
         if self.dask_threads_per_worker <= 0:
             raise ValueError("dask_threads_per_worker should be greather than 0")
+
+        if self.catalog_type not in ("source", "object"):
+            raise ValueError("catalog_type should be one of `source` or `object`")
+
+        if not self.file_reader:
+            self.file_reader = get_file_reader(self.input_format)
 
     def _check_paths(self):
         """Check existence and permissions on provided path arguments"""
@@ -216,11 +224,8 @@ class ImportArguments:
         """
         return CatalogParameters(
             catalog_name=self.catalog_name,
-            input_paths=self.input_paths,
-            input_format=self.input_format,
+            catalog_type=self.catalog_type,
             output_path=self._output_path,
-            highest_healpix_order=self.highest_healpix_order,
-            pixel_threshold=self.pixel_threshold,
             epoch=self.epoch,
             ra_column=self.ra_column,
             dec_column=self.dec_column,
@@ -235,6 +240,7 @@ class ImportArguments:
         runtime_args = {
             "catalog_name": self.catalog_name,
             "epoch": self.epoch,
+            "catalog_type": self.catalog_type,
             "input_path": str(self._input_path),
             "input_paths": self.input_paths,
             "input_format": self.input_format,
@@ -245,6 +251,7 @@ class ImportArguments:
             "output_path": str(self._output_path),
             "overwrite": self.overwrite,
             "resume": self.resume,
+            "use_schema_file": self.use_schema_file,
             "highest_healpix_order": self.highest_healpix_order,
             "pixel_threshold": self.pixel_threshold,
             "debug_stats_only": self.debug_stats_only,
@@ -270,6 +277,7 @@ class ImportArguments:
     def __str__(self):
         formatted_string = (
             f"  catalog_name {self.catalog_name}\n"
+            f"  catalog_type {self.catalog_type}\n"
             f"  input_path {self._input_path}\n"
             f"  input format {self.input_format}\n"
             f"  num input_paths {len(self.input_paths)}\n"
