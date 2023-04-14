@@ -1,7 +1,7 @@
 """Utility to hold all arguments required throughout partitioning"""
 
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, List
 
 import pandas as pd
 from hipscat.catalog import CatalogParameters
@@ -65,7 +65,7 @@ class ImportArguments(RuntimeArguments):
     catalog_type: str = "object"
     input_path: str = ""
     input_format: str = ""
-    input_file_list: list[str] = field(default_factory=list)
+    input_file_list: List[str] = field(default_factory=List)
 
     ra_column: str = "ra"
     dec_column: str = "dec"
