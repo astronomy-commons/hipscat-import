@@ -43,8 +43,8 @@ def test_good_paths(blank_data_dir, tmp_path):
         "csv",
     ]
     args = parse_command_line(good_args)
-    assert args._input_path == blank_data_dir
-    assert args._output_path == tmp_path_name
+    assert args.input_path == blank_data_dir
+    assert tmp_path_name in str(args.catalog_path)
 
 
 def test_good_paths_short_names(blank_data_dir, tmp_path):
@@ -61,5 +61,5 @@ def test_good_paths_short_names(blank_data_dir, tmp_path):
         "csv",
     ]
     args = parse_command_line(good_args)
-    assert args._input_path == blank_data_dir
-    assert args._output_path == tmp_path_name
+    assert args.input_path == blank_data_dir
+    assert tmp_path_name in str(args.catalog_path)

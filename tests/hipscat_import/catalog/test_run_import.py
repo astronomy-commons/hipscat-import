@@ -20,7 +20,7 @@ def test_empty_args():
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
-    args = {"catalog_name": "bad_arg_type"}
+    args = {"output_catalog_name": "bad_arg_type"}
     with pytest.raises(ValueError):
         runner.run(args)
 
@@ -58,10 +58,10 @@ def test_resume_dask_runner(
         os.path.join(tmp_path, "resume", "Norder=0"),
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="resume"):
         ## Check that we fail if there are some existing intermediate files
         ImportArguments(
-            catalog_name="resume",
+            output_catalog_name="resume",
             input_path=small_sky_parts_dir,
             input_format="csv",
             output_path=tmp_path,
@@ -74,7 +74,7 @@ def test_resume_dask_runner(
         )
 
     args = ImportArguments(
-        catalog_name="resume",
+        output_catalog_name="resume",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -129,7 +129,7 @@ def test_resume_dask_runner(
     rf.set_reducing_done(temp_path)
 
     args = ImportArguments(
-        catalog_name="resume",
+        output_catalog_name="resume",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -160,7 +160,7 @@ def test_dask_runner(
 ):
     """Test basic execution."""
     args = ImportArguments(
-        catalog_name="small_sky_object_catalog",
+        output_catalog_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -212,7 +212,7 @@ def test_dask_runner_source_table(
 ):
     """Test basic execution."""
     args = ImportArguments(
-        catalog_name="small_sky_source_catalog",
+        output_catalog_name="small_sky_source_catalog",
         input_path=small_sky_source_dir,
         input_format="csv",
         catalog_type="source",
@@ -269,7 +269,7 @@ def test_dask_runner_source_table(
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     """Test basic execution, without generating catalog parquet outputs."""
     args = ImportArguments(
-        catalog_name="small_sky",
+        output_catalog_name="small_sky",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -305,7 +305,7 @@ def test_dask_runner_mixed_schema_csv(
 
     schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
     args = ImportArguments(
-        catalog_name="mixed_csv",
+        output_catalog_name="mixed_csv",
         input_path=mixed_schema_csv_dir,
         input_format="csv",
         output_path=tmp_path,
