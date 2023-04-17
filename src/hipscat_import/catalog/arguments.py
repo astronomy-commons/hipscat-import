@@ -1,5 +1,7 @@
 """Utility to hold all arguments required throughout partitioning"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Callable, List
 
@@ -65,7 +67,7 @@ class ImportArguments(RuntimeArguments):
     catalog_type: str = "object"
     input_path: str = ""
     input_format: str = ""
-    input_file_list: List[str] = field(default_factory=List)
+    input_file_list: List[str] = field(default_factory=list)
 
     ra_column: str = "ra"
     dec_column: str = "dec"
