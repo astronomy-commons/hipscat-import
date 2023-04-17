@@ -73,13 +73,13 @@ class ImportArguments(RuntimeArguments):
     dec_column: str = "dec"
     id_column: str = "id"
     add_hipscat_index: bool = True
-    use_schema_file: str = None
+    use_schema_file: str | None = None
     resume: bool = False
     highest_healpix_order: int = 10
     pixel_threshold: int = 1_000_000
     debug_stats_only: bool = False
-    filter_function: Callable = None
-    file_reader: InputReader = None
+    filter_function: Callable | None = None
+    file_reader: InputReader | None = None
 
     def __post_init__(self):
         RuntimeArguments._check_arguments(self)
