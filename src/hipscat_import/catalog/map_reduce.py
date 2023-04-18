@@ -212,7 +212,12 @@ def reduce_pixel_shards(
         "Npix",
         [np.full(rows_written, fill_value=destination_pixel_number, dtype=np.int32)],
     )
-    pq.write_table(merged_table, where=destination_file)
+    if add_hipscat_index:
+        merged_table.to_pandas().set_index("_hipscat_index").sort_index().to_parquet(
+            destination_file
+        )
+    else:
+        merged_table.to_pandas().to_parquet(destination_file)
 
     del merged_table, tables
 

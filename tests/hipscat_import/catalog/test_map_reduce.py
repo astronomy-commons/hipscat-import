@@ -210,7 +210,9 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
+def test_reduce_hipscat_index(
+    parquet_shards_dir, assert_parquet_file_ids, assert_parquet_file_index, tmp_path
+):
     """Test reducing into one large pixel"""
     mr.reduce_pixel_shards(
         cache_path=parquet_shards_dir,
@@ -268,7 +270,7 @@ def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_p
         13564690156971098112,
         13557377060258709504,
     ]
-    assert_parquet_file_ids(output_file, "_hipscat_index", expected_indexes)
+    assert_parquet_file_index(output_file, expected_indexes)
 
 
 def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):

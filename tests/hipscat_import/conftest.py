@@ -171,3 +171,29 @@ def assert_parquet_file_ids():
         npt.assert_array_equal(ids, expected_ids)
 
     return assert_parquet_file_ids
+
+
+@pytest.fixture
+def assert_parquet_file_index():
+    def assert_parquet_file_index(file_name, expected_values):
+        """
+        Convenience method to read a parquet file and compare the index values to
+        a list of expected objects.
+
+        Args:
+            file_name (str): fully-specified path of the file to read
+            expected_values (:obj:`int[]`): list of expected values in index
+        """
+        assert os.path.exists(file_name), f"file not found [{file_name}]"
+
+        data_frame = pd.read_parquet(file_name, engine="pyarrow")
+        values = data_frame.index.values.tolist()
+        expected_values.sort()
+
+        assert len(values) == len(
+            expected_values
+        ), f"object list not the same size ({len(values)} vs {len(expected_values)})"
+
+        npt.assert_array_equal(values, expected_values)
+
+    return assert_parquet_file_index
