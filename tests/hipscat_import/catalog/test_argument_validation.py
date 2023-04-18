@@ -17,59 +17,39 @@ def test_none():
 def test_empty_required(small_sky_parts_dir, tmp_path):
     """*Most* required arguments are provided."""
     ## Input format is missing
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match="input_format"):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             input_format=None,
             input_path=small_sky_parts_dir,
             output_path=tmp_path,
         )
-        assert "input_format" in error
 
     ## Input path is missing
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match="input_file"):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             input_path="",
             input_format="csv",
             output_path=tmp_path,
+            overwrite=True,
         )
-        assert "input_path" in error
-
-    ## Output path is missing
-    with pytest.raises(ValueError) as error:
-        ImportArguments(
-            catalog_name="catalog",
-            input_path=small_sky_parts_dir,
-            input_format="csv",
-            output_path="",
-        )
-        assert "output_path" in error
 
 
 def test_invalid_paths(blank_data_dir, tmp_path):
     """Required arguments are provided, but paths aren't found."""
     ## Prove that it works with required args
     ImportArguments(
-        catalog_name="catalog",
+        output_catalog_name="catalog",
         input_path=blank_data_dir,
         output_path=tmp_path,
         input_format="csv",
     )
 
-    ## Bad output path
-    with pytest.raises(FileNotFoundError):
-        ImportArguments(
-            catalog_name="catalog",
-            input_path=blank_data_dir,
-            output_path="path",
-            input_format="csv",
-        )
-
     ## Bad input path
     with pytest.raises(FileNotFoundError):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             input_path="path",
             output_path=tmp_path,
             overwrite=True,
@@ -79,7 +59,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
     ## Input path has no files
     with pytest.raises(FileNotFoundError):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             input_path=blank_data_dir,
             output_path=tmp_path,
             overwrite=True,
@@ -89,68 +69,45 @@ def test_invalid_paths(blank_data_dir, tmp_path):
     ## Bad input file
     with pytest.raises(FileNotFoundError):
         ImportArguments(
-            catalog_name="catalog",
-            input_file_list=["path"],
+            output_catalog_name="catalog",
+            input_file_list=["/foo/path"],
             overwrite=True,
             output_path=tmp_path,
             input_format="csv",
         )
 
 
-def test_output_overwrite(test_data_dir, blank_data_dir):
-    """Test that we can write to existing directory, but not one with contents"""
-
-    with pytest.raises(ValueError):
-        ImportArguments(
-            catalog_name="blank",
-            input_path=blank_data_dir,
-            output_path=test_data_dir,
-            input_format="csv",
-        )
-
-    ## No error with overwrite flag
-    ImportArguments(
-        catalog_name="blank",
-        input_path=blank_data_dir,
-        output_path=test_data_dir,
-        overwrite=True,
-        input_format="csv",
-    )
-
-
 def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     """Required arguments are provided, and paths are found."""
     tmp_path_str = str(tmp_path)
     args = ImportArguments(
-        catalog_name="catalog",
+        output_catalog_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
         output_path=tmp_path_str,
         tmp_dir=tmp_path_str,
     )
-    assert args._input_path == blank_data_dir
+    assert args.input_path == blank_data_dir
     assert len(args.input_paths) == 1
     assert args.input_paths[0] == blank_data_file
-    assert args._output_path == tmp_path_str
-    assert args.tmp_path.startswith(tmp_path_str)
 
 
 def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
     """Required arguments are provided, and paths are found."""
     args = ImportArguments(
-        catalog_name="catalog",
+        output_catalog_name="catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
     )
-    assert args._input_path == small_sky_parts_dir
+    assert args.input_path == small_sky_parts_dir
     assert len(args.input_paths) == 5
 
 
 def test_single_debug_file(formats_headers_csv, tmp_path):
     """Required arguments are provided, and paths are found."""
     args = ImportArguments(
-        catalog_name="catalog",
+        output_catalog_name="catalog",
         input_file_list=[formats_headers_csv],
         input_format="csv",
         output_path=tmp_path,
@@ -159,119 +116,71 @@ def test_single_debug_file(formats_headers_csv, tmp_path):
     assert args.input_paths[0] == formats_headers_csv
 
 
-def test_good_paths_empty_args(blank_data_dir, tmp_path):
-    """Paths are good. Remove some required arguments"""
-    ImportArguments(
-        catalog_name="catalog",
-        input_path=blank_data_dir,
-        input_format="csv",
-        output_path=tmp_path,
-    )
-    with pytest.raises(NotImplementedError):
-        ImportArguments(
-            catalog_name="catalog",
-            input_path=blank_data_dir,
-            input_format="foo_type",
-            output_path=tmp_path,
-        )
-    with pytest.raises(ValueError):
-        ImportArguments(
-            catalog_name="catalog",
-            input_path=blank_data_dir,
-            input_format="csv",
-            output_path="",  ## empty
-        )
-
-
-def test_dask_args(blank_data_dir, tmp_path):
-    """Test errors for dask arguments"""
-    with pytest.raises(ValueError):
-        ImportArguments(
-            catalog_name="catalog",
-            input_path=blank_data_dir,
-            input_format="csv",
-            output_path=tmp_path,
-            dask_n_workers=-10,
-            dask_threads_per_worker=1,
-        )
-
-    with pytest.raises(ValueError):
-        ImportArguments(
-            catalog_name="catalog",
-            input_path=blank_data_dir,
-            input_format="csv",
-            output_path=tmp_path,
-            dask_n_workers=1,
-            dask_threads_per_worker=-10,
-        )
-
-
 def test_healpix_args(blank_data_dir, tmp_path):
     """Test errors for healpix partitioning arguments"""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="highest_healpix_order"):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
             highest_healpix_order=30,
+            overwrite=True,
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="pixel_threshold"):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
             pixel_threshold=3,
+            overwrite=True,
         )
 
 
 def test_catalog_type(blank_data_dir, tmp_path):
     """Test errors for catalog types."""
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match="catalog_type"):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             catalog_type=None,
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
         )
-        assert "catalog_type" in error.value
 
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match="catalog_type"):
         ImportArguments(
-            catalog_name="catalog",
+            output_catalog_name="catalog",
             catalog_type="association",
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
         )
-        assert "catalog_type" in error.value
 
 
 def test_to_catalog_parameters(blank_data_dir, tmp_path):
     """Verify creation of catalog parameters for catalog to be created."""
     args = ImportArguments(
-        catalog_name="catalog",
+        output_catalog_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
         output_path=tmp_path,
         tmp_dir=tmp_path,
     )
     catalog_parameters = args.to_catalog_parameters()
-    assert catalog_parameters.catalog_name == args.catalog_name
+    assert catalog_parameters.catalog_name == "catalog"
 
 
-def test_formatted_string(blank_data_dir, tmp_path):
-    """Test that the human readable string contains our specified arguments"""
+def test_provenance_info(blank_data_dir, tmp_path):
+    """Verify that provenance info includes association-specific fields."""
     args = ImportArguments(
-        catalog_name="catalog",
+        output_catalog_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
         output_path=tmp_path,
         tmp_dir=tmp_path,
     )
-    formatted_string = str(args)
-    assert "catalog" in formatted_string
-    assert "csv" in formatted_string
-    assert str(tmp_path) in formatted_string
+
+    runtime_args = args.provenance_info()["runtime_args"]
+    assert "epoch" in runtime_args
