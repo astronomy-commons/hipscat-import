@@ -96,7 +96,8 @@ class ImportArguments(RuntimeArguments):
 
         if not 0 <= self.highest_healpix_order <= hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
             raise ValueError(
-                f"highest_healpix_order should be between 0 and {hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
+                "highest_healpix_order should be between 0 and "
+                f"{hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
             )
         if not 100 <= self.pixel_threshold <= 10_000_000:
             raise ValueError("pixel_threshold should be between 100 and 10,000,000")
