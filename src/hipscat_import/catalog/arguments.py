@@ -7,7 +7,8 @@ from typing import Callable, List
 
 import pandas as pd
 from hipscat.catalog import CatalogParameters
-from hipscat.io import file_io
+from hipscat.io import FilePointer, file_io
+from hipscat.pixel_math import hipscat_id
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
 from hipscat_import.runtime_arguments import RuntimeArguments
@@ -65,9 +66,10 @@ class ImportArguments(RuntimeArguments):
 
     epoch: str = "J2000"
     catalog_type: str = "object"
-    input_path: str = ""
+    input_path: FilePointer | None = None
     input_format: str = ""
-    input_file_list: List[str] = field(default_factory=list)
+    input_file_list: List[FilePointer] = field(default_factory=list)
+    input_paths: List[FilePointer] = field(default_factory=list)
 
     ra_column: str = "ra"
     dec_column: str = "dec"
@@ -82,27 +84,20 @@ class ImportArguments(RuntimeArguments):
     file_reader: InputReader | None = None
 
     def __post_init__(self):
-        RuntimeArguments._check_arguments(self)
-        self.input_path = file_io.get_file_pointer_from_path(self.input_path)
-        self.input_file_list = (
-            [file_io.get_file_pointer_from_path(x) for x in self.input_file_list]
-            if self.input_file_list
-            else None
-        )
-        self.input_paths = []
-
-        if not self.filter_function:
-            self.filter_function = passthrough_filter_function
 
         self._check_arguments()
 
     def _check_arguments(self):
         """Check existence and consistency of argument values"""
+        super()._check_arguments()
+
         if not self.input_format:
             raise ValueError("input_format is required")
 
-        if not 0 <= self.highest_healpix_order <= 19:
-            raise ValueError("highest_healpix_order should be between 0 and 19")
+        if not 0 <= self.highest_healpix_order <= hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
+            raise ValueError(
+                f"highest_healpix_order should be between 0 and {hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
+            )
         if not 100 <= self.pixel_threshold <= 10_000_000:
             raise ValueError("pixel_threshold should be between 100 and 10,000,000")
 
@@ -143,6 +138,9 @@ class ImportArguments(RuntimeArguments):
                 )
         file_io.make_directory(self.tmp_path, exist_ok=True)
 
+        if not self.filter_function:
+            self.filter_function = passthrough_filter_function
+
     def to_catalog_parameters(self) -> CatalogParameters:
         """Convert importing arguments into hipscat catalog parameters.
 
@@ -158,7 +156,7 @@ class ImportArguments(RuntimeArguments):
             dec_column=self.dec_column,
         )
 
-    def additional_provenance_info(self):
+    def additional_runtime_provenance_info(self):
         return {
             "catalog_name": self.output_catalog_name,
             "epoch": self.epoch,

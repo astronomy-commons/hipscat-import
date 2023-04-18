@@ -101,7 +101,7 @@ class RuntimeArguments:
             "tmp_path": str(self.tmp_path),
         }
 
-        runtime_args.update(self.additional_provenance_info())
+        runtime_args.update(self.additional_runtime_provenance_info())
         provenance_info = {
             "tool_name": "hipscat_import",
             "version": version("hipscat-import"),
@@ -110,6 +110,6 @@ class RuntimeArguments:
 
         return provenance_info
 
-    def additional_provenance_info(self):
-        """Any additional provenance info from subclasses"""
+    def additional_runtime_provenance_info(self):
+        """Any additional runtime args to be included in provenance info from subclasses"""
         return {}
