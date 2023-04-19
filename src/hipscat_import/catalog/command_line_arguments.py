@@ -215,7 +215,7 @@ def parse_command_line(cl_args):
     args = parser.parse_args(cl_args)
 
     return ImportArguments(
-        catalog_name=args.catalog_name,
+        output_catalog_name=args.catalog_name,
         input_path=args.input_path,
         input_format=args.input_format,
         input_file_list=(

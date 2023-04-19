@@ -4,20 +4,18 @@ import hipscat.pixel_math as hist
 import numpy.testing as npt
 import pytest
 
-from hipscat_import.catalog.resume_files import (
-    clean_resume_files,
-    is_mapping_done,
-    is_reducing_done,
-    read_histogram,
-    read_mapping_keys,
-    read_reducing_keys,
-    set_mapping_done,
-    set_reducing_done,
-    write_histogram,
-    write_mapping_done_key,
-    write_mapping_start_key,
-    write_reducing_key,
-)
+from hipscat_import.catalog.resume_files import (clean_resume_files,
+                                                 is_mapping_done,
+                                                 is_reducing_done,
+                                                 read_histogram,
+                                                 read_mapping_keys,
+                                                 read_reducing_keys,
+                                                 set_mapping_done,
+                                                 set_reducing_done,
+                                                 write_histogram,
+                                                 write_mapping_done_key,
+                                                 write_mapping_start_key,
+                                                 write_reducing_key)
 
 
 def test_mapping_done(tmp_path):
@@ -92,7 +90,7 @@ def test_read_write_mapping_keys_corrupt(tmp_path):
     assert mapping_keys[0] == "key1"
 
     write_mapping_start_key(tmp_path, "key2")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="logs are corrupted"):
         read_mapping_keys(tmp_path)
 
     clean_resume_files(tmp_path)

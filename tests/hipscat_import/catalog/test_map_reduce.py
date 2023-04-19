@@ -83,7 +83,7 @@ def test_read_single_fits(formats_fits, tmp_path):
 
 def test_map_headers_wrong(formats_headers_csv, tmp_path):
     """Test loading the a file with non-default headers (without specifying right headers)"""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="header"):
         mr.map_to_pixels(
             input_file=formats_headers_csv,
             file_reader=get_file_reader("csv"),
@@ -307,7 +307,7 @@ def test_reduce_hipscat_index(
 
 def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
     """Test reducing into one large pixel"""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unexpected number of objects"):
         mr.reduce_pixel_shards(
             cache_path=parquet_shards_dir,
             origin_pixel_numbers=[44, 45, 46, 47],
