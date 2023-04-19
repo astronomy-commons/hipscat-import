@@ -32,18 +32,18 @@ def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
 
 def _has_named_index(dataframe):
     """Heuristic to determine if a dataframe has some meaningful index.
-    
+
     This will reject dataframes with no index name for a single index,
-    or empty names for multi-index ([] or [None]).    
+    or empty names for multi-index ([] or [None]).
     """
     if dataframe.index.name is not None:
         ## Single index with a given name.
         return True
-    if len(dataframe.index.names) == 0:
+    if len(dataframe.index.names) == 0 or all(
+        name is None for name in dataframe.index.names
+    ):
         return False
-    if dataframe.index.names[0] is not None:
-        return True
-    return False
+    return True
 
 
 def map_to_pixels(
