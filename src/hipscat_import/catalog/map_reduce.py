@@ -30,6 +30,22 @@ def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
     )
 
 
+def _has_named_index(dataframe):
+    """Heuristic to determine if a dataframe has some meaningful index.
+    
+    This will reject dataframes with no index name for a single index,
+    or empty names for multi-index ([] or [None]).    
+    """
+    if dataframe.index.name is not None:
+        ## Single index with a given name.
+        return True
+    if len(dataframe.index.names) == 0:
+        return False
+    if dataframe.index.names[0] is not None:
+        return True
+    return False
+
+
 def map_to_pixels(
     input_file: FilePointer,
     file_reader,
@@ -107,7 +123,10 @@ def map_to_pixels(
                 output_file = file_io.append_paths_to_pointer(
                     pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
                 )
-                filtered_data.to_parquet(output_file)
+                if _has_named_index(filtered_data):
+                    filtered_data.to_parquet(output_file, index=True)
+                else:
+                    filtered_data.to_parquet(output_file, index=False)
             del filtered_data, data_indexes
 
         ## Pesky memory!
@@ -181,45 +200,35 @@ def reduce_pixel_shards(
             f" Expected {destination_pixel_size}, wrote {rows_written}"
         )
 
+    dataframe = merged_table.to_pandas()
     if id_column:
-        merged_table = merged_table.sort_by(id_column)
+        dataframe = dataframe.sort_values(id_column)
     if add_hipscat_index:
-        merged_table = merged_table.append_column(
-            "_hipscat_index",
-            [
-                pixel_math.compute_hipscat_id(
-                    merged_table[ra_column].to_pylist(),
-                    merged_table[dec_column].to_pylist(),
-                )
-            ],
+        dataframe["_hipscat_index"] = pixel_math.compute_hipscat_id(
+            dataframe[ra_column].values,
+            dataframe[dec_column].values,
         )
-        merged_table = merged_table.sort_by("_hipscat_index")
-    merged_table = merged_table.append_column(
-        "Norder",
-        [np.full(rows_written, fill_value=destination_pixel_order, dtype=np.int32)],
-    )
-    merged_table = merged_table.append_column(
-        "Dir",
-        [
-            np.full(
-                rows_written,
-                fill_value=int(destination_pixel_number / 10_000) * 10_000,
-                dtype=np.int32,
-            )
-        ],
-    )
-    merged_table = merged_table.append_column(
-        "Npix",
-        [np.full(rows_written, fill_value=destination_pixel_number, dtype=np.int32)],
-    )
-    if add_hipscat_index:
-        merged_table.to_pandas().set_index("_hipscat_index").sort_index().to_parquet(
-            destination_file
-        )
-    else:
-        merged_table.to_pandas().to_parquet(destination_file)
 
-    del merged_table, tables
+    dataframe["Norder"] = np.full(
+        rows_written, fill_value=destination_pixel_order, dtype=np.int32
+    )
+    dataframe["Dir"] = np.full(
+        rows_written,
+        fill_value=int(destination_pixel_number / 10_000) * 10_000,
+        dtype=np.int32,
+    )
+    dataframe["Npix"] = np.full(
+        rows_written, fill_value=destination_pixel_number, dtype=np.int32
+    )
+
+    if add_hipscat_index:
+        ## If we had a meaningful index before, preserve it as a column.
+        if _has_named_index(dataframe):
+            dataframe = dataframe.reset_index()
+        dataframe = dataframe.set_index("_hipscat_index").sort_index()
+    dataframe.to_parquet(destination_file)
+
+    del dataframe, merged_table, tables
 
     if delete_input_files:
         for pixel in origin_pixel_numbers:

@@ -70,6 +70,16 @@ def formats_fits(test_data_dir):
 
 
 @pytest.fixture
+def formats_pandasindex(test_data_dir):
+    return os.path.join(test_data_dir, "test_formats", "pandasindex.parquet")
+
+
+@pytest.fixture
+def formats_multiindex(test_data_dir):
+    return os.path.join(test_data_dir, "test_formats", "multiindex.parquet")
+
+
+@pytest.fixture
 def small_sky_parts_dir(test_data_dir):
     return os.path.join(test_data_dir, "small_sky_parts")
 
@@ -87,7 +97,7 @@ def parquet_shards_dir(test_data_dir):
 @pytest.fixture
 def parquet_shards_shard_44_0(test_data_dir):
     return os.path.join(
-        test_data_dir, "parquet_shards", "dir_0", "pixel_44", "shard_0.parquet"
+        test_data_dir, "parquet_shards", "dir_0", "pixel_44", "shard_3_0.parquet"
     )
 
 
@@ -188,6 +198,7 @@ def assert_parquet_file_index():
 
         data_frame = pd.read_parquet(file_name, engine="pyarrow")
         values = data_frame.index.values.tolist()
+        values.sort()
         expected_values.sort()
 
         assert len(values) == len(
