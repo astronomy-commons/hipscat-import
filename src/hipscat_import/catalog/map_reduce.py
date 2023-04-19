@@ -34,7 +34,7 @@ def _has_named_index(dataframe):
     """Heuristic to determine if a dataframe has some meaningful index.
 
     This will reject dataframes with no index name for a single index,
-    or empty names for multi-index ([] or [None]).
+    or empty names for multi-index (e.g. [] or [None]).
     """
     if dataframe.index.name is not None:
         ## Single index with a given name.
@@ -150,6 +150,24 @@ def reduce_pixel_shards(
 ):
     """Reduce sharded source pixels into destination pixels.
 
+    In addition to combining multiple shards of data into a single
+    parquet file, this method will add a few new columns:
+
+        - `Norder` - the healpix order for the pixel
+        - `Dir` - the directory part, corresponding to the pixel
+        ` `Npix` - the healpix pixel
+        - `_hipscat_index` - optional - a spatially-correlated
+            64-bit index field.
+
+    Notes on `_hipscat_index`:
+
+        - if we generate the field, we will promote any previous
+            *named* pandas index field(s) to a column with
+            that name.
+        - see `hipscat.pixel_math.hipscat_id`
+            for more in-depth discussion of this field.
+
+
     Args:
         cache_path (str): where to read intermediate files
         origin_pixel_numbers (list[int]): high order pixels, with object
@@ -160,8 +178,12 @@ def reduce_pixel_shards(
             for the catalog's final pixel
         output_path (str): where to write the final catalog pixel data
         id_column (str): column for survey identifier, or other sortable column
+        add_hipscat_index (bool): should we add a _hipscat_index column to
+            the resulting parquet file?
         delete_input_files (bool): should we delete the intermediate files
             used as input for this method.
+        use_schema_file (str): use the parquet schema from the indicated
+            parquet file.
 
     Raises:
         ValueError: if the number of rows written doesn't equal provided
