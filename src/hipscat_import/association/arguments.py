@@ -6,6 +6,8 @@ from hipscat.catalog import CatalogParameters
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
+# pylint: disable=too-many-instance-attributes
+
 
 @dataclass
 class AssociationArguments(RuntimeArguments):
