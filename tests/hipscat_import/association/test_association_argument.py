@@ -94,6 +94,109 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             overwrite=True,
         )
 
+    with pytest.raises(ValueError, match="output_path"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="id",
+            join_foreign_key="id",
+            output_path="",  ## empty
+            output_catalog_name="small_sky_self_join",
+            overwrite=True,
+        )
+
+    with pytest.raises(ValueError, match="output_catalog_name"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="id",
+            join_foreign_key="id",
+            output_path=tmp_path,
+            output_catalog_name="",  ## empty
+            overwrite=True,
+        )
+
+    with pytest.raises(ValueError, match="join_how"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="id",
+            join_foreign_key="id",
+            output_path=tmp_path,
+            output_catalog_name="small_sky_self_join",
+            join_how="",  ## empty
+            overwrite=True,
+        )
+
+
+def test_column_names(tmp_path, small_sky_object_catalog):
+    """Test validation of column names."""
+    with pytest.raises(ValueError, match="primary_id_column"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="primary_id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="id",
+            join_foreign_key="id",
+            output_path=tmp_path,
+            output_catalog_name="bad_columns",  ## empty
+            overwrite=True,
+        )
+
+    with pytest.raises(ValueError, match="join_id_column"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="primary_id",
+            join_foreign_key="id",
+            output_path=tmp_path,
+            output_catalog_name="bad_columns",  ## empty
+            overwrite=True,
+        )
+
+
+def test_join_how(tmp_path, small_sky_object_catalog):
+    """Test validation of join how."""
+    with pytest.raises(ValueError, match="join_how"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="id",
+            join_foreign_key="id",
+            output_path=tmp_path,
+            output_catalog_name="bad_columns",
+            join_how="middle",  ## not a valid join option
+            overwrite=True,
+        )
+
+
+def test_compute_partition_size(tmp_path, small_sky_object_catalog):
+    """Test validation of compute_partition_size."""
+    with pytest.raises(ValueError, match="compute_partition_size"):
+        AssociationArguments(
+            primary_input_catalog_path=small_sky_object_catalog,
+            primary_id_column="id",
+            primary_join_column="id",
+            join_input_catalog_path=small_sky_object_catalog,
+            join_id_column="id",
+            join_foreign_key="id",
+            output_path=tmp_path,
+            output_catalog_name="bad_columns",
+            compute_partition_size=10,  ## not a valid join option
+            overwrite=True,
+        )
+
 
 def test_all_required_args(tmp_path, small_sky_object_catalog):
     """Required arguments are provided."""

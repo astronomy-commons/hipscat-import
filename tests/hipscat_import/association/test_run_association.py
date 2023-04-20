@@ -13,14 +13,14 @@ from hipscat_import.association.arguments import AssociationArguments
 
 def test_empty_args():
     """Runner should fail with empty arguments"""
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         runner.run(None)
 
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
     args = {"output_catalog_name": "bad_arg_type"}
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         runner.run(args)
 
 
@@ -97,8 +97,9 @@ def test_object_to_source(
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     npt.assert_array_equal(
         data_frame.columns,
-        ["primary_id", "primary_hipscat_index", "join_id", "join_hipscat_index"],
+        ["primary_id", "join_id", "join_hipscat_index"],
     )
+    assert data_frame.index.name == "primary_hipscat_index"
     assert len(data_frame) == 50
     ids = data_frame["primary_id"]
     assert np.logical_and(ids >= 700, ids < 832).all()
@@ -179,8 +180,9 @@ def test_source_to_object(
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     npt.assert_array_equal(
         data_frame.columns,
-        ["primary_id", "primary_hipscat_index", "join_id", "join_hipscat_index"],
+        ["primary_id", "join_id", "join_hipscat_index"],
     )
+    assert data_frame.index.name == "primary_hipscat_index"
     assert len(data_frame) == 50
     ids = data_frame["primary_id"]
     assert np.logical_and(ids >= 70_000, ids < 87161).all()
@@ -247,8 +249,9 @@ def test_self_join(
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     npt.assert_array_equal(
         data_frame.columns,
-        ["primary_id", "primary_hipscat_index", "join_id", "join_hipscat_index"],
+        ["primary_id", "join_id", "join_hipscat_index"],
     )
+    assert data_frame.index.name == "primary_hipscat_index"
     assert len(data_frame) == 131
     ids = data_frame["primary_id"]
     assert np.logical_and(ids >= 700, ids < 832).all()

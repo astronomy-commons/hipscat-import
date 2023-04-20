@@ -13,7 +13,7 @@ def map_association(args):
     Implementation notes:
 
     Because we may be joining to a column that is NOT the natural/primary key
-    (on either side of the join), we fetch both the identifying column and the 
+    (on either side of the join), we fetch both the identifying column and the
     join predicate column, possibly duplicating one of the columns.
 
     This way, when we drop the join predicate columns at the end of the process,
@@ -86,7 +86,7 @@ def map_association(args):
 
     ## Join the two data sets on the shared join predicate.
     join_data = primary_index.merge(
-        join_index, how="inner", left_index=True, right_index=True
+        join_index, how=args.join_how, left_index=True, right_index=True
     ).reset_index()
 
     ## Write out a summary of each partition join
@@ -134,7 +134,7 @@ def map_association(args):
         path=args.tmp_path,
         engine="pyarrow",
         partition_on=["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix"],
-        compute_kwargs={"partition_size": 1_000_000_000},
+        compute_kwargs={"partition_size": args.compute_partition_size},
         write_index=False,
     )
 
@@ -199,6 +199,8 @@ def reduce_association(input_path, output_path):
                 f" Expected {partition['num_rows']}, wrote {rows_written}",
             )
 
-        pq.write_table(table, where=output_file)
+        table.to_pandas().set_index("primary_hipscat_index").sort_index().to_parquet(
+            output_file
+        )
 
     return data_frame["num_rows"].sum()
