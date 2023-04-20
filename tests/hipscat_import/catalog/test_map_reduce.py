@@ -4,6 +4,7 @@ import os
 
 import hipscat.pixel_math as hist
 import numpy.testing as npt
+import pandas as pd
 import pyarrow as pa
 import pytest
 
@@ -198,6 +199,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
         destination_pixel_number=11,
         destination_pixel_size=131,
         output_path=tmp_path,
+        add_hipscat_index=True,
         ra_column="ra",
         dec_column="dec",
         id_column="id",
@@ -210,8 +212,10 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
-    """Test reducing into one large pixel"""
+def test_reduce_hipscat_index(
+    parquet_shards_dir, assert_parquet_file_ids, assert_parquet_file_index, tmp_path
+):
+    """Test reducing with or without a _hipscat_index field"""
     mr.reduce_pixel_shards(
         cache_path=parquet_shards_dir,
         origin_pixel_numbers=[47],
@@ -268,7 +272,37 @@ def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_p
         13564690156971098112,
         13557377060258709504,
     ]
-    assert_parquet_file_ids(output_file, "_hipscat_index", expected_indexes)
+    assert_parquet_file_index(output_file, expected_indexes)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.name == "_hipscat_index"
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["id", "ra", "dec", "ra_error", "dec_error", "Norder", "Dir", "Npix"],
+    )
+
+    mr.reduce_pixel_shards(
+        cache_path=parquet_shards_dir,
+        origin_pixel_numbers=[47],
+        destination_pixel_order=0,
+        destination_pixel_number=11,
+        destination_pixel_size=18,
+        output_path=tmp_path,
+        add_hipscat_index=False,  ## different from above
+        ra_column="ra",
+        dec_column="dec",
+        id_column="id",
+        delete_input_files=False,
+    )
+
+    assert_parquet_file_ids(output_file, "id", expected_ids)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    ## No index name.
+    assert data_frame.index.name is None
+    ## Data fields are the same.
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["id", "ra", "dec", "ra_error", "dec_error", "Norder", "Dir", "Npix"],
+    )
 
 
 def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
