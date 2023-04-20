@@ -4,6 +4,7 @@ import os
 import shutil
 
 import pandas as pd
+import numpy.testing as npt
 import pytest
 
 import hipscat_import.catalog.resume_files as rf
@@ -105,7 +106,7 @@ def test_resume_dask_runner(
 
     # Check that the partition info file exists
     expected_partition_lines = [
-        "Norder,Dir,Npix,num_objects",
+        "Norder,Dir,Npix,num_rows",
         "0,0,11,131",
     ]
     partition_filename = os.path.join(args.catalog_path, "partition_info.csv")
@@ -187,7 +188,7 @@ def test_dask_runner(
 
     # Check that the partition info file exists
     expected_lines = [
-        "Norder,Dir,Npix,num_objects",
+        "Norder,Dir,Npix,num_rows",
         "0,0,11,131",
     ]
     metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
@@ -245,7 +246,7 @@ def test_dask_runner_source_table(
 
     # Check that the partition info file exists
     expected_lines = [
-        "Norder,Dir,Npix,num_objects",
+        "Norder,Dir,Npix,num_rows",
         "0,0,4,50",
         "1,0,47,2395",
         "2,0,176,385",
@@ -326,3 +327,179 @@ def test_dask_runner_mixed_schema_csv(
     )
 
     assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(10)
+def test_dask_runner_preserve_index(
+    dask_client,
+    formats_pandasindex,
+    assert_parquet_file_ids,
+    assert_parquet_file_index,
+    tmp_path,
+):
+    """Test basic execution, with input with pandas metadata"""
+
+    expected_indexes = [
+        "star1_1",
+        "star1_2",
+        "star1_3",
+        "star1_4",
+        "galaxy1_1",
+        "galaxy1_2",
+        "galaxy2_1",
+        "galaxy2_2",
+    ]
+    assert_parquet_file_index(formats_pandasindex, expected_indexes)
+    data_frame = pd.read_parquet(formats_pandasindex, engine="pyarrow")
+    assert data_frame.index.name == "obs_id"
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["obj_id", "band", "ra", "dec", "mag"],
+    )
+
+    ## Don't generate a hipscat index. Verify that the original index remains.
+    args = ImportArguments(
+        output_catalog_name="pandasindex",
+        input_file_list=[formats_pandasindex],
+        input_format="parquet",
+        id_column="obs_id",
+        add_hipscat_index=False,
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+    )
+
+    runner.run_with_client(args, dask_client)
+
+    # Check that the catalog parquet file exists
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
+
+    assert_parquet_file_index(output_file, expected_indexes)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.name == "obs_id"
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["obj_id", "band", "ra", "dec", "mag", "Norder", "Dir", "Npix"],
+    )
+
+    ## DO generate a hipscat index. Verify that the original index is preserved in a column.
+    args = ImportArguments(
+        output_catalog_name="pandasindex_preserve",
+        input_file_list=[formats_pandasindex],
+        input_format="parquet",
+        id_column="obs_id",
+        add_hipscat_index=True,
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+    )
+
+    runner.run_with_client(args, dask_client)
+
+    # Check that the catalog parquet file exists
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
+
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.name == "_hipscat_index"
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["obs_id", "obj_id", "band", "ra", "dec", "mag", "Norder", "Dir", "Npix"],
+    )
+    assert_parquet_file_ids(output_file, "obs_id", expected_indexes)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(10)
+def test_dask_runner_multiindex(
+    dask_client,
+    formats_multiindex,
+    assert_parquet_file_ids,
+    assert_parquet_file_index,
+    tmp_path,
+):
+    """Test basic execution, with input with pandas metadata"""
+
+    index_arrays = [
+        [
+            "star1",
+            "star1",
+            "star1",
+            "star1",
+            "galaxy1",
+            "galaxy1",
+            "galaxy2",
+            "galaxy2",
+        ],
+        ["r", "r", "i", "i", "r", "r", "r", "r"],
+    ]
+    expected_indexes = list(zip(index_arrays[0], index_arrays[1]))
+    assert_parquet_file_index(formats_multiindex, expected_indexes)
+    data_frame = pd.read_parquet(formats_multiindex, engine="pyarrow")
+    assert data_frame.index.names == ["obj_id", "band"]
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["ra", "dec", "mag"],
+    )
+
+    ## Don't generate a hipscat index. Verify that the original index remains.
+    args = ImportArguments(
+        output_catalog_name="multiindex",
+        input_file_list=[formats_multiindex],
+        input_format="parquet",
+        id_column=["obj_id", "band"],
+        add_hipscat_index=False,
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+    )
+
+    runner.run_with_client(args, dask_client)
+
+    # Check that the catalog parquet file exists
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
+
+    assert_parquet_file_index(output_file, expected_indexes)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.names == ["obj_id", "band"]
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["ra", "dec", "mag", "Norder", "Dir", "Npix"],
+    )
+
+    ## DO generate a hipscat index. Verify that the original index is preserved in a column.
+    args = ImportArguments(
+        output_catalog_name="multiindex_preserve",
+        input_file_list=[formats_multiindex],
+        input_format="parquet",
+        id_column=["obj_id", "band"],
+        add_hipscat_index=True,
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+    )
+
+    runner.run_with_client(args, dask_client)
+
+    # Check that the catalog parquet file exists
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
+
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.name == "_hipscat_index"
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["obj_id", "band", "ra", "dec", "mag", "Norder", "Dir", "Npix"],
+    )
+    assert_parquet_file_ids(output_file, "obj_id", index_arrays[0])

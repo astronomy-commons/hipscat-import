@@ -30,6 +30,22 @@ def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
     )
 
 
+def _has_named_index(dataframe):
+    """Heuristic to determine if a dataframe has some meaningful index.
+
+    This will reject dataframes with no index name for a single index,
+    or empty names for multi-index (e.g. [] or [None]).
+    """
+    if dataframe.index.name is not None:
+        ## Single index with a given name.
+        return True
+    if len(dataframe.index.names) == 0 or all(
+        name is None for name in dataframe.index.names
+    ):
+        return False
+    return True
+
+
 def map_to_pixels(
     input_file: FilePointer,
     file_reader,
@@ -107,7 +123,10 @@ def map_to_pixels(
                 output_file = file_io.append_paths_to_pointer(
                     pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
                 )
-                filtered_data.to_parquet(output_file)
+                if _has_named_index(filtered_data):
+                    filtered_data.to_parquet(output_file, index=True)
+                else:
+                    filtered_data.to_parquet(output_file, index=False)
             del filtered_data, data_indexes
 
         ## Pesky memory!
@@ -131,6 +150,24 @@ def reduce_pixel_shards(
 ):
     """Reduce sharded source pixels into destination pixels.
 
+    In addition to combining multiple shards of data into a single
+    parquet file, this method will add a few new columns:
+
+        - `Norder` - the healpix order for the pixel
+        - `Dir` - the directory part, corresponding to the pixel
+        ` `Npix` - the healpix pixel
+        - `_hipscat_index` - optional - a spatially-correlated
+            64-bit index field.
+
+    Notes on `_hipscat_index`:
+
+        - if we generate the field, we will promote any previous
+            *named* pandas index field(s) to a column with
+            that name.
+        - see `hipscat.pixel_math.hipscat_id`
+            for more in-depth discussion of this field.
+
+
     Args:
         cache_path (str): where to read intermediate files
         origin_pixel_numbers (list[int]): high order pixels, with object
@@ -141,8 +178,12 @@ def reduce_pixel_shards(
             for the catalog's final pixel
         output_path (str): where to write the final catalog pixel data
         id_column (str): column for survey identifier, or other sortable column
+        add_hipscat_index (bool): should we add a _hipscat_index column to
+            the resulting parquet file?
         delete_input_files (bool): should we delete the intermediate files
             used as input for this method.
+        use_schema_file (str): use the parquet schema from the indicated
+            parquet file.
 
     Raises:
         ValueError: if the number of rows written doesn't equal provided
@@ -181,40 +222,35 @@ def reduce_pixel_shards(
             f" Expected {destination_pixel_size}, wrote {rows_written}"
         )
 
+    dataframe = merged_table.to_pandas()
     if id_column:
-        merged_table = merged_table.sort_by(id_column)
+        dataframe = dataframe.sort_values(id_column)
     if add_hipscat_index:
-        merged_table = merged_table.append_column(
-            "_hipscat_index",
-            [
-                pixel_math.compute_hipscat_id(
-                    merged_table[ra_column].to_pylist(),
-                    merged_table[dec_column].to_pylist(),
-                )
-            ],
+        dataframe["_hipscat_index"] = pixel_math.compute_hipscat_id(
+            dataframe[ra_column].values,
+            dataframe[dec_column].values,
         )
-        merged_table = merged_table.sort_by("_hipscat_index")
-    merged_table = merged_table.append_column(
-        "Norder",
-        [np.full(rows_written, fill_value=destination_pixel_order, dtype=np.int32)],
-    )
-    merged_table = merged_table.append_column(
-        "Dir",
-        [
-            np.full(
-                rows_written,
-                fill_value=int(destination_pixel_number / 10_000) * 10_000,
-                dtype=np.int32,
-            )
-        ],
-    )
-    merged_table = merged_table.append_column(
-        "Npix",
-        [np.full(rows_written, fill_value=destination_pixel_number, dtype=np.int32)],
-    )
-    pq.write_table(merged_table, where=destination_file)
 
-    del merged_table, tables
+    dataframe["Norder"] = np.full(
+        rows_written, fill_value=destination_pixel_order, dtype=np.int32
+    )
+    dataframe["Dir"] = np.full(
+        rows_written,
+        fill_value=int(destination_pixel_number / 10_000) * 10_000,
+        dtype=np.int32,
+    )
+    dataframe["Npix"] = np.full(
+        rows_written, fill_value=destination_pixel_number, dtype=np.int32
+    )
+
+    if add_hipscat_index:
+        ## If we had a meaningful index before, preserve it as a column.
+        if _has_named_index(dataframe):
+            dataframe = dataframe.reset_index()
+        dataframe = dataframe.set_index("_hipscat_index").sort_index()
+    dataframe.to_parquet(destination_file)
+
+    del dataframe, merged_table, tables
 
     if delete_input_files:
         for pixel in origin_pixel_numbers:
