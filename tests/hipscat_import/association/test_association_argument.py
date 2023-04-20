@@ -120,20 +120,6 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             overwrite=True,
         )
 
-    with pytest.raises(ValueError, match="join_how"):
-        AssociationArguments(
-            primary_input_catalog_path=small_sky_object_catalog,
-            primary_id_column="id",
-            primary_join_column="id",
-            join_input_catalog_path=small_sky_object_catalog,
-            join_id_column="id",
-            join_foreign_key="id",
-            output_path=tmp_path,
-            output_catalog_name="small_sky_self_join",
-            join_how="",  ## empty
-            overwrite=True,
-        )
-
 
 def test_column_names(tmp_path, small_sky_object_catalog):
     """Test validation of column names."""
@@ -160,23 +146,6 @@ def test_column_names(tmp_path, small_sky_object_catalog):
             join_foreign_key="id",
             output_path=tmp_path,
             output_catalog_name="bad_columns",  ## empty
-            overwrite=True,
-        )
-
-
-def test_join_how(tmp_path, small_sky_object_catalog):
-    """Test validation of join how."""
-    with pytest.raises(ValueError, match="join_how"):
-        AssociationArguments(
-            primary_input_catalog_path=small_sky_object_catalog,
-            primary_id_column="id",
-            primary_join_column="id",
-            join_input_catalog_path=small_sky_object_catalog,
-            join_id_column="id",
-            join_foreign_key="id",
-            output_path=tmp_path,
-            output_catalog_name="bad_columns",
-            join_how="middle",  ## not a valid join option
             overwrite=True,
         )
 

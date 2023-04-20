@@ -23,7 +23,6 @@ class AssociationArguments(RuntimeArguments):
     join_id_column: str = ""
     join_foreign_key: str = ""
 
-    join_how: str = "inner"
     compute_partition_size: int = 1_000_000_000
 
     def __post_init__(self):
@@ -48,9 +47,6 @@ class AssociationArguments(RuntimeArguments):
             raise ValueError("join_foreign_key is required")
         if self.join_id_column in ["primary_id", "join_id"]:
             raise ValueError("join_id_column uses a reserved column name")
-
-        if self.join_how not in ["left", "right", "outer", "inner"]:
-            raise ValueError("join_how must be one of left, right, outer, or inner")
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")

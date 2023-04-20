@@ -1,11 +1,66 @@
 """Test behavior of map reduce methods in association."""
 
+import json
 import os
 
 import pandas as pd
 import pytest
 
-from hipscat_import.association.map_reduce import reduce_association
+import hipscat_import.catalog.run_import as runner
+from hipscat_import.association.arguments import AssociationArguments
+from hipscat_import.association.map_reduce import (map_association,
+                                                   reduce_association)
+from hipscat_import.catalog.arguments import ImportArguments
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(15)
+def test_map_association(
+    dask_client, tmp_path, formats_headers_csv, small_sky_object_catalog
+):
+    """Test association with partially-overlapping dataset.
+    
+    This has the added benefit of testing a freshly-minted catalog as input."""
+    args = ImportArguments(
+        output_catalog_name="subset_catalog",
+        input_file_list=[formats_headers_csv],
+        input_format="csv",
+        output_path=tmp_path,
+        ra_column="ra_mean",
+        dec_column="dec_mean",
+        id_column="object_id",
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+    )
+    subset_catalog_path = args.catalog_path
+
+    runner.run_with_client(args, dask_client)
+
+    with open(
+        os.path.join(subset_catalog_path, "catalog_info.json"), "r", encoding="utf-8"
+    ) as metadata_info:
+        metadata_keywords = json.load(metadata_info)
+        assert metadata_keywords["total_rows"] == 8
+
+    args = AssociationArguments(
+        primary_input_catalog_path=small_sky_object_catalog,
+        primary_id_column="id",
+        primary_join_column="id",
+        join_input_catalog_path=subset_catalog_path,
+        output_catalog_name="association_inner",
+        join_foreign_key="object_id",
+        join_id_column="object_id",
+        output_path=tmp_path,
+        progress_bar=False,
+    )
+
+    map_association(args)
+    intermediate_partitions_file = os.path.join(
+        args.catalog_path, "intermediate", "partitions.csv"
+    )
+    data_frame = pd.read_csv(intermediate_partitions_file)
+    assert data_frame["primary_hipscat_index"].sum() == 8
 
 
 def test_reduce_bad_inputs(tmp_path, assert_text_file_matches):

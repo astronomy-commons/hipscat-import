@@ -40,6 +40,7 @@ def small_sky_single_file(test_data_dir):
 def small_sky_object_catalog(test_data_dir):
     return os.path.join(test_data_dir, "small_sky_object_catalog")
 
+
 @pytest.fixture
 def small_sky_source_dir(test_data_dir):
     return os.path.join(test_data_dir, "small_sky_source")
@@ -48,6 +49,7 @@ def small_sky_source_dir(test_data_dir):
 @pytest.fixture
 def small_sky_source_catalog(test_data_dir):
     return os.path.join(test_data_dir, "small_sky_source_catalog")
+
 
 @pytest.fixture
 def blank_data_dir(test_data_dir):

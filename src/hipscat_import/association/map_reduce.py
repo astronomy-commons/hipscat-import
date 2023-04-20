@@ -24,7 +24,6 @@ def map_association(args):
     ## NB: We may be joining on a column that is NOT the natural primary key.
     single_primary_column = args.primary_id_column == args.primary_join_column
     read_columns = [
-        "_hipscat_index",
         "Norder",
         "Dir",
         "Npix",
@@ -48,14 +47,15 @@ def map_association(args):
     }
     if not single_primary_column:
         rename_columns[args.primary_id_column] = "primary_id"
-    primary_index = primary_index.rename(columns=rename_columns).set_index(
-        "primary_join"
+    primary_index = (
+        primary_index.reset_index()
+        .rename(columns=rename_columns)
+        .set_index("primary_join")
     )
 
     ## Read and massage join input data
     single_join_column = args.join_id_column == args.join_foreign_key
     read_columns = [
-        "_hipscat_index",
         "Norder",
         "Dir",
         "Npix",
@@ -82,27 +82,23 @@ def map_association(args):
     }
     if not single_join_column:
         rename_columns[args.join_id_column] = "join_id"
-    join_index = join_index.rename(columns=rename_columns).set_index("join_to_primary")
+    join_index = (
+        join_index.reset_index()
+        .rename(columns=rename_columns)
+        .set_index("join_to_primary")
+    )
 
     ## Join the two data sets on the shared join predicate.
     join_data = primary_index.merge(
-        join_index, how=args.join_how, left_index=True, right_index=True
-    ).reset_index()
+        join_index, how="inner", left_index=True, right_index=True
+    )
 
     ## Write out a summary of each partition join
     groups = (
         join_data.groupby(
             ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix"],
             group_keys=False,
-        )[
-            "Norder",
-            "Dir",
-            "Npix",
-            "join_Norder",
-            "join_Dir",
-            "join_Npix",
-            "primary_hipscat_index",
-        ]
+        )["primary_hipscat_index"]
         .count()
         .compute()
     )
