@@ -19,7 +19,7 @@ from hipscat_import.catalog.arguments import ImportArguments
 def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
-    raw_histogram = resume.read_histogram(args.tmp_path, args.highest_healpix_order)
+    raw_histogram = resume.read_histogram(args.tmp_path, args.mapping_healpix_order)
     if resume.is_mapping_done(args.tmp_path):
         return raw_histogram
 
@@ -36,7 +36,7 @@ def _map_pixels(args, client):
                 input_file=file_path,
                 file_reader=args.file_reader,
                 filter_function=args.filter_function,
-                highest_order=args.highest_healpix_order,
+                highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
                 shard_suffix=i,
@@ -68,7 +68,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
 
     futures = []
     for destination_pixel, source_pixels in destination_pixel_map.items():
-        destination_pixel_key = f"{destination_pixel[0]}_{destination_pixel[1]}"
+        destination_pixel_key = f"{destination_pixel.order}_{destination_pixel.pixel}"
         if destination_pixel_key in reduced_keys:
             continue
         futures.append(
@@ -76,10 +76,10 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 mr.reduce_pixel_shards,
                 key=destination_pixel_key,
                 cache_path=args.tmp_path,
-                origin_pixel_numbers=source_pixels,
-                destination_pixel_order=destination_pixel[0],
-                destination_pixel_number=destination_pixel[1],
-                destination_pixel_size=destination_pixel[2],
+                origin_pixel_numbers=source_pixels[1],
+                destination_pixel_order=destination_pixel.order,
+                destination_pixel_number=destination_pixel.pixel,
+                destination_pixel_size=source_pixels[0],
                 output_path=args.catalog_path,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
@@ -122,36 +122,44 @@ def run_with_client(args, client):
     _validate_args(args)
     raw_histogram = _map_pixels(args, client)
 
-    step_progress = tqdm(total=2, desc="Binning  ", disable=not args.progress_bar)
-    pixel_map = pixel_math.generate_alignment(
-        raw_histogram, args.highest_healpix_order, args.pixel_threshold
-    )
-    step_progress.update(1)
-    destination_pixel_map = pixel_math.generate_destination_pixel_map(
-        raw_histogram, pixel_map
-    )
-    step_progress.update(1)
-    step_progress.close()
+    with tqdm(
+        total=1, desc="Binning  ", disable=not args.progress_bar
+    ) as step_progress:
+        if args.constant_healpix_order >= 0:
+            destination_pixel_map = pixel_math.generate_constant_pixel_map(
+                histogram=raw_histogram,
+                constant_healpix_order=args.constant_healpix_order,
+            )
+        else:
+            destination_pixel_map = pixel_math.compute_pixel_map(
+                raw_histogram,
+                highest_order=args.highest_healpix_order,
+                threshold=args.pixel_threshold,
+            )
+        step_progress.update(1)
 
     if not args.debug_stats_only:
         _reduce_pixels(args, destination_pixel_map, client)
 
     # All done - write out the metadata
-    step_progress = tqdm(total=6, desc="Finishing", disable=not args.progress_bar)
-    catalog_parameters = args.to_catalog_parameters()
-    catalog_parameters.total_rows = int(raw_histogram.sum())
-    io.write_provenance_info(catalog_parameters, args.provenance_info())
-    step_progress.update(1)
+    with tqdm(
+        total=6, desc="Finishing", disable=not args.progress_bar
+    ) as step_progress:
+        catalog_parameters = args.to_catalog_parameters()
+        catalog_parameters.total_rows = int(raw_histogram.sum())
+        io.write_provenance_info(catalog_parameters, args.provenance_info())
+        step_progress.update(1)
 
-    io.write_catalog_info(catalog_parameters)
-    step_progress.update(1)
-    if not args.debug_stats_only:
-        io.write_parquet_metadata(args.catalog_path)
-    step_progress.update(1)
-    io.write_fits_map(args.catalog_path, raw_histogram)
-    step_progress.update(1)
-    io.write_partition_info(catalog_parameters, destination_pixel_map)
-    step_progress.update(1)
-    resume.clean_resume_files(args.tmp_path)
-    step_progress.update(1)
-    step_progress.close()
+        io.write_catalog_info(catalog_parameters)
+        step_progress.update(1)
+        if not args.debug_stats_only:
+            io.write_parquet_metadata(args.catalog_path)
+        step_progress.update(1)
+        io.write_fits_map(args.catalog_path, raw_histogram)
+        step_progress.update(1)
+        io.write_partition_info(
+            catalog_parameters, destination_healpix_pixel_map=destination_pixel_map
+        )
+        step_progress.update(1)
+        resume.clean_resume_files(args.tmp_path)
+        step_progress.update(1)

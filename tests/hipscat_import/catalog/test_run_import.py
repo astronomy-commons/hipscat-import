@@ -3,8 +3,9 @@
 import os
 import shutil
 
-import pandas as pd
+import numpy as np
 import numpy.testing as npt
+import pandas as pd
 import pytest
 
 import hipscat_import.catalog.resume_files as rf
@@ -503,3 +504,70 @@ def test_dask_runner_multiindex(
         ["obj_id", "band", "ra", "dec", "mag", "Norder", "Dir", "Npix"],
     )
     assert_parquet_file_ids(output_file, "obj_id", index_arrays[0])
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.timeout(5)
+def test_dask_runner_constant_healpix_order(
+    dask_client,
+    small_sky_parts_dir,
+    assert_text_file_matches,
+    tmp_path,
+):
+    """Test basic execution."""
+    args = ImportArguments(
+        output_catalog_name="small_sky_object_catalog",
+        input_path=small_sky_parts_dir,
+        input_format="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        constant_healpix_order=2,
+        progress_bar=False,
+    )
+
+    runner.run_with_client(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    expected_lines = [
+        "{",
+        '    "catalog_name": "small_sky_object_catalog",',
+        '    "catalog_type": "object",',
+        '    "epoch": "J2000",',
+        '    "ra_kw": "ra",',
+        '    "dec_kw": "dec",',
+        '    "total_rows": 131',
+        "}",
+    ]
+    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
+    assert_text_file_matches(expected_lines, metadata_filename)
+
+    # Check that the partition info file exists - all pixels at order 2!
+    expected_lines = [
+        "Norder,Dir,Npix,num_rows",
+        "2,0,176,4",
+        "2,0,177,11",
+        "2,0,178,14",
+        "2,0,179,13",
+        "2,0,180,5",
+        "2,0,181,7",
+        "2,0,182,8",
+        "2,0,183,9",
+        "2,0,184,11",
+        "2,0,185,23",
+        "2,0,186,4",
+        "2,0,187,4",
+        "2,0,188,17",
+        "2,0,190,1",
+    ]
+    metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
+    assert_text_file_matches(expected_lines, metadata_filename)
+
+    # Pick a parquet file and make sure it contains as many rows as we expect
+    output_file = os.path.join(
+        args.catalog_path, "Norder=2", "Dir=0", "Npix=178.parquet"
+    )
+
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert len(data_frame) == 14
+    ids = data_frame["id"]
+    assert np.logical_and(ids >= 700, ids < 832).all()

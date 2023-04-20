@@ -136,6 +136,15 @@ def test_healpix_args(blank_data_dir, tmp_path):
             pixel_threshold=3,
             overwrite=True,
         )
+    with pytest.raises(ValueError, match="constant_healpix_order"):
+        ImportArguments(
+            output_catalog_name="catalog",
+            input_path=blank_data_dir,
+            input_format="csv",
+            output_path=tmp_path,
+            constant_healpix_order=30,
+            overwrite=True,
+        )
 
 
 def test_catalog_type(blank_data_dir, tmp_path):

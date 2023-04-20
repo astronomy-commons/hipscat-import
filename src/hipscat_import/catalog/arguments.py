@@ -77,8 +77,10 @@ class ImportArguments(RuntimeArguments):
     add_hipscat_index: bool = True
     use_schema_file: str | None = None
     resume: bool = False
+    constant_healpix_order: int = -1
     highest_healpix_order: int = 10
     pixel_threshold: int = 1_000_000
+    mapping_healpix_order: int = -1
     debug_stats_only: bool = False
     filter_function: Callable | None = None
     file_reader: InputReader | None = None
@@ -94,13 +96,30 @@ class ImportArguments(RuntimeArguments):
         if not self.input_format:
             raise ValueError("input_format is required")
 
-        if not 0 <= self.highest_healpix_order <= hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
-            raise ValueError(
-                "highest_healpix_order should be between 0 and "
-                f"{hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
-            )
-        if not 100 <= self.pixel_threshold <= 10_000_000:
-            raise ValueError("pixel_threshold should be between 100 and 10,000,000")
+        if self.constant_healpix_order >= 0:
+            if (
+                not 0
+                <= self.constant_healpix_order
+                <= hipscat_id.HIPSCAT_ID_HEALPIX_ORDER
+            ):
+                raise ValueError(
+                    "constant_healpix_order should be between 0 and ",
+                    f"{hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}",
+                )
+            self.mapping_healpix_order = self.constant_healpix_order
+        else:
+            if (
+                not 0
+                <= self.highest_healpix_order
+                <= hipscat_id.HIPSCAT_ID_HEALPIX_ORDER
+            ):
+                raise ValueError(
+                    "highest_healpix_order should be between 0 and "
+                    f"{hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
+                )
+            if not 100 <= self.pixel_threshold <= 10_000_000:
+                raise ValueError("pixel_threshold should be between 100 and 10,000,000")
+            self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
             raise ValueError("catalog_type should be one of `source` or `object`")
@@ -169,8 +188,10 @@ class ImportArguments(RuntimeArguments):
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
             "id_column": self.id_column,
+            "constant_healpix_order": self.constant_healpix_order,
             "highest_healpix_order": self.highest_healpix_order,
             "pixel_threshold": self.pixel_threshold,
+            "mapping_healpix_order": self.mapping_healpix_order,
             "debug_stats_only": self.debug_stats_only,
             "file_reader_info": self.file_reader.provenance_info(),
         }
