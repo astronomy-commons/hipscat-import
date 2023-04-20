@@ -3,7 +3,7 @@
 
 import pytest
 
-from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.catalog.arguments import ImportArguments, check_healpix_order_range
 
 # pylint: disable=protected-access
 
@@ -136,6 +136,15 @@ def test_healpix_args(blank_data_dir, tmp_path):
             pixel_threshold=3,
             overwrite=True,
         )
+    with pytest.raises(ValueError, match="constant_healpix_order"):
+        ImportArguments(
+            output_catalog_name="catalog",
+            input_path=blank_data_dir,
+            input_format="csv",
+            output_path=tmp_path,
+            constant_healpix_order=30,
+            overwrite=True,
+        )
 
 
 def test_catalog_type(blank_data_dir, tmp_path):
@@ -184,3 +193,25 @@ def test_provenance_info(blank_data_dir, tmp_path):
 
     runtime_args = args.provenance_info()["runtime_args"]
     assert "epoch" in runtime_args
+
+
+def test_check_healpix_order_range():
+    """Test method check_healpix_order_range"""
+    check_healpix_order_range(5, "order_field")
+    check_healpix_order_range(5, "order_field", lower_bound=0, upper_bound=19)
+
+    with pytest.raises(ValueError, match="positive"):
+        check_healpix_order_range(5, "order_field", lower_bound=-1)
+
+    with pytest.raises(ValueError, match="19"):
+        check_healpix_order_range(5, "order_field", upper_bound=20)
+
+    with pytest.raises(ValueError, match="order_field"):
+        check_healpix_order_range(-1, "order_field")
+    with pytest.raises(ValueError, match="order_field"):
+        check_healpix_order_range(30, "order_field")
+
+    with pytest.raises(TypeError, match="not supported"):
+        check_healpix_order_range("two", "order_field")
+    with pytest.raises(TypeError, match="not supported"):
+        check_healpix_order_range(5, "order_field", upper_bound="ten")

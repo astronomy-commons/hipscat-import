@@ -41,11 +41,17 @@ class ImportArguments(RuntimeArguments):
             we overwrite and create a new catalog.
         resume (bool): if there are existing intermediate resume files, should we
             read those and continue to create a new catalog where we left off.
+        constant_healpix_order (int): healpix order to use when mapping. if this is
+            a positive number, this will be the order of all final pixels and we
+            will not combine pixels according to the threshold.
         highest_healpix_order (int): healpix order to use when mapping. this will
             not necessarily be the order used in the final catalog, as we may combine
             pixels that don't meed the threshold.
         pixel_threshold (int): maximum number of rows for a single resulting pixel.
             we may combine hierarchically until we near the `pixel_threshold`
+        mapping_healpix_order (int): healpix order to use when mapping. will be
+            `highest_healpix_order` unless a positive value is provided for
+            `constant_healpix_order`.
         debug_stats_only (bool): do not perform a map reduce and don't create a new
             catalog. generate the partition info.
         tmp_path (str): path for storing intermediate files
@@ -77,8 +83,10 @@ class ImportArguments(RuntimeArguments):
     add_hipscat_index: bool = True
     use_schema_file: str | None = None
     resume: bool = False
+    constant_healpix_order: int = -1
     highest_healpix_order: int = 10
     pixel_threshold: int = 1_000_000
+    mapping_healpix_order: int = -1
     debug_stats_only: bool = False
     filter_function: Callable | None = None
     file_reader: InputReader | None = None
@@ -94,13 +102,18 @@ class ImportArguments(RuntimeArguments):
         if not self.input_format:
             raise ValueError("input_format is required")
 
-        if not 0 <= self.highest_healpix_order <= hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
-            raise ValueError(
-                "highest_healpix_order should be between 0 and "
-                f"{hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
+        if self.constant_healpix_order >= 0:
+            check_healpix_order_range(
+                self.constant_healpix_order, "constant_healpix_order"
             )
-        if not 100 <= self.pixel_threshold <= 10_000_000:
-            raise ValueError("pixel_threshold should be between 100 and 10,000,000")
+            self.mapping_healpix_order = self.constant_healpix_order
+        else:
+            check_healpix_order_range(
+                self.highest_healpix_order, "highest_healpix_order"
+            )
+            if not 100 <= self.pixel_threshold <= 10_000_000:
+                raise ValueError("pixel_threshold should be between 100 and 10,000,000")
+            self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
             raise ValueError("catalog_type should be one of `source` or `object`")
@@ -169,11 +182,40 @@ class ImportArguments(RuntimeArguments):
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
             "id_column": self.id_column,
+            "constant_healpix_order": self.constant_healpix_order,
             "highest_healpix_order": self.highest_healpix_order,
             "pixel_threshold": self.pixel_threshold,
+            "mapping_healpix_order": self.mapping_healpix_order,
             "debug_stats_only": self.debug_stats_only,
             "file_reader_info": self.file_reader.provenance_info(),
         }
+
+
+def check_healpix_order_range(
+    order, field_name, lower_bound=0, upper_bound=hipscat_id.HIPSCAT_ID_HEALPIX_ORDER
+):
+    """Helper method to heck if the `order` is within the range determined by the
+    `lower_bound` and `upper_bound`, inclusive.
+
+    Args:
+        order (int): healpix order to check
+        field_name (str): field name to use in the error message
+        lower_bound (int): lower bound of range
+        upper_bound (int): upper bound of range
+    Raise:
+        ValueError if the order is outside the specified range, or bounds
+            are unreasonable.
+    """
+    if lower_bound < 0:
+        raise ValueError("healpix orders must be positive")
+    if upper_bound > hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
+        raise ValueError(
+            f"healpix order should be <= {hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
+        )
+    if not lower_bound <= order <= upper_bound:
+        raise ValueError(
+            f"{field_name} should be between {lower_bound} and {upper_bound}"
+        )
 
 
 def passthrough_filter_function(data: pd.DataFrame) -> pd.DataFrame:
