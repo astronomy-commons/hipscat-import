@@ -1,0 +1,53 @@
+{
+    "catalog_name": "small_sky_object_catalog",
+    "catalog_type": "object",
+    "version": "0.0.10.dev7+g0a79f90.d20230418",
+    "generation_date": "2023.04.20",
+    "epoch": "J2000",
+    "ra_kw": "ra",
+    "dec_kw": "dec",
+    "total_rows": 131,
+    "tool_args": {
+        "tool_name": "hipscat_import",
+        "version": "0.0.4.dev28+g2e31821.d20230420",
+        "runtime_args": {
+            "catalog_name": "small_sky_object_catalog",
+            "output_path": "/home/delucchi/git/association/tests/hipscat_import/data",
+            "output_catalog_name": "small_sky_object_catalog",
+            "tmp_dir": "",
+            "overwrite": true,
+            "dask_tmp": "/tmp/pytest-of-delucchi/pytest-1261/test_dask_runner0",
+            "dask_n_workers": 1,
+            "dask_threads_per_worker": 1,
+            "catalog_path": "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_object_catalog",
+            "tmp_path": "/tmp/pytest-of-delucchi/pytest-1261/test_dask_runner0/small_sky_object_catalog/intermediate",
+            "epoch": "J2000",
+            "catalog_type": "object",
+            "input_path": "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_parts",
+            "input_paths": [
+                "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_parts/catalog_00_of_05.csv",
+                "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_parts/catalog_01_of_05.csv",
+                "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_parts/catalog_02_of_05.csv",
+                "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_parts/catalog_03_of_05.csv",
+                "/home/delucchi/git/association/tests/hipscat_import/data/small_sky_parts/catalog_04_of_05.csv"
+            ],
+            "input_format": "csv",
+            "input_file_list": [],
+            "ra_column": "ra",
+            "dec_column": "dec",
+            "id_column": "id",
+            "highest_healpix_order": 1,
+            "pixel_threshold": 1000000,
+            "debug_stats_only": false,
+            "file_reader_info": {
+                "input_reader_type": "CsvReader",
+                "chunksize": 500000,
+                "header": "infer",
+                "schema_file": null,
+                "separator": ",",
+                "column_names": null,
+                "type_map": {}
+            }
+        }
+    }
+}

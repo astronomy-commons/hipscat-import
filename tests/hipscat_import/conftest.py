@@ -1,3 +1,5 @@
+"""Fixtures for testing import tool actions."""
+
 import os
 import re
 
@@ -7,7 +9,7 @@ import pytest
 from dask.distributed import Client
 
 
-@pytest.fixture(scope="package", name="dask_client")
+@pytest.fixture(scope="session", name="dask_client")
 def dask_client():
     """Create a single client for use by all unit test cases."""
     client = Client()
@@ -35,8 +37,18 @@ def small_sky_single_file(test_data_dir):
 
 
 @pytest.fixture
+def small_sky_object_catalog(test_data_dir):
+    return os.path.join(test_data_dir, "small_sky_object_catalog")
+
+
+@pytest.fixture
 def small_sky_source_dir(test_data_dir):
     return os.path.join(test_data_dir, "small_sky_source")
+
+
+@pytest.fixture
+def small_sky_source_catalog(test_data_dir):
+    return os.path.join(test_data_dir, "small_sky_source_catalog")
 
 
 @pytest.fixture
