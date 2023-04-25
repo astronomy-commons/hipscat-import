@@ -23,6 +23,8 @@ def run(args):
     with tqdm(
         total=4, desc="Finishing", disable=not args.progress_bar
     ) as step_progress:
+        # pylint: disable=duplicate-code
+        # Very similar to /association/run_association.py
         catalog_params = args.to_catalog_parameters()
         catalog_params.total_rows = int(rows_written)
         write_metadata.write_provenance_info(catalog_params, args.provenance_info())
