@@ -27,8 +27,7 @@ def test_bad_args():
         runner.run(args)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_resume_dask_runner(
     dask_client,
     small_sky_parts_dir,
@@ -151,8 +150,7 @@ def test_resume_dask_runner(
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_dask_runner(
     dask_client,
     small_sky_parts_dir,
@@ -204,8 +202,7 @@ def test_dask_runner(
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_dask_runner_source_table(
     dask_client,
     small_sky_source_dir,
@@ -267,7 +264,7 @@ def test_dask_runner_source_table(
     assert_text_file_matches(expected_lines, metadata_filename)
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     """Test basic execution, without generating catalog parquet outputs."""
     args = ImportArguments(
@@ -294,8 +291,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     assert not os.path.exists(output_file)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_dask_runner_mixed_schema_csv(
     dask_client,
     mixed_schema_csv_dir,
@@ -330,8 +326,7 @@ def test_dask_runner_mixed_schema_csv(
     assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(10)
+@pytest.mark.dask
 def test_dask_runner_preserve_index(
     dask_client,
     formats_pandasindex,
@@ -416,8 +411,7 @@ def test_dask_runner_preserve_index(
     assert_parquet_file_ids(output_file, "obs_id", expected_indexes)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(10)
+@pytest.mark.dask
 def test_dask_runner_multiindex(
     dask_client,
     formats_multiindex,
@@ -506,8 +500,7 @@ def test_dask_runner_multiindex(
     assert_parquet_file_ids(output_file, "obj_id", index_arrays[0])
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_dask_runner_constant_healpix_order(
     dask_client,
     small_sky_parts_dir,

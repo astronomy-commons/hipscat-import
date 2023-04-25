@@ -17,6 +17,16 @@ def dask_client():
     client.close()
 
 
+def pytest_collection_modifyitems(items):
+    """Modify dask unit tests to ignore warnings and have a longer timeout"""
+    for item in items:
+        is_dask = False
+        for _ in item.iter_markers(name="dask"):
+            is_dask=True
+        if is_dask:
+            item.add_marker(pytest.mark.timeout(5))
+            item.add_marker(pytest.mark.filterwarnings("ignore::DeprecationWarning"))
+
 # pylint: disable=missing-function-docstring, redefined-outer-name
 TEST_DIR = os.path.dirname(__file__)
 

@@ -13,8 +13,7 @@ from hipscat_import.association.map_reduce import (map_association,
 from hipscat_import.catalog.arguments import ImportArguments
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(15)
+@pytest.mark.dask
 def test_map_association(
     dask_client, tmp_path, formats_headers_csv, small_sky_object_catalog
 ):
