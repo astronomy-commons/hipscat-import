@@ -10,6 +10,7 @@ from .file_readers import (
     get_file_reader,
 )
 from .map_reduce import map_to_pixels, reduce_pixel_shards, split_pixels
+from .margin_cache import generate_margin_cache, generate_margin_cache_with_client
 from .resume_files import (
     clean_resume_files,
     is_mapping_done,
