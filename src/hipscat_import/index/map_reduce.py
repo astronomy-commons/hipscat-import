@@ -2,6 +2,7 @@
 
 import dask.dataframe as dd
 import numpy as np
+from dask.distributed import progress, wait
 from hipscat.io import file_io
 
 
@@ -31,13 +32,16 @@ def create_index(args):
     data = data.reset_index()
     if not args.include_hipscat_index:
         data = data.drop(columns=["_hipscat_index"])
-    data = data.set_index(args.indexing_column)
     data = data.repartition(partition_size=args.compute_partition_size)
-    data.to_parquet(
+    data = data.set_index(args.indexing_column)
+    result = data.to_parquet(
         path=index_dir,
         engine="pyarrow",
-        partition_on=[],
-        write_index=True,
         compute_kwargs={"partition_size": args.compute_partition_size},
     )
+    if args.progress_bar:
+        # pragma: no cover
+        progress(result)
+    else:
+        wait(result)
     return len(data)
