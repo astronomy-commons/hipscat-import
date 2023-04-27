@@ -24,8 +24,7 @@ def test_bad_args():
         runner.run(args)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(15)
+@pytest.mark.dask
 def test_object_to_source(
     small_sky_object_catalog,
     small_sky_source_catalog,
@@ -107,8 +106,7 @@ def test_object_to_source(
     assert np.logical_and(ids >= 70_000, ids < 87161).all()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(15)
+@pytest.mark.dask
 def test_source_to_object(
     small_sky_object_catalog,
     small_sky_source_catalog,
@@ -190,8 +188,7 @@ def test_source_to_object(
     assert np.logical_and(ids >= 700, ids < 832).all()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(15)
+@pytest.mark.dask
 def test_self_join(
     small_sky_object_catalog,
     tmp_path,

@@ -60,3 +60,6 @@ hc = "hipscat_import.control:main"
 
 [tool.pytest.ini_options]
 timeout = 1
+markers = [
+    "dask: mark tests as having a dask client runtime dependency",
+]
