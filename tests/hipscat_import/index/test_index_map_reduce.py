@@ -12,8 +12,7 @@ import hipscat_import.index.map_reduce as mr
 from hipscat_import.index.arguments import IndexArguments
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_create_index(
     small_sky_object_catalog,
     assert_parquet_file_index,
@@ -46,8 +45,7 @@ def test_create_index(
     assert (data_frame["Norder"] == 0).all()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
     """Create an index for simple object catalog"""
     args = IndexArguments(
@@ -70,8 +68,7 @@ def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
     assert data_frame.index.name == "id"
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path):
     """Create an index for simple object catalog"""
     args = IndexArguments(
@@ -94,8 +91,7 @@ def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path):
     assert data_frame.index.name == "id"
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_create_index_source(
     small_sky_source_catalog,
     assert_parquet_file_index,
@@ -129,8 +125,7 @@ def test_create_index_source(
     assert np.logical_and(data_frame["Norder"] >= 0, data_frame["Norder"] <= 2).all()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_create_index_source_by_object(
     small_sky_source_catalog,
     assert_parquet_file_index,
@@ -163,8 +158,7 @@ def test_create_index_source_by_object(
     assert len(data_frame) == 17161
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_create_index_extra_columns(
     small_sky_source_catalog,
     assert_parquet_file_index,

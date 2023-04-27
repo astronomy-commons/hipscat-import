@@ -23,8 +23,7 @@ def test_bad_args():
         runner.run(args)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.timeout(5)
+@pytest.mark.dask
 def test_run_index(
     small_sky_object_catalog,
     tmp_path,

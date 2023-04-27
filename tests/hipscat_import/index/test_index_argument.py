@@ -116,6 +116,18 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
     )
 
 
+def test_compute_partition_size(tmp_path, small_sky_object_catalog):
+    """Test validation of compute_partition_size."""
+    with pytest.raises(ValueError, match="compute_partition_size"):
+        IndexArguments(
+            input_catalog_path=small_sky_object_catalog,
+            indexing_column="id",
+            output_path=tmp_path,
+            output_catalog_name="small_sky_object_index",
+            compute_partition_size=10,  ## not a valid join option
+        )
+
+
 def test_to_catalog_parameters(small_sky_object_catalog, tmp_path):
     """Verify creation of catalog parameters for index to be created."""
     args = IndexArguments(

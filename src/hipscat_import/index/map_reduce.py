@@ -39,8 +39,7 @@ def create_index(args):
         engine="pyarrow",
         compute_kwargs={"partition_size": args.compute_partition_size},
     )
-    if args.progress_bar:
-        # pragma: no cover
+    if args.progress_bar:  # pragma: no cover
         progress(result)
     else:
         wait(result)
