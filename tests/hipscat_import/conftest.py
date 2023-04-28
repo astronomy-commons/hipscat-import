@@ -18,7 +18,7 @@ def dask_client():
 
 
 def pytest_collection_modifyitems(items):
-    """Modify dask unit tests to 
+    """Modify dask unit tests to
         - ignore event loop deprecation warnings
         - have a longer timeout default timeout (5 seconds instead of 1 second)
         - require use of the `dask_client` fixture, even if it's not requsted

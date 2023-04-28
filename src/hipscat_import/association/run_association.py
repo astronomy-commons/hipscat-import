@@ -9,7 +9,8 @@ from hipscat.io import file_io, write_metadata
 from tqdm import tqdm
 
 from hipscat_import.association.arguments import AssociationArguments
-from hipscat_import.association.map_reduce import map_association, reduce_association
+from hipscat_import.association.map_reduce import (map_association,
+                                                   reduce_association)
 
 
 def _validate_args(args):
@@ -38,6 +39,8 @@ def run(args):
     with tqdm(
         total=4, desc="Finishing", disable=not args.progress_bar
     ) as step_progress:
+        # pylint: disable=duplicate-code
+        # Very similar to /index/run_index.py
         catalog_params = args.to_catalog_parameters()
         catalog_params.total_rows = int(rows_written)
         write_metadata.write_provenance_info(catalog_params, args.provenance_info())
