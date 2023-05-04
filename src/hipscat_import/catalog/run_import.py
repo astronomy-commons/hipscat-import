@@ -50,13 +50,13 @@ def _map_pixels(args, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        if future.status == "error":
+        if future.status == "error": # pragma: no cover
             some_error = True
         raw_histogram = np.add(raw_histogram, result)
         resume.write_mapping_start_key(args.tmp_path, future.key)
         resume.write_histogram(args.tmp_path, raw_histogram)
         resume.write_mapping_done_key(args.tmp_path, future.key)
-    if some_error:
+    if some_error: # pragma: no cover
         raise RuntimeError("Some mapping stages failed. See logs for details.")
     resume.set_mapping_done(args.tmp_path)
     return raw_histogram
@@ -98,10 +98,10 @@ def _split_pixels(args, alignment_future, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        if future.status == "error":
+        if future.status == "error": # pragma: no cover
             some_error = True
         resume.write_splitting_done_key(args.tmp_path, future.key)
-    if some_error:
+    if some_error: # pragma: no cover
         raise RuntimeError("Some splitting stages failed. See logs for details.")
     resume.set_splitting_done(args.tmp_path)
 
@@ -143,10 +143,10 @@ def _reduce_pixels(args, destination_pixel_map, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        if future.status == "error":
+        if future.status == "error": # pragma: no cover
             some_error = True
         resume.write_reducing_key(args.tmp_path, future.key)
-    if some_error:
+    if some_error: # pragma: no cover
         raise RuntimeError("Some reducing stages failed. See logs for details.")
     resume.set_reducing_done(args.tmp_path)
 

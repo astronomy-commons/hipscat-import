@@ -127,9 +127,9 @@ def split_pixels(
     highest_order,
     ra_column,
     dec_column,
-    cache_path: FilePointer = None,
-    filter_function=None,
+    cache_path: FilePointer,
     alignment=None,
+    filter_function=None,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
 

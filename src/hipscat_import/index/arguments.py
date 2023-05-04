@@ -1,7 +1,7 @@
 """Utility to hold all arguments required throughout indexing"""
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from hipscat.catalog import Catalog, CatalogParameters
 
@@ -14,7 +14,7 @@ class IndexArguments(RuntimeArguments):
 
     ## Input
     input_catalog_path: str = ""
-    input_catalog: Catalog = None
+    input_catalog: Optional[Catalog] = None
     indexing_column: str = ""
     extra_columns: List[str] = field(default_factory=list)
 
