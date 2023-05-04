@@ -19,8 +19,6 @@ from hipscat_import.runtime_arguments import RuntimeArguments
 @dataclass
 class ImportArguments(RuntimeArguments):
     """Container class for holding partitioning arguments
-
-
     Attributes:
         catalog_name (str): short, convenient name for the catalog.
         epoch (str): astronomical epoch for the data. defaults to "J2000"
@@ -157,7 +155,6 @@ class ImportArguments(RuntimeArguments):
 
     def to_catalog_parameters(self) -> CatalogParameters:
         """Convert importing arguments into hipscat catalog parameters.
-
         Returns:
             CatalogParameters for catalog being created.
         """
@@ -196,7 +193,6 @@ def check_healpix_order_range(
 ):
     """Helper method to heck if the `order` is within the range determined by the
     `lower_bound` and `upper_bound`, inclusive.
-
     Args:
         order (int): healpix order to check
         field_name (str): field name to use in the error message

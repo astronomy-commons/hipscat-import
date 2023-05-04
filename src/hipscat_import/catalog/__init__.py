@@ -1,6 +1,7 @@
 """All modules for importing new catalogs."""
 
 from .arguments import ImportArguments
+from .margin_cache_arguments import MarginCacheArguments
 from .command_line_arguments import parse_command_line
 from .file_readers import (
     CsvReader,
