@@ -131,6 +131,7 @@ def test_resume_dask_runner(
         temp_path,
     )
     rf.set_mapping_done(temp_path)
+    rf.set_splitting_done(temp_path)
     rf.set_reducing_done(temp_path)
 
     args = ImportArguments(
