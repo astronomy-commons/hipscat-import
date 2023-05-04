@@ -9,7 +9,7 @@ from .file_readers import (
     ParquetReader,
     get_file_reader,
 )
-from .map_reduce import map_to_pixels, reduce_pixel_shards
+from .map_reduce import map_to_pixels, reduce_pixel_shards, split_pixels
 from .resume_files import (
     clean_resume_files,
     is_mapping_done,

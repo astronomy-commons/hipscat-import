@@ -9,8 +9,7 @@ from hipscat.io import file_io, write_metadata
 from tqdm import tqdm
 
 from hipscat_import.association.arguments import AssociationArguments
-from hipscat_import.association.map_reduce import (map_association,
-                                                   reduce_association)
+from hipscat_import.association.map_reduce import map_association, reduce_association
 
 
 def _validate_args(args):

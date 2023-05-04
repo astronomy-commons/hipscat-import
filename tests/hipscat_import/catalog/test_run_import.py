@@ -47,11 +47,15 @@ def test_resume_dask_runner(
     for file_index in range(0, 5):
         rf.write_mapping_start_key(
             temp_path,
-            os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv"),
+            f"map_{os.path.join(small_sky_parts_dir, f'catalog_0{file_index}_of_05.csv')}",
         )
         rf.write_mapping_done_key(
             temp_path,
-            os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv"),
+            f'map_{os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv")}',
+        )
+        rf.write_splitting_done_key(
+            temp_path,
+            f'split_{os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv")}',
         )
 
     shutil.copytree(

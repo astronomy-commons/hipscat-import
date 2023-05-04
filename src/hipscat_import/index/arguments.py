@@ -39,7 +39,9 @@ class IndexArguments(RuntimeArguments):
                 "At least one of include_hipscat_index or include_order_pixel must be True"
             )
 
-        self.input_catalog = Catalog(catalog_path=self.input_catalog_path)
+        self.input_catalog = Catalog.read_from_hipscat(
+            catalog_path=self.input_catalog_path
+        )
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")

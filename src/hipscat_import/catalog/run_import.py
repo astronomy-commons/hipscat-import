@@ -26,21 +26,20 @@ def _map_pixels(args, client):
     mapped_paths = set(resume.read_mapping_keys(args.tmp_path))
 
     futures = []
-    for i, file_path in enumerate(args.input_paths):
-        if file_path in mapped_paths:
+    for file_path in args.input_paths:
+        map_key = f"map_{file_path}"
+        if map_key in mapped_paths:
             continue
         futures.append(
             client.submit(
                 mr.map_to_pixels,
-                key=file_path,
+                key=map_key,
                 input_file=file_path,
                 file_reader=args.file_reader,
                 filter_function=args.filter_function,
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
-                shard_suffix=i,
-                cache_path=None if args.debug_stats_only else args.tmp_path,
             )
         )
 
@@ -56,6 +55,45 @@ def _map_pixels(args, client):
         resume.write_mapping_done_key(args.tmp_path, future.key)
     resume.set_mapping_done(args.tmp_path)
     return raw_histogram
+
+
+def _split_pixels(args, alignment, client):
+    """Generate a raw histogram of object counts in each healpix pixel"""
+
+    if resume.is_splitting_done(args.tmp_path):
+        return
+
+    split_paths = set(resume.read_splitting_keys(args.tmp_path))
+
+    futures = []
+    for i, file_path in enumerate(args.input_paths):
+        split_key = f"split_{file_path}"
+        if split_key in split_paths:
+            continue
+        futures.append(
+            client.submit(
+                mr.split_pixels,
+                key=split_key,
+                input_file=file_path,
+                file_reader=args.file_reader,
+                filter_function=args.filter_function,
+                highest_order=args.mapping_healpix_order,
+                ra_column=args.ra_column,
+                dec_column=args.dec_column,
+                shard_suffix=i,
+                cache_path=args.tmp_path,
+                alignment=alignment,
+            )
+        )
+
+    for future in tqdm(
+        as_completed(futures),
+        desc="Splitting",
+        total=len(futures),
+        disable=(not args.progress_bar),
+    ):
+        resume.write_splitting_done_key(args.tmp_path, future.key)
+    resume.set_splitting_done(args.tmp_path)
 
 
 def _reduce_pixels(args, destination_pixel_map, client):
@@ -76,7 +114,6 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 mr.reduce_pixel_shards,
                 key=destination_pixel_key,
                 cache_path=args.tmp_path,
-                origin_pixel_numbers=source_pixels[1],
                 destination_pixel_order=destination_pixel.order,
                 destination_pixel_number=destination_pixel.pixel,
                 destination_pixel_size=source_pixels[0],
@@ -126,11 +163,24 @@ def run_with_client(args, client):
         total=1, desc="Binning  ", disable=not args.progress_bar
     ) as step_progress:
         if args.constant_healpix_order >= 0:
+            alignment = np.full(len(raw_histogram), None)
+            for pixel_num, pixel_sum in enumerate(raw_histogram):
+                alignment[pixel_num] = (
+                    args.constant_healpix_order,
+                    pixel_num,
+                    pixel_sum,
+                )
+
             destination_pixel_map = pixel_math.generate_constant_pixel_map(
                 histogram=raw_histogram,
                 constant_healpix_order=args.constant_healpix_order,
             )
         else:
+            alignment = pixel_math.generate_alignment(
+                raw_histogram,
+                highest_order=args.highest_healpix_order,
+                threshold=args.pixel_threshold,
+            )
             destination_pixel_map = pixel_math.compute_pixel_map(
                 raw_histogram,
                 highest_order=args.highest_healpix_order,
@@ -139,6 +189,7 @@ def run_with_client(args, client):
         step_progress.update(1)
 
     if not args.debug_stats_only:
+        _split_pixels(args, alignment, client)
         _reduce_pixels(args, destination_pixel_map, client)
 
     # All done - write out the metadata
