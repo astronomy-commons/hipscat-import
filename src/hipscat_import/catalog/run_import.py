@@ -43,21 +43,26 @@ def _map_pixels(args, client):
             )
         )
 
+    some_error = False
     for future, result in tqdm(
         as_completed(futures, with_results=True),
         desc="Mapping  ",
         total=len(futures),
         disable=(not args.progress_bar),
     ):
+        if future.status == "error":
+            some_error = True
         raw_histogram = np.add(raw_histogram, result)
         resume.write_mapping_start_key(args.tmp_path, future.key)
         resume.write_histogram(args.tmp_path, raw_histogram)
         resume.write_mapping_done_key(args.tmp_path, future.key)
+    if some_error:
+        raise RuntimeError("Some mapping stages failed. See logs for details.")
     resume.set_mapping_done(args.tmp_path)
     return raw_histogram
 
 
-def _split_pixels(args, alignment, client):
+def _split_pixels(args, alignment_future, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
     if resume.is_splitting_done(args.tmp_path):
@@ -82,17 +87,22 @@ def _split_pixels(args, alignment, client):
                 dec_column=args.dec_column,
                 shard_suffix=i,
                 cache_path=args.tmp_path,
-                alignment=alignment,
+                alignment=alignment_future,
             )
         )
 
+    some_error = False
     for future in tqdm(
         as_completed(futures),
         desc="Splitting",
         total=len(futures),
         disable=(not args.progress_bar),
     ):
+        if future.status == "error":
+            some_error = True
         resume.write_splitting_done_key(args.tmp_path, future.key)
+    if some_error:
+        raise RuntimeError("Some splitting stages failed. See logs for details.")
     resume.set_splitting_done(args.tmp_path)
 
 
@@ -125,13 +135,19 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 use_schema_file=args.use_schema_file,
             )
         )
+
+    some_error = False
     for future in tqdm(
         as_completed(futures),
         desc="Reducing ",
         total=len(futures),
         disable=(not args.progress_bar),
     ):
+        if future.status == "error":
+            some_error = True
         resume.write_reducing_key(args.tmp_path, future.key)
+    if some_error:
+        raise RuntimeError("Some reducing stages failed. See logs for details.")
     resume.set_reducing_done(args.tmp_path)
 
 
@@ -189,7 +205,8 @@ def run_with_client(args, client):
         step_progress.update(1)
 
     if not args.debug_stats_only:
-        _split_pixels(args, alignment, client)
+        alignment_future = client.scatter(alignment)
+        _split_pixels(args, alignment_future, client)
         _reduce_pixels(args, destination_pixel_map, client)
 
     # All done - write out the metadata
