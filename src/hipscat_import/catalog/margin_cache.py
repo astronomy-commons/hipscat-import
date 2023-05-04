@@ -43,7 +43,7 @@ def _create_margin_directory(stats, output_path, margin_name):
         )
         file_io.make_directory(destination_dir, exist_ok=True)
 
-def _map_to_margin_shards(client, partition_files, margin_pairs, margin_threshold, output_path, margin_order, catalog):
+def _map_to_margin_shards(client, args, partition_files, margin_pairs):
     futures = []
     for p in partition_files:
         futures.append(
@@ -51,11 +51,11 @@ def _map_to_margin_shards(client, partition_files, margin_pairs, margin_threshol
                 _map_pixel_shards,
                 partition_file=p,
                 margin_pairs=margin_pairs,
-                margin_threshold=margin_threshold,
-                output_path=output_path,
-                margin_order=margin_order,
-                ra_column=catalog.catalog_info.ra_column,
-                dec_column=catalog.catalog_info.dec_column,
+                margin_threshold=args.margin_threshold,
+                output_path=args.output_path,
+                margin_order=args.margin_order,
+                ra_column=args.catalog.catalog_info.ra_column,
+                dec_column=args.catalog.catalog_info.dec_column,
             )
         )
 
@@ -161,45 +161,40 @@ def _margin_filter_polar(data, order, pix, margin_order, pole, margin_threshold,
 
     return pd.concat([trunc_data, other_data])
 
-def generate_margin_cache(catalog_location, margin_threshold, output_path, margin_order=-1):
+def generate_margin_cache(args):
     with Client(
-        n_workers=4,
-        threads_per_worker=1,
+        n_workers=args.dask_n_workers,
+        threads_per_worker=args.dask_threads_per_worker,
     ) as client:  # pragma: no cover
         generate_margin_cache_with_client(
             client,
-            catalog_location,
-            margin_threshold,
-            output_path,
-            margin_order
+            args
         )
 
-def generate_margin_cache_with_client(client, catalog_location, margin_threshold, output_path, margin_order=-1):
-    catalog = Catalog(catalog_location)
-
+def generate_margin_cache_with_client(client, args):
     # determine which order to generate margin pixels for
-    partition_stats = catalog.get_pixels()
-    highest_order = np.max(partition_stats["Norder"].values)
-    margin_pixel_k = highest_order + 1
-    if margin_order > -1:
-        if margin_order < margin_pixel_k:
-            raise ValueError(
-                "margin_order must be of a higher order than the highest order catalog partition pixel."
-            )
-        margin_pixel_k = margin_order
+    partition_stats = args.catalog.get_pixels()
 
-    margin_pixel_nside = hp.order2nside(margin_pixel_k)
+    margin_pairs = _find_parition_margin_pixel_pairs(
+        partition_stats, 
+        args.margin_order
+    )
 
-    if hp.nside2resol(margin_pixel_nside, arcmin=True) / 60. < margin_threshold:
-        warnings.warn("Warning: margin pixels have a smaller resolution than margin_threshold; this may lead to data loss in the margin cache.")
+    # arcsec to degree conversion
+    # TODO: remove this once hipscat uses arcsec for calculation
+    args.margin_threshold = args.margin_threshold / 3600.
 
-    margin_pairs = _find_parition_margin_pixel_pairs(partition_stats, margin_pixel_k)
+    base_dir = f"{args.output_path}{args.output_catalog_name}"
+    _create_margin_directory(
+        partition_stats, base_dir, args.output_catalog_name
+    )
 
-    margin_name = f"{catalog.catalog_name}_margin_cache_{margin_threshold}"
-    base_dir = f"{output_path}{margin_name}"
-    _create_margin_directory(partition_stats, base_dir, margin_name)
-
-    partition_files = catalog.partition_info.get_file_names()
-    _map_to_margin_shards(client, partition_files, margin_pairs, margin_threshold, base_dir, margin_pixel_k, catalog)
+    partition_files = args.catalog.partition_info.get_file_names()
+    _map_to_margin_shards(
+        client=client,
+        args=args,
+        partition_files=partition_files,
+        margin_pairs=margin_pairs,
+    )
 
 
