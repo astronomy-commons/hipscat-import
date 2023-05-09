@@ -8,8 +8,7 @@ import pytest
 
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.association.arguments import AssociationArguments
-from hipscat_import.association.map_reduce import (map_association,
-                                                   reduce_association)
+from hipscat_import.association.map_reduce import map_association, reduce_association
 from hipscat_import.catalog.arguments import ImportArguments
 
 

@@ -10,7 +10,7 @@ from hipscat.io import FilePointer, file_io, paths
 # pylint: disable=too-many-locals,too-many-arguments
 
 
-def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
+def _get_pixel_directory(cache_path: FilePointer, order: np.int64, pixel: np.int64):
     """Create a path for intermediate pixel data.
 
     This will take the form:
@@ -26,7 +26,7 @@ def _get_pixel_directory(cache_path: FilePointer, pixel: np.int64):
     """
     dir_number = int(pixel / 10_000) * 10_000
     return file_io.append_paths_to_pointer(
-        cache_path, f"dir_{dir_number}", f"pixel_{pixel}"
+        cache_path, f"order_{order}", f"dir_{dir_number}", f"pixel_{pixel}"
     )
 
 
@@ -46,41 +46,15 @@ def _has_named_index(dataframe):
     return True
 
 
-def map_to_pixels(
+def _iterate_input_file(
     input_file: FilePointer,
     file_reader,
-    shard_suffix,
     highest_order,
     ra_column,
     dec_column,
-    cache_path: FilePointer = None,
     filter_function=None,
 ):
-    """Map a file of input objects to their healpix pixels.
-
-    Args:
-        input_file (FilePointer): file to read for catalog data.
-        file_reader (InputReader): instance of input reader that
-            specifies arguments necessary for reading from the input file.
-        shard_suffix (str): unique counter for this input file, used
-            when creating intermediate files
-        highest_order (int): healpix order to use when mapping
-        ra_column (str): where to find right ascension data in the dataframe
-        dec_column (str): where to find declation in the dataframe
-        cache_path (FilePointer): where to write intermediate files.
-            if None, no intermediate files will be written, but healpix
-            stats will be returned
-        filter_function (function pointer): method to perform some filtering
-            or transformation of the input data
-    Returns:
-        one-dimensional numpy array of long integers where the value at each index corresponds
-        to the number of objects found at the healpix pixel.
-    Raises:
-        ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
-        FileNotFoundError: if the file does not exist, or is a directory
-    """
-
-    # Perform checks on the provided path
+    """Helper function to handle input file reading and healpix pixel calculation"""
     if not file_io.does_file_or_directory_exist(input_file):
         raise FileNotFoundError(f"File not found at path: {input_file}")
     if not file_io.is_regular_file(input_file):
@@ -91,7 +65,6 @@ def map_to_pixels(
         raise NotImplementedError("No file reader implemented")
 
     required_columns = [ra_column, dec_column]
-    histo = pixel_math.empty_histogram(highest_order)
 
     for chunk_number, data in enumerate(file_reader.read(input_file)):
         if not all(x in data.columns for x in required_columns):
@@ -108,35 +81,101 @@ def map_to_pixels(
             lonlat=True,
             nest=True,
         )
+        yield chunk_number, data, mapped_pixels
+
+
+def map_to_pixels(
+    input_file: FilePointer,
+    file_reader,
+    highest_order,
+    ra_column,
+    dec_column,
+    filter_function=None,
+):
+    """Map a file of input objects to their healpix pixels.
+
+    Args:
+        input_file (FilePointer): file to read for catalog data.
+        file_reader (InputReader): instance of input reader that
+            specifies arguments necessary for reading from the input file.
+        shard_suffix (str): unique counter for this input file, used
+            when creating intermediate files
+        highest_order (int): healpix order to use when mapping
+        ra_column (str): where to find right ascension data in the dataframe
+        dec_column (str): where to find declation in the dataframe
+
+    Returns:
+        one-dimensional numpy array of long integers where the value at each index corresponds
+        to the number of objects found at the healpix pixel.
+    Raises:
+        ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
+        FileNotFoundError: if the file does not exist, or is a directory
+    """
+    histo = pixel_math.empty_histogram(highest_order)
+    for _, _, mapped_pixels in _iterate_input_file(
+        input_file, file_reader, highest_order, ra_column, dec_column, filter_function
+    ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-
-        if cache_path:
-            for pixel in mapped_pixel:
-                mapped_indexes = np.where(mapped_pixels == pixel)
-                data_indexes = data.index[mapped_indexes[0].tolist()]
-
-                filtered_data = data.filter(items=data_indexes, axis=0)
-
-                pixel_dir = _get_pixel_directory(cache_path, pixel)
-                file_io.make_directory(pixel_dir, exist_ok=True)
-                output_file = file_io.append_paths_to_pointer(
-                    pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
-                )
-                if _has_named_index(filtered_data):
-                    filtered_data.to_parquet(output_file, index=True)
-                else:
-                    filtered_data.to_parquet(output_file, index=False)
-            del filtered_data, data_indexes
-
-        ## Pesky memory!
-        del mapped_pixels, mapped_pixel, count_at_pixel
     return histo
+
+
+def split_pixels(
+    input_file: FilePointer,
+    file_reader,
+    shard_suffix,
+    highest_order,
+    ra_column,
+    dec_column,
+    cache_path: FilePointer,
+    alignment=None,
+    filter_function=None,
+):
+    """Map a file of input objects to their healpix pixels and split into shards.
+
+    Args:
+        input_file (FilePointer): file to read for catalog data.
+        file_reader (InputReader): instance of input reader that
+            specifies arguments necessary for reading from the input file.
+        shard_suffix (str): unique counter for this input file, used
+            when creating intermediate files
+        highest_order (int): healpix order to use when mapping
+        ra_column (str): where to find right ascension data in the dataframe
+        dec_column (str): where to find declation in the dataframe
+        cache_path (FilePointer): where to write intermediate files.
+        filter_function (function pointer): method to perform some filtering
+            or transformation of the input data
+
+    Raises:
+        ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
+        FileNotFoundError: if the file does not exist, or is a directory
+    """
+    for chunk_number, data, mapped_pixels in _iterate_input_file(
+        input_file, file_reader, highest_order, ra_column, dec_column, filter_function
+    ):
+        aligned_pixels = alignment[mapped_pixels]
+        unique_pixels, unique_inverse = np.unique(aligned_pixels, return_inverse=True)
+
+        for unique_index, [order, pixel, _] in enumerate(unique_pixels):
+            mapped_indexes = np.where(unique_inverse == unique_index)
+            data_indexes = data.index[mapped_indexes[0].tolist()]
+
+            filtered_data = data.filter(items=data_indexes, axis=0)
+
+            pixel_dir = _get_pixel_directory(cache_path, order, pixel)
+            file_io.make_directory(pixel_dir, exist_ok=True)
+            output_file = file_io.append_paths_to_pointer(
+                pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
+            )
+            if _has_named_index(filtered_data):
+                filtered_data.to_parquet(output_file, index=True)
+            else:
+                filtered_data.to_parquet(output_file, index=False)
+        del filtered_data, data_indexes
 
 
 def reduce_pixel_shards(
     cache_path,
-    origin_pixel_numbers,
     destination_pixel_order,
     destination_pixel_number,
     destination_pixel_size,
@@ -203,13 +242,14 @@ def reduce_pixel_shards(
         schema = file_io.read_parquet_metadata(use_schema_file).schema.to_arrow_schema()
 
     tables = []
-    for pixel in origin_pixel_numbers:
-        pixel_dir = _get_pixel_directory(cache_path, pixel)
+    pixel_dir = _get_pixel_directory(
+        cache_path, destination_pixel_order, destination_pixel_number
+    )
 
-        if schema:
-            tables.append(pq.read_table(pixel_dir, schema=schema))
-        else:
-            tables.append(pq.read_table(pixel_dir))
+    if schema:
+        tables.append(pq.read_table(pixel_dir, schema=schema))
+    else:
+        tables.append(pq.read_table(pixel_dir))
 
     merged_table = pa.concat_tables(tables)
 
@@ -253,7 +293,8 @@ def reduce_pixel_shards(
     del dataframe, merged_table, tables
 
     if delete_input_files:
-        for pixel in origin_pixel_numbers:
-            pixel_dir = _get_pixel_directory(cache_path=cache_path, pixel=pixel)
+        pixel_dir = _get_pixel_directory(
+            cache_path, destination_pixel_order, destination_pixel_number
+        )
 
-            file_io.remove_directory(pixel_dir, ignore_errors=True)
+        file_io.remove_directory(pixel_dir, ignore_errors=True)

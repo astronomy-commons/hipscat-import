@@ -39,6 +39,18 @@ def set_mapping_done(tmp_path: FilePointer):
     Path(file_io.append_paths_to_pointer(tmp_path, "mapping_done")).touch()
 
 
+def is_splitting_done(tmp_path: FilePointer):
+    """Check for existence of done file"""
+    return file_io.does_file_or_directory_exist(
+        file_io.append_paths_to_pointer(tmp_path, "splitting_done")
+    )
+
+
+def set_splitting_done(tmp_path: FilePointer):
+    """Touch (create) a done file"""
+    Path(file_io.append_paths_to_pointer(tmp_path, "splitting_done")).touch()
+
+
 def is_reducing_done(tmp_path: FilePointer):
     """Check for existence of done file"""
     return file_io.does_file_or_directory_exist(
@@ -64,6 +76,13 @@ def read_mapping_keys(tmp_path: FilePointer):
             "Resume logs are corrupted. Delete temp directory and restart import pipeline."
         )
     return mapping_start_keys
+
+
+def read_splitting_keys(tmp_path: FilePointer):
+    """Read keys from splitting log file"""
+    return _read_log_keys(
+        file_io.append_paths_to_pointer(tmp_path, "splitting_done_log.txt")
+    )
 
 
 def read_reducing_keys(tmp_path: FilePointer):
@@ -95,6 +114,13 @@ def write_mapping_done_key(tmp_path: FilePointer, key):
     """Append single key to mapping log file"""
     _write_log_key(
         file_io.append_paths_to_pointer(tmp_path, "mapping_done_log.txt"), key
+    )
+
+
+def write_splitting_done_key(tmp_path: FilePointer, key):
+    """Append single key to splitting log file"""
+    _write_log_key(
+        file_io.append_paths_to_pointer(tmp_path, "splitting_done_log.txt"), key
     )
 
 

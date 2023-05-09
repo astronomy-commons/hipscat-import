@@ -1,7 +1,7 @@
 """Utility to hold all arguments required throughout indexing"""
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from hipscat.catalog import Catalog, CatalogParameters
 
@@ -14,7 +14,7 @@ class IndexArguments(RuntimeArguments):
 
     ## Input
     input_catalog_path: str = ""
-    input_catalog: Catalog = None
+    input_catalog: Optional[Catalog] = None
     indexing_column: str = ""
     extra_columns: List[str] = field(default_factory=list)
 
@@ -39,7 +39,9 @@ class IndexArguments(RuntimeArguments):
                 "At least one of include_hipscat_index or include_order_pixel must be True"
             )
 
-        self.input_catalog = Catalog(catalog_path=self.input_catalog_path)
+        self.input_catalog = Catalog.read_from_hipscat(
+            catalog_path=self.input_catalog_path
+        )
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")

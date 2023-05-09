@@ -134,7 +134,12 @@ def parquet_shards_dir(test_data_dir):
 @pytest.fixture
 def parquet_shards_shard_44_0(test_data_dir):
     return os.path.join(
-        test_data_dir, "parquet_shards", "dir_0", "pixel_44", "shard_3_0.parquet"
+        test_data_dir,
+        "parquet_shards",
+        "order_1",
+        "dir_0",
+        "pixel_44",
+        "shard_3_0.parquet",
     )
 
 
