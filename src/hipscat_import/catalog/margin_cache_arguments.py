@@ -13,6 +13,7 @@ class MarginCacheArguments(RuntimeArguments):
     margin_order: int = -1
 
     input_catalog_path: str = ""
+    margin_output_path: str = ""
 
     def __post_init__(self):
         super().__post_init__()
