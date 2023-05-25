@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from hipscat_import.runtime_arguments import RuntimeArguments
 from hipscat.catalog import Catalog
+from hipscat.io import file_io
 import numpy as np
 import warnings
 import healpy as hp
@@ -20,6 +21,9 @@ class MarginCacheArguments(RuntimeArguments):
         self._check_arguments()
 
     def _check_arguments(self):
+        if not file_io.does_file_or_directory_exist(self.input_catalog_path):
+                raise FileNotFoundError("input_catalog_path not found on local storage")
+
         self.catalog = Catalog(self.input_catalog_path)
 
         partition_stats = self.catalog.get_pixels()
