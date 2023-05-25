@@ -8,7 +8,38 @@ import healpy as hp
 
 @dataclass
 class MarginCacheArguments(RuntimeArguments):
-    """Container for margin cache generation arguments"""
+    """Container for margin cache generation arguments
+    Attributes:
+        input_catalog_path (str): the path to the hipscat-formatted input catalog.
+        margin_output_path (str): the path to the margin cache output directory.
+        margin_threshold (float): the size of the margin cache boundary,
+            given in arcseconds. setting the `margin_threshold` to be greater than
+            the resolution of a `margin_order` healpixel will result in a warning,
+            as this may lead to data loss.
+        margin_order (int): the order of healpixels that will be used to constrain
+            the margin data before doing more precise boundary checking. this value
+            must be greater than the highest order of healpix partitioning in
+            the source catalog. if `margin_order` is left default or set to -1, then
+            the `margin_order` will be set dynamically to the highest partition
+            order plus 1.
+        overwrite (bool): if there is existing data at the `catalog_path`, should
+            we overwrite and create a new catalog.
+        pixel_threshold (int): maximum number of rows for a single resulting pixel.
+            we may combine hierarchically until we near the `pixel_threshold`
+        mapping_healpix_order (int): healpix order to use when mapping. will be
+            `highest_healpix_order` unless a positive value is provided for
+            `constant_healpix_order`.
+        debug_stats_only (bool): do not perform a map reduce and don't create a new
+            catalog. generate the partition info.
+        tmp_path (str): path for storing intermediate files
+        `_tmp_dir` (str): base directory provided by the caller for temporary files.
+        progress_bar (bool): if true, a tqdm progress bar will be displayed for user
+            feedback of map reduce progress.
+        dask_tmp (str): directory for dask worker space. this should be local to
+            the execution of the pipeline, for speed of reads and writes.
+        dask_n_workers (int): number of workers for the dask client
+        dask_threads_per_worker (int): number of threads per dask worker.
+    """
 
     margin_threshold: float = 5.0
     margin_order: int = -1
