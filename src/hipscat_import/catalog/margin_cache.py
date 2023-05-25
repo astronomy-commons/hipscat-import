@@ -52,7 +52,7 @@ def _map_to_margin_shards(client, args, partition_files, margin_pairs):
                 partition_file=p,
                 margin_pairs=margin_pairs,
                 margin_threshold=args.margin_threshold,
-                output_path=args.output_path,
+                output_path=args.margin_output_path,
                 margin_order=args.margin_order,
                 ra_column=args.catalog.catalog_info.ra_column,
                 dec_column=args.catalog.catalog_info.dec_column,
@@ -184,9 +184,9 @@ def generate_margin_cache_with_client(client, args):
     # TODO: remove this once hipscat uses arcsec for calculation
     args.margin_threshold = args.margin_threshold / 3600.
 
-    base_dir = f"{args.output_path}{args.output_catalog_name}"
+    args.margin_output_path = f"{args.output_path}{args.output_catalog_name}"
     _create_margin_directory(
-        partition_stats, base_dir, args.output_catalog_name
+        partition_stats, args.margin_output_path, args.output_catalog_name
     )
 
     partition_files = args.catalog.partition_info.get_file_names()
