@@ -61,7 +61,7 @@ def test_read_bad_fileformat(blank_data_file):
         )
 
 
-def test_read_single_fits(formats_fits, tmp_path):
+def test_read_single_fits(formats_fits):
     """Success case - fits file that exists being read as fits"""
     result = mr.map_to_pixels(
         input_file=formats_fits,
@@ -76,7 +76,7 @@ def test_read_single_fits(formats_fits, tmp_path):
     npt.assert_array_equal(result, expected)
 
 
-def test_map_headers_wrong(formats_headers_csv, tmp_path):
+def test_map_headers_wrong(formats_headers_csv):
     """Test loading the a file with non-default headers (without specifying right headers)"""
     with pytest.raises(ValueError, match="header"):
         mr.map_to_pixels(
@@ -88,7 +88,7 @@ def test_map_headers_wrong(formats_headers_csv, tmp_path):
         )
 
 
-def test_map_headers(formats_headers_csv, assert_parquet_file_ids, tmp_path):
+def test_map_headers(formats_headers_csv):
     """Test loading the a file with non-default headers"""
     result = mr.map_to_pixels(
         input_file=formats_headers_csv,
@@ -133,7 +133,7 @@ def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_
     assert not os.path.exists(file_name)
 
 
-def test_map_small_sky_order0(small_sky_single_file, assert_parquet_file_ids, tmp_path):
+def test_map_small_sky_order0(small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
     result = mr.map_to_pixels(
         input_file=small_sky_single_file,
@@ -151,7 +151,7 @@ def test_map_small_sky_order0(small_sky_single_file, assert_parquet_file_ids, tm
     assert (result == expected).all()
 
 
-def test_map_small_sky_part_order1(small_sky_file0, assert_parquet_file_ids, tmp_path):
+def test_map_small_sky_part_order1(small_sky_file0):
     """
     Test loading a small portion of the small sky catalog and
     partitioning objects into four smaller buckets
@@ -195,7 +195,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
 
 
 def test_reduce_hipscat_index(
-    parquet_shards_dir, assert_parquet_file_ids, assert_parquet_file_index, tmp_path
+    parquet_shards_dir, assert_parquet_file_ids, tmp_path
 ):
     """Test reducing with or without a _hipscat_index field"""
     mr.reduce_pixel_shards(
