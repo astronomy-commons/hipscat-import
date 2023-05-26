@@ -18,78 +18,62 @@ from hipscat_import.runtime_arguments import RuntimeArguments
 
 @dataclass
 class ImportArguments(RuntimeArguments):
-    """Container class for holding partitioning arguments
-
-
-    Attributes:
-        catalog_name (str): short, convenient name for the catalog.
-        epoch (str): astronomical epoch for the data. defaults to "J2000"
-        `_input_path` (str): path to the input data
-        input_format (str): specifier of the input data format. This will
-            be used to find an appropriate file reader, and may be used to find
-            input files, via a match like "<input_path>/*<input_format>"
-        `_input_file_list` (list[str]): can be used instead of `input_format` to
-            import just a few files at a time.
-        input_paths (list[str]): resolved list of all files used in the importer
-        ra_column (str): column for right ascension
-        dec_column (str): column for declination
-        id_column (str): column for survey identifier, or other sortable column
-        `_output_path` (str): base path for catalog output
-        catalog_path (str): path for catalog output. This is generally formed
-            via <output_path>/<catalog_name>
-        overwrite (bool): if there is existing data at the `catalog_path`, should
-            we overwrite and create a new catalog.
-        resume (bool): if there are existing intermediate resume files, should we
-            read those and continue to create a new catalog where we left off.
-        constant_healpix_order (int): healpix order to use when mapping. if this is
-            a positive number, this will be the order of all final pixels and we
-            will not combine pixels according to the threshold.
-        highest_healpix_order (int): healpix order to use when mapping. this will
-            not necessarily be the order used in the final catalog, as we may combine
-            pixels that don't meed the threshold.
-        pixel_threshold (int): maximum number of rows for a single resulting pixel.
-            we may combine hierarchically until we near the `pixel_threshold`
-        mapping_healpix_order (int): healpix order to use when mapping. will be
-            `highest_healpix_order` unless a positive value is provided for
-            `constant_healpix_order`.
-        debug_stats_only (bool): do not perform a map reduce and don't create a new
-            catalog. generate the partition info.
-        tmp_path (str): path for storing intermediate files
-        filter_function (function pointer): optional method which takes a pandas
-            dataframe as input, performs some filtering or transformation of the data,
-            and returns a dataframe with the rows that will be used to create the
-            new catalog.
-        file_reader (`InputReader`): instance of input reader that specifies arguments
-            necessary for reading from your input files.
-        `_tmp_dir` (str): base directory provided by the caller for temporary files.
-        progress_bar (bool): if true, a tqdm progress bar will be displayed for user
-            feedback of map reduce progress.
-        dask_tmp (str): directory for dask worker space. this should be local to
-            the execution of the pipeline, for speed of reads and writes.
-        dask_n_workers (int): number of workers for the dask client
-        dask_threads_per_worker (int): number of threads per dask worker.
-    """
+    """Container class for holding partitioning arguments"""
 
     epoch: str = "J2000"
+    """astronomical epoch for the data. defaults to "J2000" """
+
     catalog_type: str = "object"
+    """level of catalog data, object (things in the sky) or source (detections)"""
     input_path: FilePointer | None = None
+    """path to search for the input data"""
     input_format: str = ""
+    """specifier of the input data format. This will be used to find an appropriate file 
+    reader, and may be used to find input files, via a match like ``<input_path>/*<input_format>`` """
     input_file_list: List[FilePointer] = field(default_factory=list)
+    """can be used instead of `input_format` to import only specified files."""
     input_paths: List[FilePointer] = field(default_factory=list)
+    """resolved list of all files that will be used in the importer"""
 
     ra_column: str = "ra"
+    """column for right ascension"""
     dec_column: str = "dec"
+    """column for declination"""
     id_column: str = "id"
+    """column for survey identifier, or other sortable column"""
     add_hipscat_index: bool = True
+    """add the hipscat spatial index field alongside the data"""
     use_schema_file: str | None = None
+    """path to a parquet file with schema metadata. this will be used for column
+    metadata when writing the files, if specified."""
     resume: bool = False
+    """if there are existing intermediate resume files, should we
+    read those and continue to create a new catalog where we left off."""
     constant_healpix_order: int = -1
+    """healpix order to use when mapping. if this is
+    a positive number, this will be the order of all final pixels and we
+    will not combine pixels according to the threshold."""
     highest_healpix_order: int = 10
+    """healpix order to use when mapping. this will
+    not necessarily be the order used in the final catalog, as we may combine
+    pixels that don't meed the threshold."""
     pixel_threshold: int = 1_000_000
+    """maximum number of rows for a single resulting pixel.
+    we may combine hierarchically until we near the `pixel_threshold`"""
     mapping_healpix_order: int = -1
+    """healpix order to use when mapping. will be
+    `highest_healpix_order` unless a positive value is provided for
+    `constant_healpix_order`."""
     debug_stats_only: bool = False
+    """do not perform a map reduce and don't create a new
+    catalog. generate the partition info."""
     filter_function: Callable | None = None
+    """optional method which takes a pandas dataframe as input, performs some 
+    filtering or transformation of the data, and returns a dataframe with the 
+    rows that will be used to create the new catalog."""
     file_reader: InputReader | None = None
+    """instance of input reader that specifies arguments necessary for reading
+    from your input files."""
 
     def __post_init__(self):
 
@@ -203,7 +187,7 @@ def check_healpix_order_range(
         lower_bound (int): lower bound of range
         upper_bound (int): upper bound of range
     Raise:
-        ValueError if the order is outside the specified range, or bounds
+        ValueError: if the order is outside the specified range, or bounds
             are unreasonable.
     """
     if lower_bound < 0:
