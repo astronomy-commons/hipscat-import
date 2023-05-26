@@ -28,8 +28,9 @@ class ImportArguments(RuntimeArguments):
     input_path: FilePointer | None = None
     """path to search for the input data"""
     input_format: str = ""
-    """specifier of the input data format. This will be used to find an appropriate file 
-    reader, and may be used to find input files, via a match like ``<input_path>/*<input_format>`` """
+    """specifier of the input data format. This will be used to find an appropriate
+    InputReader type, and may be used to find input files, via a match like
+    ``<input_path>/*<input_format>`` """
     input_file_list: List[FilePointer] = field(default_factory=list)
     """can be used instead of `input_format` to import only specified files."""
     input_paths: List[FilePointer] = field(default_factory=list)
