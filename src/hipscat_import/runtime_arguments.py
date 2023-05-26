@@ -17,7 +17,7 @@ class RuntimeArguments:
     output_path: str = ""
     """base path where new catalog should be output"""
     output_catalog_name: str = ""
-    """short, convenient name for the catalog."""
+    """short, convenient name for the catalog"""
 
     ## Execution
     tmp_dir: str = ""
@@ -27,21 +27,21 @@ class RuntimeArguments:
     should we overwrite and create a new catalog"""
     progress_bar: bool = True
     """if true, a tqdm progress bar will be displayed for user
-    feedback of map reduce progress."""
+    feedback of map reduce progress"""
     dask_tmp: str = ""
     """ directory for dask worker space. this should be local to
-    the execution of the pipeline, for speed of reads and writes."""
+    the execution of the pipeline, for speed of reads and writes"""
     dask_n_workers: int = 1
     """number of workers for the dask client"""
     dask_threads_per_worker: int = 1
-    """number of threads per dask worker."""
+    """number of threads per dask worker"""
 
     catalog_path = ""
     """constructed output path for the catalog that will be something like
     <output_path>/<output_catalog_name>"""
     tmp_path = ""
     """constructed temp path - defaults to tmp_dir, then dask_tmp, but will create
-    a new temp directory under catalog_path if no other options are provided."""
+    a new temp directory under catalog_path if no other options are provided"""
 
     def __post_init__(self):
         self._check_arguments()

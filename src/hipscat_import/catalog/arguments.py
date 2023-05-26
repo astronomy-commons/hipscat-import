@@ -28,11 +28,11 @@ class ImportArguments(RuntimeArguments):
     input_path: FilePointer | None = None
     """path to search for the input data"""
     input_format: str = ""
-    """specifier of the input data format. This will be used to find an appropriate
+    """specifier of the input data format. this will be used to find an appropriate
     InputReader type, and may be used to find input files, via a match like
     ``<input_path>/*<input_format>`` """
     input_file_list: List[FilePointer] = field(default_factory=list)
-    """can be used instead of `input_format` to import only specified files."""
+    """can be used instead of `input_format` to import only specified files"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
 
@@ -46,35 +46,35 @@ class ImportArguments(RuntimeArguments):
     """add the hipscat spatial index field alongside the data"""
     use_schema_file: str | None = None
     """path to a parquet file with schema metadata. this will be used for column
-    metadata when writing the files, if specified."""
+    metadata when writing the files, if specified"""
     resume: bool = False
     """if there are existing intermediate resume files, should we
-    read those and continue to create a new catalog where we left off."""
+    read those and continue to create a new catalog where we left off"""
     constant_healpix_order: int = -1
     """healpix order to use when mapping. if this is
     a positive number, this will be the order of all final pixels and we
-    will not combine pixels according to the threshold."""
+    will not combine pixels according to the threshold"""
     highest_healpix_order: int = 10
     """healpix order to use when mapping. this will
     not necessarily be the order used in the final catalog, as we may combine
-    pixels that don't meed the threshold."""
+    pixels that don't meed the threshold"""
     pixel_threshold: int = 1_000_000
     """maximum number of rows for a single resulting pixel.
     we may combine hierarchically until we near the `pixel_threshold`"""
     mapping_healpix_order: int = -1
     """healpix order to use when mapping. will be
     `highest_healpix_order` unless a positive value is provided for
-    `constant_healpix_order`."""
+    `constant_healpix_order`"""
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
-    catalog. generate the partition info."""
+    catalog. generate the partition info"""
     filter_function: Callable | None = None
     """optional method which takes a pandas dataframe as input, performs some 
     filtering or transformation of the data, and returns a dataframe with the 
-    rows that will be used to create the new catalog."""
+    rows that will be used to create the new catalog"""
     file_reader: InputReader | None = None
     """instance of input reader that specifies arguments necessary for reading
-    from your input files."""
+    from your input files"""
 
     def __post_init__(self):
 

@@ -10,6 +10,7 @@ Utility for ingesting large survey data into HiPSCat structure.
    guide/overview
    guide/command_line
    guide/resume
+   Notebooks <notebooks>
 
 .. toctree::
    :maxdepth: 1
@@ -19,7 +20,6 @@ Utility for ingesting large survey data into HiPSCat structure.
    catalogs/allwise
    catalogs/neowise
    catalogs/tic
-   Notebooks <notebooks>
 
 .. toctree::
    :maxdepth: 1
