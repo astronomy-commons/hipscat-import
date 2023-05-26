@@ -19,6 +19,7 @@ Utility for ingesting large survey data into HiPSCat structure.
    catalogs/allwise
    catalogs/neowise
    catalogs/tic
+   Notebooks <notebooks>
 
 .. toctree::
    :maxdepth: 1
