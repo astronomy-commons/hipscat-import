@@ -1,10 +1,14 @@
-from dataclasses import dataclass
-from hipscat_import.runtime_arguments import RuntimeArguments
-from hipscat.catalog import Catalog
-from hipscat.io import file_io
-import numpy as np
 import warnings
+from dataclasses import dataclass
+
 import healpy as hp
+import numpy as np
+from hipscat.catalog import Catalog, PartitionInfo
+from hipscat.catalog.catalog_info import CatalogInfo
+from hipscat.io import file_io, paths
+
+from hipscat_import.runtime_arguments import RuntimeArguments
+
 
 @dataclass
 class MarginCacheArguments(RuntimeArguments):
@@ -53,27 +57,38 @@ class MarginCacheArguments(RuntimeArguments):
 
     def _check_arguments(self):
         if not file_io.does_file_or_directory_exist(self.input_catalog_path):
-                raise FileNotFoundError("input_catalog_path not found on local storage")
+            raise FileNotFoundError("input_catalog_path not found on local storage")
 
-        self.catalog = Catalog(self.input_catalog_path)
+        meta_pointer = paths.get_catalog_info_pointer(self.input_catalog_path)
+        catalog_info = CatalogInfo.read_from_metadata_file(meta_pointer)
+
+        info_pointer = paths.get_partition_info_pointer(self.input_catalog_path)
+        pixels = PartitionInfo.read_from_file(info_pointer)
+
+        self.catalog = Catalog(
+            catalog_info=catalog_info,
+            pixels=pixels,
+            catalog_path=self.input_catalog_path
+        )
 
         partition_stats = self.catalog.get_pixels()
         highest_order = np.max(partition_stats["Norder"].values)
         margin_pixel_k = highest_order + 1
         if self.margin_order > -1:
             if self.margin_order < margin_pixel_k:
+                # pylint: disable=line-too-long
                 raise ValueError(
                     "margin_order must be of a higher order than the highest order catalog partition pixel."
                 )
+                # pylint: enable=line-too-long
         else:
             self.margin_order = margin_pixel_k
 
         margin_pixel_nside = hp.order2nside(self.margin_order)
 
         if hp.nside2resol(margin_pixel_nside, arcmin=True) * 60. < self.margin_threshold:
+            # pylint: disable=line-too-long
             warnings.warn(
                 "Warning: margin pixels have a smaller resolution than margin_threshold; this may lead to data loss in the margin cache."
             )
-
-    
-
+            # pylint: enable=line-too-long
