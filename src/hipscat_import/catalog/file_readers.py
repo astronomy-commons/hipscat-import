@@ -28,7 +28,7 @@ def get_file_reader(
             Currently supported formats include:
 
             - `csv`, comma separated values. may also be tab- or pipe-delimited
-                    includes `.csv.gz` and other compressed csv files
+              includes `.csv.gz` and other compressed csv files
             - `fits`, flexible image transport system. often used for astropy tables.
             - `parquet`, compressed columnar data format
 
@@ -74,7 +74,7 @@ class InputReader(abc.ABC):
         """Read the input file, or chunk of the input file.
 
         Args:
-            input_file(str) path to the input file.
+            input_file(str): path to the input file.
         Yields:
             DataFrame containing chunk of file info.
         """
@@ -125,7 +125,6 @@ class CsvReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
-        """Read CSV using chunked file reader"""
         if self.schema_file:
             schema_parquet = pd.read_parquet(
                 self.schema_file, dtype_backend="numpy_nullable"
@@ -182,6 +181,12 @@ class FitsReader(InputReader):
           `skip_column_names` will be ignored.
         - If `skip_column_names` is provided, we will remove those columns from processing stages.
 
+    NB:
+        Uses astropy table memmap to avoid reading the entire file into memory.
+
+        See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
+
+
     Attributes:
         chunksize (int): number of rows of the file to process at once.
             For large files, this can prevent loading the entire file
@@ -201,12 +206,6 @@ class FitsReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
-        """Read chunks of rows in a fits file.
-
-        Uses astropy table memmap to avoid reading the entire file into memory.
-
-        See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
-        """
         table = Table.read(input_file, memmap=True, **self.kwargs)
         if self.column_names:
             table.keep_columns(self.column_names)
@@ -244,7 +243,6 @@ class ParquetReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
-        """Read chunks of rows in a parquet file."""
         parquet_file = pq.read_table(input_file, **self.kwargs)
         for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
             yield pa.Table.from_batches([smaller_table]).to_pandas()
