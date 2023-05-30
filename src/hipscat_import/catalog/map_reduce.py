@@ -7,6 +7,8 @@ import pyarrow.parquet as pq
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 
+from hipscat_import.catalog.file_readers import InputReader
+
 # pylint: disable=too-many-locals,too-many-arguments
 
 
@@ -48,7 +50,7 @@ def _has_named_index(dataframe):
 
 def _iterate_input_file(
     input_file: FilePointer,
-    file_reader,
+    file_reader: InputReader,
     highest_order,
     ra_column,
     dec_column,
@@ -86,7 +88,7 @@ def _iterate_input_file(
 
 def map_to_pixels(
     input_file: FilePointer,
-    file_reader,
+    file_reader: InputReader,
     highest_order,
     ra_column,
     dec_column,
@@ -96,8 +98,8 @@ def map_to_pixels(
 
     Args:
         input_file (FilePointer): file to read for catalog data.
-        file_reader (InputReader): instance of input reader that
-            specifies arguments necessary for reading from the input file.
+        file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input 
+            reader that specifies arguments necessary for reading from the input file.
         shard_suffix (str): unique counter for this input file, used
             when creating intermediate files
         highest_order (int): healpix order to use when mapping
@@ -122,7 +124,7 @@ def map_to_pixels(
 
 def split_pixels(
     input_file: FilePointer,
-    file_reader,
+    file_reader: InputReader,
     shard_suffix,
     highest_order,
     ra_column,
@@ -135,8 +137,8 @@ def split_pixels(
 
     Args:
         input_file (FilePointer): file to read for catalog data.
-        file_reader (InputReader): instance of input reader that
-            specifies arguments necessary for reading from the input file.
+        file_reader (hipscat_import.catalog.file_readers.InputReader): instance 
+            of input reader that specifies arguments necessary for reading from the input file.
         shard_suffix (str): unique counter for this input file, used
             when creating intermediate files
         highest_order (int): healpix order to use when mapping
@@ -192,20 +194,19 @@ def reduce_pixel_shards(
     In addition to combining multiple shards of data into a single
     parquet file, this method will add a few new columns:
 
-        - `Norder` - the healpix order for the pixel
-        - `Dir` - the directory part, corresponding to the pixel
-        ` `Npix` - the healpix pixel
-        - `_hipscat_index` - optional - a spatially-correlated
-            64-bit index field.
+        - ``Norder`` - the healpix order for the pixel
+        - ``Dir`` - the directory part, corresponding to the pixel
+        - ``Npix`` - the healpix pixel
+        - ``_hipscat_index`` - optional - a spatially-correlated
+          64-bit index field.
 
-    Notes on `_hipscat_index`:
+    Notes on ``_hipscat_index``:
 
         - if we generate the field, we will promote any previous
-            *named* pandas index field(s) to a column with
-            that name.
-        - see `hipscat.pixel_math.hipscat_id`
-            for more in-depth discussion of this field.
-
+          *named* pandas index field(s) to a column with
+          that name.
+        - see ``hipscat.pixel_math.hipscat_id``
+          for more in-depth discussion of this field.
 
     Args:
         cache_path (str): where to read intermediate files
