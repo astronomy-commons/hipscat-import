@@ -8,7 +8,7 @@ import hipscat_import.catalog.margin_cache as mc
 from hipscat_import.catalog import MarginCacheArguments
 
 
-@pytest.mark.dask
+@pytest.mark.dask(timeout=20)
 def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     """Test that margin cache generation works end to end."""
     args = MarginCacheArguments(
