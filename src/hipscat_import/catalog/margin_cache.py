@@ -61,7 +61,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
                 partition_file=partition_file,
                 margin_pairs=margin_pairs,
                 margin_threshold=args.margin_threshold,
-                output_path=args.margin_output_path,
+                output_path=args.catalog_path,
                 margin_order=args.margin_order,
                 ra_column=args.catalog.catalog_info.ra_column,
                 dec_column=args.catalog.catalog_info.dec_column,
@@ -97,14 +97,15 @@ def _map_pixel_shards(
 
     constrained_data = data.merge(margin_pairs, on="margin_pixel")
 
-    constrained_data.groupby(["partition_order", "partition_pixel"]).apply(
-        _to_pixel_shard,
-        margin_threshold=margin_threshold,
-        output_path=output_path,
-        margin_order=margin_order,
-        ra_column=ra_column,
-        dec_column=dec_column,
-    )
+    if len(constrained_data):
+        constrained_data.groupby(["partition_order", "partition_pixel"]).apply(
+            _to_pixel_shard,
+            margin_threshold=margin_threshold,
+            output_path=output_path,
+            margin_order=margin_order,
+            ra_column=ra_column,
+            dec_column=dec_column,
+        )
 
 def _to_pixel_shard(data, margin_threshold, output_path, margin_order, ra_column, dec_column):
     """Do boundary checking for the cached partition and then output remaining data."""
@@ -113,7 +114,7 @@ def _to_pixel_shard(data, margin_threshold, output_path, margin_order, ra_column
 
     scale = pixel_math.get_margin_scale(order, margin_threshold)
     bounding_polygons = pixel_math.get_margin_bounds_and_wcs(order, pix, scale)
-    is_polar, pole = pixel_math.pixel_is_polar(order, pix)
+    is_polar, _ = pixel_math.pixel_is_polar(order, pix)
 
     if is_polar:
         data = _margin_filter_polar(
@@ -121,7 +122,6 @@ def _to_pixel_shard(data, margin_threshold, output_path, margin_order, ra_column
             order,
             pix,
             margin_order,
-            pole,
             margin_threshold,
             ra_column,
             dec_column,
@@ -160,7 +160,6 @@ def _margin_filter_polar(
     order,
     pix,
     margin_order,
-    pole,
     margin_threshold,
     ra_column,
     dec_column,
@@ -185,7 +184,6 @@ def _margin_filter_polar(
         order,
         pix,
         margin_order,
-        pole,
         margin_threshold
     )
     other_data["margin_check"] = pixel_math.check_margin_bounds(
@@ -206,6 +204,7 @@ def generate_margin_cache(args):
     Args:
         args (MarginCacheArguments): A valid `MarginCacheArguments` object.
     """
+    # pylint: disable=duplicate-code
     with Client(
         local_directory=args.dask_tmp,
         n_workers=args.dask_n_workers,
@@ -215,6 +214,7 @@ def generate_margin_cache(args):
             client,
             args
         )
+    # pylint: enable=duplicate-code
 
 def generate_margin_cache_with_client(client, args):
     """Generate a margin cache for a given input catalog.
@@ -235,9 +235,8 @@ def generate_margin_cache_with_client(client, args):
     # TODO: remove this once hipscat uses arcsec for calculation
     args.margin_threshold = args.margin_threshold / 3600.
 
-    args.margin_output_path = f"{args.output_path}{args.output_catalog_name}"
     _create_margin_directory(
-        partition_stats, args.margin_output_path
+        partition_stats, args.catalog_path
     )
 
     partition_pixels = args.catalog.partition_info.get_healpix_pixels()

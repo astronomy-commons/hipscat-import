@@ -2,7 +2,7 @@
     "catalog_name": "small_sky_source_catalog",
     "catalog_type": "source",
     "epoch": "J2000",
-    "ra_kw": "source_ra",
-    "dec_kw": "source_dec",
+    "ra_column": "source_ra",
+    "dec_column": "source_dec",
     "total_rows": 17161
 }

@@ -49,13 +49,12 @@ class MarginCacheArguments(RuntimeArguments):
     margin_order: int = -1
 
     input_catalog_path: str = ""
-    margin_output_path: str = ""
 
     def __post_init__(self):
-        super().__post_init__()
         self._check_arguments()
 
     def _check_arguments(self):
+        super()._check_arguments()
         if not file_io.does_file_or_directory_exist(self.input_catalog_path):
             raise FileNotFoundError("input_catalog_path not found on local storage")
 
