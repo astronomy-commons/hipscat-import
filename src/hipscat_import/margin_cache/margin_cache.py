@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 # pylint: disable=too-many-locals,too-many-arguments
 
-def _find_parition_margin_pixel_pairs(stats, margin_order):
+def _find_partition_margin_pixel_pairs(stats, margin_order):
     """Creates a DataFrame filled with many-to-many connections between
     the catalog partition pixels and the margin pixels at `margin_order`.
     """
@@ -16,9 +16,9 @@ def _find_parition_margin_pixel_pairs(stats, margin_order):
     part_pix = []
     margin_pix = []
 
-    for _, row in stats.iterrows():
-        order = row["Norder"]
-        pix = row["Npix"]
+    for healpixel in stats:
+        order = healpixel.order
+        pix = healpixel.pixel
 
         d_order = margin_order - order
 
@@ -37,9 +37,9 @@ def _find_parition_margin_pixel_pairs(stats, margin_order):
 
 def _create_margin_directory(stats, output_path):
     """Creates directories for all the catalog partitions."""
-    for _, row in stats.iterrows():
-        order = row["Norder"]
-        pix = row["Npix"]
+    for healpixel in stats:
+        order = healpixel.order
+        pix = healpixel.pixel
 
         destination_dir = paths.pixel_directory(
             output_path, order, pix
@@ -153,7 +153,9 @@ def _to_pixel_shard(data, margin_threshold, output_path, margin_order, ra_column
             partition_dir, source_order, source_pix
         )
 
-        margin_data.to_parquet(shard_path)
+        final_df = margin_data.drop(columns=["partition_order", "partition_pixel", "margin_check"])
+
+        final_df.to_parquet(shard_path)
 
 def _margin_filter_polar(
     data,
@@ -224,9 +226,9 @@ def generate_margin_cache_with_client(client, args):
         args (MarginCacheArguments): A valid `MarginCacheArguments` object.
     """
     # determine which order to generate margin pixels for
-    partition_stats = args.catalog.get_pixels()
+    partition_stats = args.catalog.partition_info.get_healpix_pixels()
 
-    margin_pairs = _find_parition_margin_pixel_pairs(
+    margin_pairs = _find_partition_margin_pixel_pairs(
         partition_stats,
         args.margin_order
     )
@@ -239,10 +241,9 @@ def generate_margin_cache_with_client(client, args):
         partition_stats, args.catalog_path
     )
 
-    partition_pixels = args.catalog.partition_info.get_healpix_pixels()
     _map_to_margin_shards(
         client=client,
         args=args,
-        partition_pixels=partition_pixels,
+        partition_pixels=partition_stats,
         margin_pairs=margin_pairs,
     )

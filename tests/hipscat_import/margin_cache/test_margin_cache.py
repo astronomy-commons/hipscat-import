@@ -4,8 +4,8 @@ import numpy.testing as npt
 import pytest
 from hipscat.io import file_io
 
-import hipscat_import.catalog.margin_cache as mc
-from hipscat_import.catalog import MarginCacheArguments
+import hipscat_import.margin_cache.margin_cache as mc
+from hipscat_import.margin_cache import MarginCacheArguments
 
 
 @pytest.mark.dask(timeout=20)
@@ -32,8 +32,8 @@ def test_partition_margin_pixel_pairs(small_sky_source_catalog, tmp_path):
         output_catalog_name="catalog_cache",
     )
 
-    margin_pairs = mc._find_parition_margin_pixel_pairs(
-        args.catalog.get_pixels(),
+    margin_pairs = mc._find_partition_margin_pixel_pairs(
+        args.catalog.partition_info.get_healpix_pixels(),
         args.margin_order
     )
 
@@ -51,7 +51,7 @@ def test_create_margin_directory(small_sky_source_catalog, tmp_path):
     )
 
     mc._create_margin_directory(
-        stats=args.catalog.get_pixels(),
+        stats=args.catalog.partition_info.get_healpix_pixels(),
         output_path=args.catalog_path
     )
 
