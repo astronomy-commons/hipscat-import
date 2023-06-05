@@ -44,7 +44,8 @@ class MarginCacheArguments(RuntimeArguments):
             if self.margin_order < margin_pixel_k:
                 # pylint: disable=line-too-long
                 raise ValueError(
-                    "margin_order must be of a higher order than the highest order catalog partition pixel."
+                    "margin_order must be of a higher order "
+                    "than the highest order catalog partition pixel."
                 )
                 # pylint: enable=line-too-long
         else:
