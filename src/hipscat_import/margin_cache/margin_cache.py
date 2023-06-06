@@ -49,6 +49,7 @@ def _create_margin_directory(stats, output_path):
 def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
     """Create all the jobs for mapping partition files into the margin cache."""
     futures = []
+    mp_future = client.scatter(margin_pairs, broadcast=True)
     for pix in partition_pixels:
         partition_file = paths.pixel_catalog_file(
             args.input_catalog_path,
@@ -59,7 +60,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
             client.submit(
                 mcmr.map_pixel_shards,
                 partition_file=partition_file,
-                margin_pairs=margin_pairs,
+                margin_pairs=mp_future,
                 margin_threshold=args.margin_threshold,
                 output_path=args.catalog_path,
                 margin_order=args.margin_order,

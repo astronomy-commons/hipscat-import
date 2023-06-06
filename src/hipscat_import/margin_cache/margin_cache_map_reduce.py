@@ -84,7 +84,12 @@ def _to_pixel_shard(data, margin_threshold, output_path, margin_order, ra_column
             partition_dir, source_order, source_pix
         )
 
-        final_df = margin_data.drop(columns=["partition_order", "partition_pixel", "margin_check"])
+        final_df = margin_data.drop(columns=[
+            "partition_order", 
+            "partition_pixel", 
+            "margin_check", 
+            "margin_pixel"
+        ])
 
         if is_polar:
             final_df = final_df.drop(columns=["is_trunc"])
@@ -112,9 +117,8 @@ def _margin_filter_polar(
     # pylint: disable=singleton-comparison
     trunc_data = data.loc[data["is_trunc"] == True]
     other_data = data.loc[data["is_trunc"] == False]
-    # pylint: enable=singleton-comparison
 
-    trunc_data["margin_check"] = pixel_math.check_polar_margin_bounds(
+    trunc_check = pixel_math.check_polar_margin_bounds(
         trunc_data[ra_column].values,
         trunc_data[dec_column].values,
         order,
@@ -122,10 +126,14 @@ def _margin_filter_polar(
         margin_order,
         margin_threshold
     )
-    other_data["margin_check"] = pixel_math.check_margin_bounds(
+    data.loc[data["is_trunc"] == True, "margin_check"] = trunc_check
+
+    no_trunc_check = pixel_math.check_margin_bounds(
         other_data[ra_column].values,
         other_data[dec_column].values,
         bounding_polygons
     )
+    data.loc[data["is_trunc"] == False, "margin_check"] = no_trunc_check
+    # pylint: enable=singleton-comparison
 
-    return pd.concat([trunc_data, other_data])
+    return data
