@@ -1,6 +1,7 @@
 import healpy as hp
 import numpy as np
 import pandas as pd
+import pyarrow.dataset as ds
 from hipscat import pixel_math
 from hipscat.io import file_io, paths
 
@@ -72,8 +73,7 @@ def _to_pixel_shard(data, margin_threshold, output_path, margin_order, ra_column
         # TODO: this should be a utility function in `hipscat`
         # that properly handles the hive formatting
         # generate a file name for our margin shard
-        partition_file = paths.pixel_catalog_file(output_path, order, pix)
-        partition_dir = f"{partition_file[:-8]}/"
+        partition_dir = _get_partition_directory(output_path, order, pix)
         shard_dir = paths.pixel_directory(
             partition_dir, source_order, source_pix
         )
@@ -137,3 +137,34 @@ def _margin_filter_polar(
     # pylint: enable=singleton-comparison
 
     return data
+
+def _get_partition_directory(path, order, pix):
+    """Get the directory where a partition pixel's margin shards live"""
+    partition_file = paths.pixel_catalog_file(path, order, pix)
+
+    # removes the '.parquet' and adds a slash
+    partition_dir = f"{partition_file[:-8]}/"
+
+    return partition_dir
+
+def reduce_margin_shards(output_path, partition_order, partition_pixel):
+    """Reduce all partition pixel directories into a single file"""
+    shard_dir = _get_partition_directory(
+        output_path,
+        partition_order,
+        partition_pixel
+    )
+
+    if file_io.does_file_or_directory_exist(shard_dir):
+        data = ds.dataset(shard_dir, format="parquet", partitioning="hive")
+        full_df = data.to_table().to_pandas()
+
+        if len(full_df):
+            margin_cache_file_path = paths.pixel_catalog_file(
+                output_path,
+                partition_order,
+                partition_pixel
+            )
+
+            full_df.to_parquet(margin_cache_file_path)
+            file_io.remove_directory(shard_dir)
