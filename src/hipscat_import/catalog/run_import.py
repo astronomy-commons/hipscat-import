@@ -162,12 +162,14 @@ def run(args):
     """Importer that creates a dask client from the arguments"""
     _validate_args(args)
 
+    # pylint: disable=duplicate-code
     with Client(
         local_directory=args.dask_tmp,
         n_workers=args.dask_n_workers,
         threads_per_worker=args.dask_threads_per_worker,
     ) as client:  # pragma: no cover
         run_with_client(args, client)
+    # pylint: enable=duplicate-code
 
 
 def run_with_client(args, client):
