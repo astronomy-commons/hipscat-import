@@ -62,3 +62,31 @@ def test_margin_threshold_warns(small_sky_source_catalog, tmp_path):
             output_catalog_name="catalog_cache",
             margin_order=16
         )
+
+
+def test_to_catalog_info(small_sky_source_catalog, tmp_path):
+    """Verify creation of catalog info for margin cache to be created."""
+    args = MarginCacheArguments(
+        margin_threshold=5.0,
+        input_catalog_path=small_sky_source_catalog,
+        output_path=tmp_path,
+        output_catalog_name="catalog_cache",
+        margin_order=4
+    )
+    catalog_info = args.to_catalog_info(total_rows=10)
+    assert catalog_info.catalog_name == args.output_catalog_name
+    assert catalog_info.total_rows == 10
+
+
+def test_provenance_info(small_sky_source_catalog, tmp_path):
+    """Verify that provenance info includes margin-cache-specific fields."""
+    args = MarginCacheArguments(
+        margin_threshold=5.0,
+        input_catalog_path=small_sky_source_catalog,
+        output_path=tmp_path,
+        output_catalog_name="catalog_cache",
+        margin_order=4
+    )
+
+    runtime_args = args.provenance_info()["runtime_args"]
+    assert "margin_threshold" in runtime_args

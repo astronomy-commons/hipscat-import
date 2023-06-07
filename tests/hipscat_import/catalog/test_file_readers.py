@@ -7,15 +7,24 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from hipscat.catalog import CatalogParameters
+from hipscat.catalog.catalog import CatalogInfo
 
-from hipscat_import.catalog.file_readers import (
-    CsvReader,
-    FitsReader,
-    ParquetReader,
-    get_file_reader,
-)
+from hipscat_import.catalog.file_readers import (CsvReader, FitsReader,
+                                                 ParquetReader,
+                                                 get_file_reader)
 
+
+# pylint: disable=redefined-outer-name
+@pytest.fixture
+def basic_catalog_info():
+    info = {
+        "catalog_name": "test_catalog",
+        "catalog_type": "object",
+        "total_rows": 100,
+        "ra_column": "ra",
+        "dec_column": "dec",
+    }
+    return CatalogInfo(**info)
 
 def test_unknown_file_type():
     """File reader factory method should fail for unknown file types"""
@@ -187,7 +196,7 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     assert np.all(column_types == expected_column_types)
 
 
-def test_csv_reader_provenance_info(tmp_path):
+def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
     """Test that we get some provenance info and it is parseable into JSON."""
     reader = CsvReader(
         header=None,
@@ -201,10 +210,9 @@ def test_csv_reader_provenance_info(tmp_path):
         },
     )
     provenance_info = reader.provenance_info()
-    base_catalog_parameters = CatalogParameters(
-        output_path=tmp_path, catalog_name="empty"
-    )
-    io.write_provenance_info(base_catalog_parameters, provenance_info)
+    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
+    os.makedirs(catalog_base_dir)
+    io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
 
 
 def test_parquet_reader(parquet_shards_shard_44_0):
@@ -226,14 +234,13 @@ def test_parquet_reader_chunked(parquet_shards_shard_44_0):
     assert total_chunks == 7
 
 
-def test_parquet_reader_provenance_info(tmp_path):
+def test_parquet_reader_provenance_info(tmp_path, basic_catalog_info):
     """Test that we get some provenance info and it is parseable into JSON."""
     reader = ParquetReader(chunksize=1)
     provenance_info = reader.provenance_info()
-    base_catalog_parameters = CatalogParameters(
-        output_path=tmp_path, catalog_name="empty"
-    )
-    io.write_provenance_info(base_catalog_parameters, provenance_info)
+    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
+    os.makedirs(catalog_base_dir)
+    io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
 
 
 def test_read_fits(formats_fits):
@@ -267,11 +274,10 @@ def test_read_fits_columns(formats_fits):
     assert list(frame.columns) == ["id", "ra", "dec"]
 
 
-def test_fits_reader_provenance_info(tmp_path):
+def test_fits_reader_provenance_info(tmp_path, basic_catalog_info):
     """Test that we get some provenance info and it is parseable into JSON."""
     reader = FitsReader()
     provenance_info = reader.provenance_info()
-    base_catalog_parameters = CatalogParameters(
-        output_path=tmp_path, catalog_name="empty"
-    )
-    io.write_provenance_info(base_catalog_parameters, provenance_info)
+    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
+    os.makedirs(catalog_base_dir)
+    io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)

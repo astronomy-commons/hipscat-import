@@ -3,7 +3,8 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from hipscat.catalog import Catalog, CatalogParameters
+from hipscat.catalog import Catalog
+from hipscat.catalog.index.index_catalog_info import IndexCatalogInfo
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -46,17 +47,17 @@ class IndexArguments(RuntimeArguments):
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
 
-    def to_catalog_parameters(self) -> CatalogParameters:
-        """Convert importing arguments into hipscat catalog parameters.
-
-        Returns:
-            CatalogParameters for catalog being created.
-        """
-        return CatalogParameters(
-            catalog_name=self.output_catalog_name,
-            catalog_type="index",
-            output_path=self.output_path,
-        )
+    def to_catalog_info(self, total_rows) -> IndexCatalogInfo:
+        """Catalog-type-specific dataset info."""
+        info = {
+            "catalog_name": self.output_catalog_name,
+            "total_rows": total_rows,
+            "catalog_type": "index",
+            "primary_catalog":str(self.input_catalog_path),
+            "indexing_column": self.indexing_column,
+            "extra_columns": self.extra_columns,
+        }
+        return IndexCatalogInfo(**info)
 
     def additional_runtime_provenance_info(self):
         return {

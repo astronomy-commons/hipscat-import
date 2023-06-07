@@ -3,7 +3,8 @@
 
 import pytest
 
-from hipscat_import.catalog.arguments import ImportArguments, check_healpix_order_range
+from hipscat_import.catalog.arguments import (ImportArguments,
+                                              check_healpix_order_range)
 
 # pylint: disable=protected-access
 
@@ -168,7 +169,7 @@ def test_catalog_type(blank_data_dir, tmp_path):
         )
 
 
-def test_to_catalog_parameters(blank_data_dir, tmp_path):
+def test_to_catalog_info(blank_data_dir, tmp_path):
     """Verify creation of catalog parameters for catalog to be created."""
     args = ImportArguments(
         output_catalog_name="catalog",
@@ -177,8 +178,9 @@ def test_to_catalog_parameters(blank_data_dir, tmp_path):
         output_path=tmp_path,
         tmp_dir=tmp_path,
     )
-    catalog_parameters = args.to_catalog_parameters()
-    assert catalog_parameters.catalog_name == "catalog"
+    catalog_info = args.to_catalog_info(total_rows=10)
+    assert catalog_info.catalog_name == "catalog"
+    assert catalog_info.total_rows == 10
 
 
 def test_provenance_info(blank_data_dir, tmp_path):
