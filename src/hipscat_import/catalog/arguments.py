@@ -169,7 +169,9 @@ class ImportArguments(RuntimeArguments):
             "pixel_threshold": self.pixel_threshold,
             "mapping_healpix_order": self.mapping_healpix_order,
             "debug_stats_only": self.debug_stats_only,
-            "file_reader_info": self.file_reader.provenance_info(),
+            "file_reader_info": self.file_reader.provenance_info()
+            if self.file_reader is not None
+            else {},
         }
 
 
