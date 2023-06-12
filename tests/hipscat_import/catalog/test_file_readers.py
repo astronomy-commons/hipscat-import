@@ -9,9 +9,12 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.catalog import CatalogInfo
 
-from hipscat_import.catalog.file_readers import (CsvReader, FitsReader,
-                                                 ParquetReader,
-                                                 get_file_reader)
+from hipscat_import.catalog.file_readers import (
+    CsvReader,
+    FitsReader,
+    ParquetReader,
+    get_file_reader,
+)
 
 
 # pylint: disable=redefined-outer-name
@@ -25,6 +28,7 @@ def basic_catalog_info():
         "dec_column": "dec",
     }
     return CatalogInfo(**info)
+
 
 def test_unknown_file_type():
     """File reader factory method should fail for unknown file types"""

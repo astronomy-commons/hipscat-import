@@ -53,13 +53,13 @@ class IndexArguments(RuntimeArguments):
             "catalog_name": self.output_catalog_name,
             "total_rows": total_rows,
             "catalog_type": "index",
-            "primary_catalog":str(self.input_catalog_path),
+            "primary_catalog": str(self.input_catalog_path),
             "indexing_column": self.indexing_column,
             "extra_columns": self.extra_columns,
         }
         return IndexCatalogInfo(**info)
 
-    def additional_runtime_provenance_info(self):
+    def additional_runtime_provenance_info(self) -> dict:
         return {
             "input_catalog_path": str(self.input_catalog_path),
             "indexing_column": self.indexing_column,

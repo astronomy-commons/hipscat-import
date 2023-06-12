@@ -7,6 +7,7 @@ from hipscat_import.margin_cache import MarginCacheArguments
 
 # pylint: disable=protected-access
 
+
 def test_empty_required(tmp_path):
     """*Most* required arguments are provided."""
     ## Input catalog path is missing
@@ -16,6 +17,7 @@ def test_empty_required(tmp_path):
             output_path=tmp_path,
             output_catalog_name="catalog_cache",
         )
+
 
 def test_margin_order_dynamic(small_sky_source_catalog, tmp_path):
     """Ensure we can dynamically set the margin_order"""
@@ -28,6 +30,7 @@ def test_margin_order_dynamic(small_sky_source_catalog, tmp_path):
 
     assert args.margin_order == 3
 
+
 def test_margin_order_static(small_sky_source_catalog, tmp_path):
     """Ensure we can manually set the margin_order"""
     args = MarginCacheArguments(
@@ -35,10 +38,11 @@ def test_margin_order_static(small_sky_source_catalog, tmp_path):
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
         output_catalog_name="catalog_cache",
-        margin_order=4
+        margin_order=4,
     )
 
     assert args.margin_order == 4
+
 
 def test_margin_order_invalid(small_sky_source_catalog, tmp_path):
     """Ensure we raise an exception when margin_order is invalid"""
@@ -48,8 +52,9 @@ def test_margin_order_invalid(small_sky_source_catalog, tmp_path):
             input_catalog_path=small_sky_source_catalog,
             output_path=tmp_path,
             output_catalog_name="catalog_cache",
-            margin_order=2
+            margin_order=2,
         )
+
 
 def test_margin_threshold_warns(small_sky_source_catalog, tmp_path):
     """Ensure we give a warning when margin_threshold is greater than margin_order resolution"""
@@ -60,7 +65,7 @@ def test_margin_threshold_warns(small_sky_source_catalog, tmp_path):
             input_catalog_path=small_sky_source_catalog,
             output_path=tmp_path,
             output_catalog_name="catalog_cache",
-            margin_order=16
+            margin_order=16,
         )
 
 
@@ -71,7 +76,7 @@ def test_to_catalog_info(small_sky_source_catalog, tmp_path):
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
         output_catalog_name="catalog_cache",
-        margin_order=4
+        margin_order=4,
     )
     catalog_info = args.to_catalog_info(total_rows=10)
     assert catalog_info.catalog_name == args.output_catalog_name
@@ -85,7 +90,7 @@ def test_provenance_info(small_sky_source_catalog, tmp_path):
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
         output_catalog_name="catalog_cache",
-        margin_order=4
+        margin_order=4,
     )
 
     runtime_args = args.provenance_info()["runtime_args"]

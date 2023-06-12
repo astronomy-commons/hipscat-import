@@ -77,7 +77,7 @@ class MarginCacheArguments(RuntimeArguments):
         }
         return MarginCacheCatalogInfo(**info)
 
-    def additional_runtime_provenance_info(self):
+    def additional_runtime_provenance_info(self) -> dict:
         return {
             "input_catalog_path": str(self.input_catalog_path),
             "margin_threshold": self.margin_threshold,

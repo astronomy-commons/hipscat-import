@@ -152,7 +152,7 @@ class ImportArguments(RuntimeArguments):
         }
         return CatalogInfo(**info)
 
-    def additional_runtime_provenance_info(self):
+    def additional_runtime_provenance_info(self) -> dict:
         return {
             "catalog_name": self.output_catalog_name,
             "epoch": self.epoch,

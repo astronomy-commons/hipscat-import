@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
-from hipscat.catalog.association_catalog.association_catalog import \
-    AssociationCatalogInfo
+from hipscat.catalog.association_catalog.association_catalog import (
+    AssociationCatalogInfo,
+)
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -65,7 +66,7 @@ class AssociationArguments(RuntimeArguments):
         }
         return AssociationCatalogInfo(**info)
 
-    def additional_runtime_provenance_info(self):
+    def additional_runtime_provenance_info(self) -> dict:
         return {
             "primary_input_catalog_path": str(self.primary_input_catalog_path),
             "primary_id_column": self.primary_id_column,
