@@ -7,7 +7,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 
 import hipscat.io.write_metadata as io
 import numpy as np
-from dask.distributed import Client, as_completed
+from dask.distributed import as_completed
 from hipscat import pixel_math
 from tqdm import tqdm
 
