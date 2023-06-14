@@ -35,7 +35,7 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
     """
     try:
         if not args:
-            raise ValueError("args is required and should be subclass RuntimeArguments")
+            raise ValueError("args is required and should be subclass of RuntimeArguments")
 
         if isinstance(args, ImportArguments):
             catalog_runner.run(args, client)
