@@ -62,12 +62,15 @@ write_to = "src/hipscat_import/_version.py"
 
 [tool.setuptools.package-data]
 hipscat_import = ["py.typed"]
-[project.scripts]
-hipscat-import = "hipscat_import.control:main"
-hc = "hipscat_import.control:main"
 
 [tool.pytest.ini_options]
 timeout = 1
 markers = [
     "dask: mark tests as having a dask client runtime dependency",
+]
+
+[tool.coverage.report]
+omit = [
+    "src/hipscat_import/_version.py", #auto-generated
+    "src/hipscat_import/pipeline.py" #too annoying to test
 ]

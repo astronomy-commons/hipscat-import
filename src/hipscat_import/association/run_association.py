@@ -13,16 +13,12 @@ from hipscat_import.association.map_reduce import (map_association,
                                                    reduce_association)
 
 
-def _validate_args(args):
+def run(args):
+    """Run the association pipeline"""
     if not args:
         raise TypeError("args is required and should be type AssociationArguments")
     if not isinstance(args, AssociationArguments):
         raise TypeError("args must be type AssociationArguments")
-
-
-def run(args):
-    """Run the association pipeline"""
-    _validate_args(args)
 
     with tqdm(total=1, desc="Mapping ", disable=not args.progress_bar) as step_progress:
         map_association(args)

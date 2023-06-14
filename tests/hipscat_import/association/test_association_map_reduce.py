@@ -33,7 +33,7 @@ def test_map_association(
     )
     subset_catalog_path = args.catalog_path
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     with open(
         os.path.join(subset_catalog_path, "catalog_info.json"), "r", encoding="utf-8"
