@@ -50,13 +50,13 @@ def _map_pixels(args, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        if future.status == "error": # pragma: no cover
+        if future.status == "error":  # pragma: no cover
             some_error = True
         raw_histogram = np.add(raw_histogram, result)
         resume.write_mapping_start_key(args.tmp_path, future.key)
         resume.write_histogram(args.tmp_path, raw_histogram)
         resume.write_mapping_done_key(args.tmp_path, future.key)
-    if some_error: # pragma: no cover
+    if some_error:  # pragma: no cover
         raise RuntimeError("Some mapping stages failed. See logs for details.")
     resume.set_mapping_done(args.tmp_path)
     return raw_histogram
@@ -98,10 +98,10 @@ def _split_pixels(args, alignment_future, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        if future.status == "error": # pragma: no cover
+        if future.status == "error":  # pragma: no cover
             some_error = True
         resume.write_splitting_done_key(args.tmp_path, future.key)
-    if some_error: # pragma: no cover
+    if some_error:  # pragma: no cover
         raise RuntimeError("Some splitting stages failed. See logs for details.")
     resume.set_splitting_done(args.tmp_path)
 
@@ -143,10 +143,10 @@ def _reduce_pixels(args, destination_pixel_map, client):
         total=len(futures),
         disable=(not args.progress_bar),
     ):
-        if future.status == "error": # pragma: no cover
+        if future.status == "error":  # pragma: no cover
             some_error = True
         resume.write_reducing_key(args.tmp_path, future.key)
-    if some_error: # pragma: no cover
+    if some_error:  # pragma: no cover
         raise RuntimeError("Some reducing stages failed. See logs for details.")
     resume.set_reducing_done(args.tmp_path)
 
@@ -215,12 +215,17 @@ def run_with_client(args, client):
     with tqdm(
         total=6, desc="Finishing", disable=not args.progress_bar
     ) as step_progress:
-        catalog_parameters = args.to_catalog_parameters()
-        catalog_parameters.total_rows = int(raw_histogram.sum())
-        io.write_provenance_info(catalog_parameters, args.provenance_info())
+        catalog_info = args.to_catalog_info(int(raw_histogram.sum()))
+        io.write_provenance_info(
+            catalog_base_dir=args.catalog_path,
+            dataset_info=catalog_info,
+            tool_args=args.provenance_info(),
+        )
         step_progress.update(1)
 
-        io.write_catalog_info(catalog_parameters)
+        io.write_catalog_info(
+            catalog_base_dir=args.catalog_path, dataset_info=catalog_info
+        )
         step_progress.update(1)
         if not args.debug_stats_only:
             io.write_parquet_metadata(args.catalog_path)
@@ -228,7 +233,8 @@ def run_with_client(args, client):
         io.write_fits_map(args.catalog_path, raw_histogram)
         step_progress.update(1)
         io.write_partition_info(
-            catalog_parameters, destination_healpix_pixel_map=destination_pixel_map
+            catalog_base_dir=args.catalog_path,
+            destination_healpix_pixel_map=destination_pixel_map,
         )
         step_progress.update(1)
         resume.clean_resume_files(args.tmp_path)

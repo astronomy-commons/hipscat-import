@@ -128,7 +128,7 @@ def test_compute_partition_size(tmp_path, small_sky_object_catalog):
         )
 
 
-def test_to_catalog_parameters(small_sky_object_catalog, tmp_path):
+def test_to_catalog_info(small_sky_object_catalog, tmp_path):
     """Verify creation of catalog parameters for index to be created."""
     args = IndexArguments(
         input_catalog_path=small_sky_object_catalog,
@@ -138,8 +138,9 @@ def test_to_catalog_parameters(small_sky_object_catalog, tmp_path):
         include_hipscat_index=True,
         include_order_pixel=True,
     )
-    catalog_parameters = args.to_catalog_parameters()
-    assert catalog_parameters.catalog_name == args.output_catalog_name
+    catalog_info = args.to_catalog_info(total_rows=10)
+    assert catalog_info.catalog_name == args.output_catalog_name
+    assert catalog_info.total_rows == 10
 
 
 def test_provenance_info(small_sky_object_catalog, tmp_path):
