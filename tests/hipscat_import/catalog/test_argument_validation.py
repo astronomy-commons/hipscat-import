@@ -1,9 +1,10 @@
-"""Tests of argument validation, in the absense of command line parsing"""
+"""Tests of argument validation"""
 
 
 import pytest
 
-from hipscat_import.catalog.arguments import ImportArguments, check_healpix_order_range
+from hipscat_import.catalog.arguments import (ImportArguments,
+                                              check_healpix_order_range)
 
 # pylint: disable=protected-access
 

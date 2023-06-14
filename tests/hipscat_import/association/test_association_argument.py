@@ -1,4 +1,4 @@
-"""Tests of argument validation, in the absense of command line parsing"""
+"""Tests of argument validation"""
 
 
 import pytest

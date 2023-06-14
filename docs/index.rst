@@ -8,7 +8,6 @@ Utility for ingesting large survey data into HiPSCat structure.
    :caption: Importing Catalogs
 
    guide/overview
-   guide/command_line
    guide/resume
    Notebooks <notebooks>
 
