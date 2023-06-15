@@ -6,8 +6,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-from hipscat.catalog.association_catalog.association_catalog import \
-    AssociationCatalog
+from hipscat.catalog.association_catalog.association_catalog import AssociationCatalog
 
 import hipscat_import.association.run_association as runner
 from hipscat_import.association.arguments import AssociationArguments

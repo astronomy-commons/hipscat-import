@@ -55,7 +55,7 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
 
 def _send_failure_email(args: RuntimeArguments, exception: Exception):
     if not args.completion_email_address:
-        return
+        raise exception
     message = EmailMessage()
     message["Subject"] = "hipscat-import failure."
     message["To"] = args.completion_email_address
