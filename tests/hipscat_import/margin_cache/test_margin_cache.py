@@ -1,8 +1,9 @@
 """Tests of map reduce operations"""
 import numpy as np
 import numpy.testing as npt
+import pandas as pd
 import pytest
-from hipscat.io import file_io
+from hipscat.io import file_io, paths
 
 import hipscat_import.margin_cache.margin_cache as mc
 from hipscat_import.margin_cache import MarginCacheArguments
@@ -21,8 +22,19 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     assert args.catalog.catalog_info.ra_column == "source_ra"
 
     mc.generate_margin_cache_with_client(dask_client, args)
-    # TODO: add more verification of output to this test once the
-    # reduce phase is implemented.
+
+    print(args.catalog.partition_info.get_healpix_pixels())
+
+    norder = 1
+    npix = 47
+
+    test_file = paths.pixel_catalog_file(
+        args.catalog_path, norder, npix
+    )
+
+    data = pd.read_parquet(test_file)
+
+    assert len(data) == 4
 
 def test_partition_margin_pixel_pairs(small_sky_source_catalog, tmp_path):
     args = MarginCacheArguments(
