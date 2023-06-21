@@ -36,6 +36,10 @@ class RuntimeArguments:
     dask_threads_per_worker: int = 1
     """number of threads per dask worker"""
 
+    completion_email_address: str = ""
+    """if provided, send an email to the indicated email address once the 
+    import pipeline has complete."""
+
     catalog_path = ""
     """constructed output path for the catalog that will be something like
     <output_path>/<output_catalog_name>"""

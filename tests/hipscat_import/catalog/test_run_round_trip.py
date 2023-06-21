@@ -44,7 +44,7 @@ def test_import_source_table(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Catalog.read_from_hipscat(args.catalog_path)
@@ -84,7 +84,7 @@ def test_import_mixed_schema_csv(
         use_schema_file=mixed_schema_csv_parquet,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -140,7 +140,7 @@ def test_import_preserve_index(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -168,7 +168,7 @@ def test_import_preserve_index(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -235,7 +235,7 @@ def test_import_multiindex(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -263,7 +263,7 @@ def test_import_multiindex(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -299,14 +299,16 @@ def test_import_constant_healpix_order(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Catalog.read_from_hipscat(args.catalog_path)
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
     # Check that the partition info file exists - all pixels at order 2!
-    assert all(pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels())
+    assert all(
+        pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels()
+    )
 
     # Pick a parquet file and make sure it contains as many rows as we expect
     output_file = os.path.join(
