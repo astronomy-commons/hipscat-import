@@ -27,9 +27,9 @@ Example import
 
     import pandas as pd
 
-    import hipscat_import.run_import as runner
-    from hipscat_import.arguments import ImportArguments
-    from hipscat_import.file_readers import CsvReader
+    import hipscat_import.catalog.run_import as runner
+    from hipscat_import.catalog.arguments import ImportArguments
+    from hipscat_import.catalog.hipscat_import.file_readers import CsvReader
 
     # Load the column names and types from a side file.
     type_frame = pd.read_csv("allwise_types.csv")
