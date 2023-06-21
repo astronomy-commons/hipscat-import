@@ -8,4 +8,4 @@ making our products better, or pretty much anything else, reach out!
 
 * Open an issue in our github repo for hipscat-import
     * https://github.com/astronomy-commons/hipscat-import/issues/new
-* If you're on LSSTC slack, so are we! #lincc-lsdb
+* If you're on LSSTC slack, so are we! #lincc-dataformats

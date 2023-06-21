@@ -18,7 +18,9 @@ Challenges with this data set
 - The numeric fields may be null, which is not directly supported by the 
   ``int64`` type in pandas, so we must use the nullable ``Int64`` type.
 
-You can download the :download:`allwise_types</static/allwise_types.csv>` CSV file we used.
+You can download the :download:`allwise_types</static/allwise_types.csv>` CSV file we used,
+and the associated schema file :download:`allwise_schema</static/allwise_schema.parquet>`
+with column-level parquet metadata.
 
 Example import
 -------------------------------------------------------------------------------
@@ -45,7 +47,8 @@ Example import
             column_names=type_frame["name"].values.tolist(),
             type_map=type_map,
             chunksize=250_000,
-        ).read,
+        ),
+        use_schema_file="allwise_schema.parquet",
         ra_column="ra",
         dec_column="dec",
         id_column="source_id",
