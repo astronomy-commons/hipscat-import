@@ -5,10 +5,13 @@ Utility for ingesting large survey data into HiPSCat structure.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Importing Catalogs
+   :caption: Importing Datasets
 
    guide/overview
-   guide/resume
+   guide/catalog_arguments
+   guide/margin_cache
+   guide/association
+   guide/index_table
    Notebooks <notebooks>
 
 .. toctree::
