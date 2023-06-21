@@ -9,7 +9,8 @@ from hipscat.io import file_io, write_metadata
 from tqdm import tqdm
 
 from hipscat_import.association.arguments import AssociationArguments
-from hipscat_import.association.map_reduce import map_association, reduce_association
+from hipscat_import.association.map_reduce import (map_association,
+                                                   reduce_association)
 
 
 def _validate_args(args):
@@ -40,11 +41,17 @@ def run(args):
     ) as step_progress:
         # pylint: disable=duplicate-code
         # Very similar to /index/run_index.py
-        catalog_params = args.to_catalog_parameters()
-        catalog_params.total_rows = int(rows_written)
-        write_metadata.write_provenance_info(catalog_params, args.provenance_info())
+        catalog_info = args.to_catalog_info(int(rows_written))
+        write_metadata.write_provenance_info(
+            catalog_base_dir=args.catalog_path,
+            dataset_info=catalog_info,
+            tool_args=args.provenance_info(),
+        )
         step_progress.update(1)
-        write_metadata.write_catalog_info(catalog_params)
+        catalog_info = args.to_catalog_info(total_rows=int(rows_written))
+        write_metadata.write_catalog_info(
+            dataset_info=catalog_info, catalog_base_dir=args.catalog_path
+        )
         step_progress.update(1)
         write_metadata.write_parquet_metadata(args.catalog_path)
         step_progress.update(1)

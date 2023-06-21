@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 
-from hipscat.catalog import CatalogParameters
+from hipscat.catalog.association_catalog.association_catalog import (
+    AssociationCatalogInfo,
+)
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -51,19 +53,20 @@ class AssociationArguments(RuntimeArguments):
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
 
-    def to_catalog_parameters(self) -> CatalogParameters:
-        """Convert importing arguments into hipscat catalog parameters.
+    def to_catalog_info(self, total_rows) -> AssociationCatalogInfo:
+        """Catalog-type-specific dataset info."""
+        info = {
+            "catalog_name": self.output_catalog_name,
+            "catalog_type": "association",
+            "total_rows": total_rows,
+            "primary_column": self.primary_id_column,
+            "primary_catalog": str(self.primary_input_catalog_path),
+            "join_column": self.join_id_column,
+            "join_catalog": str(self.join_input_catalog_path),
+        }
+        return AssociationCatalogInfo(**info)
 
-        Returns:
-            CatalogParameters for catalog being created.
-        """
-        return CatalogParameters(
-            catalog_name=self.output_catalog_name,
-            catalog_type="association",
-            output_path=self.output_path,
-        )
-
-    def additional_runtime_provenance_info(self):
+    def additional_runtime_provenance_info(self) -> dict:
         return {
             "primary_input_catalog_path": str(self.primary_input_catalog_path),
             "primary_id_column": self.primary_id_column,

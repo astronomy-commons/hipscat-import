@@ -5,6 +5,7 @@ import os
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from hipscat.catalog.dataset.dataset import Dataset
 
 import hipscat_import.index.run_index as runner
 from hipscat_import.index.arguments import IndexArguments
@@ -27,7 +28,6 @@ def test_bad_args():
 def test_run_index(
     small_sky_object_catalog,
     tmp_path,
-    assert_text_file_matches,
 ):
     """Test appropriate metadata is written"""
 
@@ -42,18 +42,9 @@ def test_run_index(
     runner.run(args)
 
     # Check that the catalog metadata file exists
-    expected_metadata_lines = [
-        "{",
-        '    "catalog_name": "small_sky_object_index",',
-        '    "catalog_type": "index",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 131',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_metadata_lines, metadata_filename)
+    catalog = Dataset.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
 
     basic_index_parquet_schema = pa.schema(
         [

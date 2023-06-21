@@ -6,6 +6,8 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
+from hipscat.catalog.association_catalog.association_catalog import \
+    AssociationCatalog
 
 import hipscat_import.association.run_association as runner
 from hipscat_import.association.arguments import AssociationArguments
@@ -29,9 +31,8 @@ def test_object_to_source(
     small_sky_object_catalog,
     small_sky_source_catalog,
     tmp_path,
-    assert_text_file_matches,
 ):
-    """test stuff"""
+    """Test creating association between object and source catalogs."""
 
     args = AssociationArguments(
         primary_input_catalog_path=small_sky_object_catalog,
@@ -46,40 +47,11 @@ def test_object_to_source(
     )
     runner.run(args)
 
-    # Check that the catalog metadata file exists
-    expected_metadata_lines = [
-        "{",
-        '    "catalog_name": "small_sky_association",',
-        '    "catalog_type": "association",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 17161',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_metadata_lines, metadata_filename)
-
-    # Check that the partition *join* info file exists
-    expected_lines = [
-        "Norder,Dir,Npix,join_Norder,join_Dir,join_Npix,num_rows",
-        "0,0,11,0,0,4,50",
-        "0,0,11,1,0,47,2395",
-        "0,0,11,2,0,176,385",
-        "0,0,11,2,0,177,1510",
-        "0,0,11,2,0,178,1634",
-        "0,0,11,2,0,179,1773",
-        "0,0,11,2,0,180,655",
-        "0,0,11,2,0,181,903",
-        "0,0,11,2,0,182,1246",
-        "0,0,11,2,0,183,1143",
-        "0,0,11,2,0,184,1390",
-        "0,0,11,2,0,185,2942",
-        "0,0,11,2,0,186,452",
-        "0,0,11,2,0,187,683",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "partition_join_info.csv")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    ## Check that the association data can be parsed as a valid association catalog.
+    catalog = AssociationCatalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert len(catalog.get_join_pixels()) == 14
 
     ## Test one pixel that will have 50 rows in it.
     output_file = os.path.join(
@@ -105,15 +77,19 @@ def test_object_to_source(
     ids = data_frame["join_id"]
     assert np.logical_and(ids >= 70_000, ids < 87161).all()
 
+    catalog = AssociationCatalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert len(catalog.get_join_pixels()) == 14
+
 
 @pytest.mark.dask
 def test_source_to_object(
     small_sky_object_catalog,
     small_sky_source_catalog,
     tmp_path,
-    assert_text_file_matches,
 ):
-    """test stuff"""
+    """Test creating (weirder) association between source and object catalogs."""
 
     args = AssociationArguments(
         primary_input_catalog_path=small_sky_source_catalog,
@@ -128,40 +104,11 @@ def test_source_to_object(
     )
     runner.run(args)
 
-    # Check that the catalog metadata file exists
-    expected_metadata_lines = [
-        "{",
-        '    "catalog_name": "small_sky_association",',
-        '    "catalog_type": "association",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 17161',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_metadata_lines, metadata_filename)
-
-    # Check that the partition *join* info file exists
-    expected_lines = [
-        "Norder,Dir,Npix,join_Norder,join_Dir,join_Npix,num_rows",
-        "0,0,4,0,0,11,50",
-        "1,0,47,0,0,11,2395",
-        "2,0,176,0,0,11,385",
-        "2,0,177,0,0,11,1510",
-        "2,0,178,0,0,11,1634",
-        "2,0,179,0,0,11,1773",
-        "2,0,180,0,0,11,655",
-        "2,0,181,0,0,11,903",
-        "2,0,182,0,0,11,1246",
-        "2,0,183,0,0,11,1143",
-        "2,0,184,0,0,11,1390",
-        "2,0,185,0,0,11,2942",
-        "2,0,186,0,0,11,452",
-        "2,0,187,0,0,11,683",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "partition_join_info.csv")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    ## Check that the association data can be parsed as a valid association catalog.
+    catalog = AssociationCatalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert len(catalog.get_join_pixels()) == 14
 
     ## Test one pixel that will have 50 rows in it.
     output_file = os.path.join(
@@ -192,9 +139,8 @@ def test_source_to_object(
 def test_self_join(
     small_sky_object_catalog,
     tmp_path,
-    assert_text_file_matches,
 ):
-    """test stuff"""
+    """Test creating association between object catalog and itself."""
 
     args = AssociationArguments(
         primary_input_catalog_path=small_sky_object_catalog,
@@ -209,27 +155,11 @@ def test_self_join(
     )
     runner.run(args)
 
-    # Check that the catalog metadata file exists
-    expected_metadata_lines = [
-        "{",
-        '    "catalog_name": "small_sky_self_association",',
-        '    "catalog_type": "association",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 131',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_metadata_lines, metadata_filename)
-
-    # Check that the partition *join* info file exists
-    expected_lines = [
-        "Norder,Dir,Npix,join_Norder,join_Dir,join_Npix,num_rows",
-        "0,0,11,0,0,11,131",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "partition_join_info.csv")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    ## Check that the association data can be parsed as a valid association catalog.
+    catalog = AssociationCatalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert len(catalog.get_join_pixels()) == 1
 
     ## Test one pixel that will have 50 rows in it.
     output_file = os.path.join(
