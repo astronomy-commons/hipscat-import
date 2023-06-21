@@ -1,4 +1,4 @@
-AllWISE
+NEOWISE
 ===============================================================================
 
 Getting the data
@@ -6,7 +6,7 @@ Getting the data
 
 See docs at IRSA.
 
-https://irsa.ipac.caltech.edu/data/download/wise-allwise/
+https://irsa.ipac.caltech.edu/data/download/neowiser_year8/
 
 Challenges with this data set
 -------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ Challenges with this data set
 - The numeric fields may be null, which is not directly supported by the 
   ``int64`` type in pandas, so we must use the nullable ``Int64`` type.
 
-You can download the :download:`allwise_types</static/allwise_types.csv>` CSV file we used.
+You can download the :download:`neowise_types</static/neowise_types.csv>` CSV file we used.
 
 Example import
 -------------------------------------------------------------------------------
@@ -27,17 +27,17 @@ Example import
 
     import pandas as pd
 
-    import hipscat_import.catalog.run_import as runner
+    import hipscat_import.pipeline as runner
     from hipscat_import.catalog.arguments import ImportArguments
-    from hipscat_import.catalog.hipscat_import.file_readers import CsvReader
+    from hipscat_import.catalog.file_readers import CsvReader
 
     # Load the column names and types from a side file.
-    type_frame = pd.read_csv("allwise_types.csv")
+    type_frame = pd.read_csv("neowise_types.csv")
     type_map = dict(zip(type_frame["name"], type_frame["type"]))
 
     args = ImportArguments(
-        catalog_name="allwise",
-        input_path="/path/to/allwise/",
+        output_catalog_name="neowise_1",
+        input_path="/path/to/neowiser_year8/",
         input_format="csv.bz2",
         file_reader=CsvReader(
             header=None,

@@ -13,6 +13,11 @@ a description.
 You can reach the team with bug reports, feature requests, and general inquiries
 by creating a new GitHub issue.
 
+.. tip::
+   Want to help?
+
+   Do you want to help out, but you're not sure how? :doc:`/guide/contact`
+
 Create a branch
 -------------------------------------------------------------------------------
 
