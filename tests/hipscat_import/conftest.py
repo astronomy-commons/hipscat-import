@@ -92,6 +92,11 @@ def empty_data_dir(test_data_dir):
 
 
 @pytest.fixture
+def formats_dir(test_data_dir):
+    return os.path.join(test_data_dir, "test_formats")
+
+
+@pytest.fixture
 def formats_headers_csv(test_data_dir):
     return os.path.join(test_data_dir, "test_formats", "headers.csv")
 
