@@ -156,7 +156,7 @@ def reduce_margin_shards(output_path, partition_order, partition_pixel):
     )
 
     if file_io.does_file_or_directory_exist(shard_dir):
-        data = ds.dataset(shard_dir, format="parquet", partitioning="hive")
+        data = ds.dataset(shard_dir, format="parquet")
         full_df = data.to_table().to_pandas()
 
         if len(full_df):

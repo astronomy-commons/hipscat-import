@@ -1,8 +1,6 @@
-import healpy as hp
-import numpy as np
 import pandas as pd
 import pytest
-from hipscat.io import file_io
+from hipscat.io import file_io, paths
 
 from hipscat_import.margin_cache import margin_cache_map_reduce
 
@@ -33,36 +31,9 @@ def validate_result_dataframe(df_path, expected_len):
         assert col not in cols
 
 @pytest.mark.timeout(5)
-def test_to_pixel_shard_equator(tmp_path):
-    ras = np.arange(0.,360.)
-    dec = np.full(360, 0.)
-    ppix = np.full(360, 21)
-    porder = np.full(360, 1)
-    norder = np.full(360, 1)
-    npix = np.full(360, 0)
-
-    test_df = pd.DataFrame(
-        data=zip(ras, dec, ppix, porder, norder, npix),
-        columns=[
-            "weird_ra", 
-            "weird_dec",
-            "partition_pixel",
-            "partition_order",
-            "Norder",
-            "Npix"
-        ]
-    )
-
-    test_df["margin_pixel"] = hp.ang2pix(
-        2**3,
-        test_df["weird_ra"].values,
-        test_df["weird_dec"].values,
-        lonlat=True,
-        nest=True
-    )
-
+def test_to_pixel_shard_equator(tmp_path, basic_data_shard_df):
     margin_cache_map_reduce._to_pixel_shard(
-        test_df,
+        basic_data_shard_df,
         margin_threshold=0.1,
         output_path=tmp_path,
         margin_order=3,
@@ -80,36 +51,9 @@ def test_to_pixel_shard_equator(tmp_path):
     validate_result_dataframe(path, 46)
 
 @pytest.mark.timeout(5)
-def test_to_pixel_shard_polar(tmp_path):
-    ras = np.arange(0.,360.)
-    dec = np.full(360, 89.9)
-    ppix = np.full(360, 15)
-    porder = np.full(360, 2)
-    norder = np.full(360, 2)
-    npix = np.full(360, 0)
-
-    test_df = pd.DataFrame(
-        data=zip(ras, dec, ppix, porder, norder, npix),
-        columns=[
-            "weird_ra", 
-            "weird_dec",
-            "partition_pixel",
-            "partition_order",
-            "Norder",
-            "Npix"
-        ]
-    )
-
-    test_df["margin_pixel"] = hp.ang2pix(
-        2**3,
-        test_df["weird_ra"].values,
-        test_df["weird_dec"].values,
-        lonlat=True,
-        nest=True
-    )
-
+def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
     margin_cache_map_reduce._to_pixel_shard(
-        test_df,
+        polar_data_shard_df,
         margin_threshold=0.1,
         output_path=tmp_path,
         margin_order=3,
@@ -125,3 +69,37 @@ def test_to_pixel_shard_polar(tmp_path):
     assert file_io.does_file_or_directory_exist(path)
 
     validate_result_dataframe(path, 317)
+
+def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
+    partition_dir = margin_cache_map_reduce._get_partition_directory(
+        tmp_path, 1, 21
+    )
+    shard_dir = paths.pixel_directory(
+        partition_dir, 1, 21
+    )
+
+    file_io.make_directory(shard_dir, exist_ok=True)
+
+    first_shard_path = paths.pixel_catalog_file(
+        partition_dir, 1, 0
+    )
+    second_shard_path = paths.pixel_catalog_file(
+        partition_dir, 1, 1
+    )
+
+    print(first_shard_path)
+
+    shard_df = basic_data_shard_df.drop(columns=[
+        "partition_order", 
+        "partition_pixel",
+        "margin_pixel"
+    ])
+
+    shard_df.to_parquet(first_shard_path)
+    shard_df.to_parquet(second_shard_path)
+
+    margin_cache_map_reduce.reduce_margin_shards(tmp_path, 1, 21)
+
+    result_path = paths.pixel_catalog_file(tmp_path, 1, 21)
+
+    validate_result_dataframe(result_path, 720)
