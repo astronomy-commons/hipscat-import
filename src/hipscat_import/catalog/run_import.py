@@ -52,6 +52,7 @@ def _map_pixels(args, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
+            continue
         raw_histogram = np.add(raw_histogram, result)
         resume.write_mapping_start_key(args.tmp_path, future.key)
         resume.write_histogram(args.tmp_path, raw_histogram)
@@ -100,6 +101,7 @@ def _split_pixels(args, alignment_future, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
+            continue
         resume.write_splitting_done_key(args.tmp_path, future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some splitting stages failed. See logs for details.")
@@ -145,6 +147,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
+            continue
         resume.write_reducing_key(args.tmp_path, future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some reducing stages failed. See logs for details.")
