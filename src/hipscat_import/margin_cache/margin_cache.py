@@ -75,6 +75,26 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
     ):
         ...
 
+def _reduce_margin_shards(client, args, partition_pixels):
+    """Create all the jobs for reducing margin cache shards into singular files"""
+    futures = []
+
+    for pix in partition_pixels:
+        futures.append(
+            client.submit(
+                mcmr.reduce_margin_shards,
+                output_path=args.catalog_path,
+                partition_order=pix.order,
+                partition_pixel=pix.pixel
+            )
+        )
+
+    for _ in tqdm(
+        as_completed(futures),
+        desc="Reducing ",
+        total=len(futures),
+    ):
+        ...
 
 def generate_margin_cache(args, client):
     """Generate a margin cache for a given input catalog.
@@ -102,4 +122,10 @@ def generate_margin_cache(args, client):
         args=args,
         partition_pixels=partition_stats,
         margin_pairs=margin_pairs,
+    )
+
+    _reduce_margin_shards(
+        client=client,
+        args=args,
+        partition_pixels=partition_stats
     )
