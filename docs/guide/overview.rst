@@ -11,5 +11,4 @@ Installation
 Other Topics
 -------------------------------------------------------------------------------
 
-* :doc:`command_line`
 * :doc:`resume`

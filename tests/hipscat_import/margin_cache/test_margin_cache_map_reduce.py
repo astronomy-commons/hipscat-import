@@ -4,18 +4,16 @@ from hipscat.io import file_io, paths
 
 from hipscat_import.margin_cache import margin_cache_map_reduce
 
-keep_cols = [
-    "weird_ra",
-    "weird_dec"
-]
+keep_cols = ["weird_ra", "weird_dec"]
 
 drop_cols = [
-    "partition_order", 
-    "partition_pixel", 
-    "margin_check", 
+    "partition_order",
+    "partition_pixel",
+    "margin_check",
     "margin_pixel",
-    "is_trunc"
+    "is_trunc",
 ]
+
 
 def validate_result_dataframe(df_path, expected_len):
     res_df = pd.read_parquet(df_path)
@@ -38,12 +36,11 @@ def test_to_pixel_shard_equator(tmp_path, basic_data_shard_df):
         output_path=tmp_path,
         margin_order=3,
         ra_column="weird_ra",
-        dec_column="weird_dec"
+        dec_column="weird_dec",
     )
 
     path = file_io.append_paths_to_pointer(
-        tmp_path,
-        "Norder=1/Dir=0/Npix=21/Norder=1/Dir=0/Npix=0.parquet"
+        tmp_path, "Norder=1/Dir=0/Npix=21/Norder=1/Dir=0/Npix=0.parquet"
     )
 
     assert file_io.does_file_or_directory_exist(path)
@@ -58,12 +55,11 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
         output_path=tmp_path,
         margin_order=3,
         ra_column="weird_ra",
-        dec_column="weird_dec"
+        dec_column="weird_dec",
     )
 
     path = file_io.append_paths_to_pointer(
-        tmp_path,
-        "Norder=2/Dir=0/Npix=15/Norder=2/Dir=0/Npix=0.parquet"
+        tmp_path, "Norder=2/Dir=0/Npix=15/Norder=2/Dir=0/Npix=0.parquet"
     )
 
     assert file_io.does_file_or_directory_exist(path)

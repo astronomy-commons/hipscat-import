@@ -4,6 +4,7 @@ import os
 import shutil
 
 import pytest
+from hipscat.catalog.catalog import Catalog
 
 import hipscat_import.catalog.resume_files as rf
 import hipscat_import.catalog.run_import as runner
@@ -12,15 +13,15 @@ from hipscat_import.catalog.arguments import ImportArguments
 
 def test_empty_args():
     """Runner should fail with empty arguments"""
-    with pytest.raises(ValueError):
-        runner.run(None)
+    with pytest.raises(ValueError, match="args is required"):
+        runner.run(None, None)
 
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
     args = {"output_catalog_name": "bad_arg_type"}
-    with pytest.raises(ValueError):
-        runner.run(args)
+    with pytest.raises(ValueError, match="ImportArguments"):
+        runner.run(args, None)
 
 
 @pytest.mark.dask
@@ -29,7 +30,6 @@ def test_resume_dask_runner(
     small_sky_parts_dir,
     resume_dir,
     tmp_path,
-    assert_text_file_matches,
     assert_parquet_file_ids,
 ):
     """Test execution in the presence of some resume files."""
@@ -88,29 +88,16 @@ def test_resume_dask_runner(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
-    expected_metadata_lines = [
-        "{",
-        '    "catalog_name": "resume",',
-        '    "catalog_type": "object",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 131',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_metadata_lines, metadata_filename)
-
-    # Check that the partition info file exists
-    expected_partition_lines = [
-        "Norder,Dir,Npix,num_rows",
-        "0,0,11,131",
-    ]
-    partition_filename = os.path.join(args.catalog_path, "partition_info.csv")
-    assert_text_file_matches(expected_partition_lines, partition_filename)
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.ra_column == "ra"
+    assert catalog.catalog_info.dec_column == "dec"
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
     output_file = os.path.join(
@@ -144,10 +131,15 @@ def test_resume_dask_runner(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
-    assert_text_file_matches(expected_metadata_lines, metadata_filename)
-    assert_text_file_matches(expected_partition_lines, partition_filename)
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.ra_column == "ra"
+    assert catalog.catalog_info.dec_column == "dec"
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_pixels()) == 1
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
@@ -156,7 +148,6 @@ def test_dask_runner(
     dask_client,
     small_sky_parts_dir,
     assert_parquet_file_ids,
-    assert_text_file_matches,
     tmp_path,
 ):
     """Test basic execution."""
@@ -170,29 +161,16 @@ def test_dask_runner(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
-    expected_lines = [
-        "{",
-        '    "catalog_name": "small_sky_object_catalog",',
-        '    "catalog_type": "object",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 131',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_lines, metadata_filename)
-
-    # Check that the partition info file exists
-    expected_lines = [
-        "Norder,Dir,Npix,num_rows",
-        "0,0,11,131",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.ra_column == "ra"
+    assert catalog.catalog_info.dec_column == "dec"
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
     output_file = os.path.join(
@@ -217,7 +195,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
         debug_stats_only=True,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
     assert os.path.exists(metadata_filename)

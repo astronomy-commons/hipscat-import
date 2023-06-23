@@ -11,17 +11,17 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
+from hipscat.catalog.catalog import Catalog
 
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
-from hipscat_import.catalog.file_readers import get_file_reader
+from hipscat_import.catalog.file_readers import CsvReader, get_file_reader
 
 
 @pytest.mark.dask
 def test_import_source_table(
     dask_client,
     small_sky_source_dir,
-    assert_text_file_matches,
     tmp_path,
 ):
     """Test basic execution, using a larger source file.
@@ -44,42 +44,15 @@ def test_import_source_table(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
-    expected_lines = [
-        "{",
-        '    "catalog_name": "small_sky_source_catalog",',
-        '    "catalog_type": "source",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "source_ra",',
-        '    "dec_kw": "source_dec",',
-        '    "total_rows": 17161',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_lines, metadata_filename)
-
-    # Check that the partition info file exists
-    expected_lines = [
-        "Norder,Dir,Npix,num_rows",
-        "0,0,4,50",
-        "1,0,47,2395",
-        "2,0,176,385",
-        "2,0,177,1510",
-        "2,0,178,1634",
-        "2,0,179,1773",
-        "2,0,180,655",
-        "2,0,181,903",
-        "2,0,182,1246",
-        "2,0,183,1143",
-        "2,0,184,1390",
-        "2,0,185,2942",
-        "2,0,186,452",
-        "2,0,187,683",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.ra_column == "source_ra"
+    assert catalog.catalog_info.dec_column == "source_dec"
+    assert len(catalog.get_pixels()) == 14
 
 
 @pytest.mark.dask
@@ -111,7 +84,7 @@ def test_import_mixed_schema_csv(
         use_schema_file=mixed_schema_csv_parquet,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -131,8 +104,8 @@ def test_import_preserve_index(
 ):
     """Test basic execution, with input with pandas metadata.
     - the input file is a parquet file with some pandas metadata.
-        this verifies that the parquet file at the end also has pandas 
-        metadata, and the user's preferred id is retained as the index, 
+        this verifies that the parquet file at the end also has pandas
+        metadata, and the user's preferred id is retained as the index,
         when requested.
     """
 
@@ -167,7 +140,7 @@ def test_import_preserve_index(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -195,7 +168,7 @@ def test_import_preserve_index(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -222,8 +195,8 @@ def test_import_multiindex(
     """Test basic execution, with input with pandas metadata
     - this is *similar* to the above test
     - the input file is a parquet file with a multi-level pandas index.
-        this verifies that the parquet file at the end also has pandas 
-        metadata, and the user's preferred id is retained as the index, 
+        this verifies that the parquet file at the end also has pandas
+        metadata, and the user's preferred id is retained as the index,
         when requested.
     """
 
@@ -262,7 +235,7 @@ def test_import_multiindex(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -290,7 +263,7 @@ def test_import_multiindex(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -310,7 +283,6 @@ def test_import_multiindex(
 def test_import_constant_healpix_order(
     dask_client,
     small_sky_parts_dir,
-    assert_text_file_matches,
     tmp_path,
 ):
     """Test basic execution.
@@ -327,42 +299,16 @@ def test_import_constant_healpix_order(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
-
-    # Check that the partition info file exists - all pixels at order 2!
-    expected_lines = [
-        "Norder,Dir,Npix,num_rows",
-        "2,0,176,4",
-        "2,0,177,11",
-        "2,0,178,14",
-        "2,0,179,13",
-        "2,0,180,5",
-        "2,0,181,7",
-        "2,0,182,8",
-        "2,0,183,9",
-        "2,0,184,11",
-        "2,0,185,23",
-        "2,0,186,4",
-        "2,0,187,4",
-        "2,0,188,17",
-        "2,0,190,1",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "partition_info.csv")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
-    expected_lines = [
-        "{",
-        '    "catalog_name": "small_sky_object_catalog",',
-        '    "catalog_type": "object",',
-        '    "epoch": "J2000",',
-        '    "ra_kw": "ra",',
-        '    "dec_kw": "dec",',
-        '    "total_rows": 131',
-        "}",
-    ]
-    metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_lines, metadata_filename)
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    # Check that the partition info file exists - all pixels at order 2!
+    assert all(
+        pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels()
+    )
 
     # Pick a parquet file and make sure it contains as many rows as we expect
     output_file = os.path.join(
@@ -373,3 +319,47 @@ def test_import_constant_healpix_order(
     assert len(data_frame) == 14
     ids = data_frame["id"]
     assert np.logical_and(ids >= 700, ids < 832).all()
+
+@pytest.mark.dask
+def test_import_starr_file(
+    dask_client,
+    formats_dir,
+    assert_parquet_file_ids,
+    tmp_path,
+):
+    """Test basic execution.
+    - tests that we can run pipeline with a totally unknown file type, so long
+      as a valid InputReader implementation is provided.
+    """
+
+    class StarrReader(CsvReader):
+        """Shallow subclass"""
+
+    args = ImportArguments(
+        output_catalog_name="starr",
+        input_path=formats_dir,
+        input_format="starr",
+        file_reader=StarrReader(),
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_pixels()) == 1
+
+    # Check that the catalog parquet file exists and contains correct object IDs
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
+
+    expected_ids = [*range(700, 831)]
+    assert_parquet_file_ids(output_file, "id", expected_ids)

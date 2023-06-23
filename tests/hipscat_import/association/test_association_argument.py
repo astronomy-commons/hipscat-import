@@ -1,4 +1,4 @@
-"""Tests of argument validation, in the absense of command line parsing"""
+"""Tests of argument validation"""
 
 
 import pytest
@@ -181,8 +181,8 @@ def test_all_required_args(tmp_path, small_sky_object_catalog):
     )
 
 
-def test_to_catalog_parameters(small_sky_object_catalog, tmp_path):
-    """Verify creation of catalog parameters for index to be created."""
+def test_to_catalog_info(small_sky_object_catalog, tmp_path):
+    """Verify creation of catalog parameters for association table to be created."""
     args = AssociationArguments(
         primary_input_catalog_path=small_sky_object_catalog,
         primary_id_column="id",
@@ -193,8 +193,9 @@ def test_to_catalog_parameters(small_sky_object_catalog, tmp_path):
         output_path=tmp_path,
         output_catalog_name="small_sky_self_join",
     )
-    catalog_parameters = args.to_catalog_parameters()
-    assert catalog_parameters.catalog_name == args.output_catalog_name
+    catalog_info = args.to_catalog_info(total_rows=10)
+    assert catalog_info.catalog_name == args.output_catalog_name
+    assert catalog_info.total_rows == 10
 
 
 def test_provenance_info(small_sky_object_catalog, tmp_path):

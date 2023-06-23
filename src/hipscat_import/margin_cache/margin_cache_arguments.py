@@ -4,6 +4,9 @@ from dataclasses import dataclass
 import healpy as hp
 import numpy as np
 from hipscat.catalog import Catalog
+from hipscat.catalog.margin_cache.margin_cache_catalog_info import (
+    MarginCacheCatalogInfo,
+)
 from hipscat.io import file_io
 
 from hipscat_import.runtime_arguments import RuntimeArguments
@@ -53,9 +56,30 @@ class MarginCacheArguments(RuntimeArguments):
 
         margin_pixel_nside = hp.order2nside(self.margin_order)
 
-        if hp.nside2resol(margin_pixel_nside, arcmin=True) * 60. < self.margin_threshold:
+        if (
+            hp.nside2resol(margin_pixel_nside, arcmin=True) * 60.0
+            < self.margin_threshold
+        ):
             # pylint: disable=line-too-long
             warnings.warn(
                 "Warning: margin pixels have a smaller resolution than margin_threshold; this may lead to data loss in the margin cache."
             )
             # pylint: enable=line-too-long
+
+    def to_catalog_info(self, total_rows) -> MarginCacheCatalogInfo:
+        """Catalog-type-specific dataset info."""
+        info = {
+            "catalog_name": self.output_catalog_name,
+            "total_rows": total_rows,
+            "catalog_type": "margin",
+            "primary_catalog": self.input_catalog_path,
+            "margin_threshold": self.margin_threshold,
+        }
+        return MarginCacheCatalogInfo(**info)
+
+    def additional_runtime_provenance_info(self) -> dict:
+        return {
+            "input_catalog_path": str(self.input_catalog_path),
+            "margin_threshold": self.margin_threshold,
+            "margin_order": self.margin_order,
+        }

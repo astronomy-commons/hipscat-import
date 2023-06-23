@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Callable, List
 
 import pandas as pd
-from hipscat.catalog import CatalogParameters
+from hipscat.catalog.catalog import CatalogInfo
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math import hipscat_id
 
@@ -96,8 +96,8 @@ class ImportArguments(RuntimeArguments):
             check_healpix_order_range(
                 self.highest_healpix_order, "highest_healpix_order"
             )
-            if not 100 <= self.pixel_threshold <= 10_000_000:
-                raise ValueError("pixel_threshold should be between 100 and 10,000,000")
+            if not 100 <= self.pixel_threshold <= 1_000_000_000:
+                raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
             self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
@@ -140,21 +140,19 @@ class ImportArguments(RuntimeArguments):
         if not self.filter_function:
             self.filter_function = passthrough_filter_function
 
-    def to_catalog_parameters(self) -> CatalogParameters:
-        """Convert importing arguments into hipscat catalog parameters.
-        Returns:
-            CatalogParameters for catalog being created.
-        """
-        return CatalogParameters(
-            catalog_name=self.output_catalog_name,
-            catalog_type=self.catalog_type,
-            output_path=self.output_path,
-            epoch=self.epoch,
-            ra_column=self.ra_column,
-            dec_column=self.dec_column,
-        )
+    def to_catalog_info(self, total_rows) -> CatalogInfo:
+        """Catalog-type-specific dataset info."""
+        info = {
+            "catalog_name": self.output_catalog_name,
+            "catalog_type": self.catalog_type,
+            "total_rows": total_rows,
+            "epoch": self.epoch,
+            "ra_column": self.ra_column,
+            "dec_column": self.dec_column,
+        }
+        return CatalogInfo(**info)
 
-    def additional_runtime_provenance_info(self):
+    def additional_runtime_provenance_info(self) -> dict:
         return {
             "catalog_name": self.output_catalog_name,
             "epoch": self.epoch,
@@ -171,7 +169,9 @@ class ImportArguments(RuntimeArguments):
             "pixel_threshold": self.pixel_threshold,
             "mapping_healpix_order": self.mapping_healpix_order,
             "debug_stats_only": self.debug_stats_only,
-            "file_reader_info": self.file_reader.provenance_info(),
+            "file_reader_info": self.file_reader.provenance_info()
+            if self.file_reader is not None
+            else {},
         }
 
 
@@ -180,6 +180,7 @@ def check_healpix_order_range(
 ):
     """Helper method to heck if the `order` is within the range determined by the
     `lower_bound` and `upper_bound`, inclusive.
+
     Args:
         order (int): healpix order to check
         field_name (str): field name to use in the error message
