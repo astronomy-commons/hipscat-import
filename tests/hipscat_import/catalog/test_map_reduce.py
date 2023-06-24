@@ -194,9 +194,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
-def test_reduce_hipscat_index(
-    parquet_shards_dir, assert_parquet_file_ids, tmp_path
-):
+def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     """Test reducing with or without a _hipscat_index field"""
     mr.reduce_pixel_shards(
         cache_path=parquet_shards_dir,

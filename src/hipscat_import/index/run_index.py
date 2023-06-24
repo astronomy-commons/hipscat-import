@@ -7,16 +7,12 @@ import hipscat_import.index.map_reduce as mr
 from hipscat_import.index.arguments import IndexArguments
 
 
-def _validate_args(args):
+def run(args):
+    """Run index creation pipeline."""
     if not args:
         raise TypeError("args is required and should be type IndexArguments")
     if not isinstance(args, IndexArguments):
         raise TypeError("args must be type IndexArguments")
-
-
-def run(args):
-    """Importer, where the client context may out-live the runner"""
-    _validate_args(args)
     rows_written = mr.create_index(args)
 
     # All done - write out the metadata

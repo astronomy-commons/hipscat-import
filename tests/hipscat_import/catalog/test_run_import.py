@@ -13,15 +13,15 @@ from hipscat_import.catalog.arguments import ImportArguments
 
 def test_empty_args():
     """Runner should fail with empty arguments"""
-    with pytest.raises(ValueError):
-        runner.run(None)
+    with pytest.raises(ValueError, match="args is required"):
+        runner.run(None, None)
 
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
     args = {"output_catalog_name": "bad_arg_type"}
-    with pytest.raises(ValueError):
-        runner.run(args)
+    with pytest.raises(ValueError, match="ImportArguments"):
+        runner.run(args, None)
 
 
 @pytest.mark.dask
@@ -88,7 +88,7 @@ def test_resume_dask_runner(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Catalog.read_from_hipscat(args.catalog_path)
@@ -131,7 +131,7 @@ def test_resume_dask_runner(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     catalog = Catalog.read_from_hipscat(args.catalog_path)
     assert catalog.on_disk
@@ -161,7 +161,7 @@ def test_dask_runner(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Catalog.read_from_hipscat(args.catalog_path)
@@ -195,7 +195,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
         debug_stats_only=True,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     metadata_filename = os.path.join(args.catalog_path, "catalog_info.json")
     assert os.path.exists(metadata_filename)
