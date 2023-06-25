@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import List
 
+import numpy as np
+import pandas as pd
+from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
+from numpy import frombuffer
 from tqdm import tqdm
-
-import hipscat_import.catalog.resume_files as resume
 
 
 @dataclass
@@ -16,14 +20,25 @@ class ResumePlan:
     """Container class for holding the state of each file in the pipeline plan."""
 
     resume: bool = False
+    """if there are existing intermediate resume files, should we
+    read those and continue to create a new catalog where we left off"""
     progress_bar: bool = True
+    """if true, a tqdm progress bar will be displayed for user
+    feedback of planning progress"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
     tmp_path: str = ""
+    """path for any intermediate files"""
     map_files: List[str] = field(default_factory=list)
+    """list of files that have yet to be mapped"""
     split_keys: List[(str, str)] = field(default_factory=list)
+    """set of files (and job keys) that have yet to be split"""
 
     def __post_init__(self):
+        """Initialize the plan."""
+        self.gather_plan()
+
+    def gather_plan(self):
         """Initialize the plan."""
         with tqdm(
             total=4, desc="Planning ", disable=not self.progress_bar
@@ -59,14 +74,20 @@ class ResumePlan:
                     raise FileNotFoundError(f"{test_path} not found on local storage")
             step_progress.update(1)
             if not mapping_done:
-                mapped_paths = set(resume.read_mapping_keys(self.tmp_path))
+                mapping_start_keys = self._read_log_keys("mapping_start_log.txt")
+                mapping_done_keys = self._read_log_keys("mapping_done_log.txt")
+                if len(mapping_done_keys) != len(mapping_start_keys):
+                    raise ValueError(
+                        "Resume logs are corrupted. Delete temp directory and restart import pipeline."
+                    )
+                mapped_paths = set(mapping_start_keys)
                 self.map_files = [
                     file_path
                     for file_path in self.input_paths
                     if f"map_{file_path}" not in mapped_paths
                 ]
             if not splitting_done:
-                split_keys = set(resume.read_splitting_keys(self.tmp_path))
+                split_keys = set(self._read_log_keys("splitting_done_log.txt"))
                 self.split_keys = [
                     (f"split_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
@@ -76,52 +97,114 @@ class ResumePlan:
                     for (key, file) in self.split_keys
                     if key not in split_keys
                 ]
-            if not reducing_done:
-                ...
             step_progress.update(1)
+
+    def read_histogram(self, highest_healpix_order):
+        """Read a numpy array at the indicated directory.
+        Otherwise, return histogram of appropriate shape."""
+        file_name = file_io.append_paths_to_pointer(
+            self.tmp_path, "mapping_histogram.binary"
+        )
+        if file_io.does_file_or_directory_exist(file_name):
+            with open(file_name, "rb") as file_handle:
+                return frombuffer(file_handle.read(), dtype=np.int64)
+        return pixel_math.empty_histogram(highest_healpix_order)
 
     def mark_mapping_done(self, mapping_key: str, histogram):
         """Add mapping key to done list and update raw histogram"""
-        resume.write_mapping_start_key(self.tmp_path, mapping_key)
-        resume.write_histogram(self.tmp_path, histogram)
-        resume.write_mapping_done_key(self.tmp_path, mapping_key)
+        self._write_log_key("mapping_start_log.txt", mapping_key)
+        file_name = file_io.append_paths_to_pointer(
+            self.tmp_path, "mapping_histogram.binary"
+        )
+        with open(file_name, "wb+") as file_handle:
+            file_handle.write(histogram.data)
+        self._write_log_key("mapping_done_log.txt", mapping_key)
 
     def is_mapping_done(self) -> bool:
         """Are there files left to map?"""
-        return resume.is_mapping_done(self.tmp_path)
+        return self._done_file_exists("mapping_done")
 
     def set_mapping_done(self):
         """All files are done mapping."""
-        resume.set_mapping_done(self.tmp_path)
-
-    def get_split_keys(self) -> list[str]:
-        """Get job keys for remaining splitting jobs."""
-        return self.split_keys
+        self._touch_done_file("mapping_done")
 
     def mark_splitting_done(self, splitting_key: str):
         """Add splitting key to done list"""
-        resume.write_splitting_done_key(self.tmp_path, splitting_key)
+        self._write_log_key("splitting_done_log.txt", splitting_key)
 
     def is_splitting_done(self) -> bool:
         """Are there files left to split?"""
-        return resume.is_splitting_done(self.tmp_path)
+        return self._done_file_exists("splitting_done")
 
     def set_splitting_done(self):
         """All files are done splitting."""
-        resume.set_splitting_done(self.tmp_path)
+        self._touch_done_file("splitting_done")
+
+    def get_reduce_items(self, destination_pixel_map):
+        """Fetch a triple for each partition to reduce.
+
+        Triple contains:
+
+        - destination pixel (healpix pixel with both order and pixel)
+        - source pixels (list of pixels at mapping order)
+        - reduce key (string of destination order+pixel)
+        """
+        reduced_keys = set(self._read_log_keys("reducing_log.txt"))
+        reduce_items = [
+            (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
+            for hp_pixel, source_pixels in destination_pixel_map.items()
+        ]
+        reduce_items = [
+            (hp_pixel, source_pixels, key)
+            for (hp_pixel, source_pixels, key) in reduce_items
+            if key not in reduced_keys
+        ]
+        return reduce_items
 
     def mark_reducing_done(self, reducing_key: str):
         """Add reducing key to done list"""
-        resume.write_reducing_key(self.tmp_path, reducing_key)
+        self._write_log_key("reducing_log.txt", reducing_key)
 
     def is_reducing_done(self) -> bool:
         """Are there partitions left to reduce?"""
-        return resume.is_reducing_done(self.tmp_path)
+        return self._done_file_exists("reducing_done")
 
     def set_reducing_done(self):
         """All partitions are done reducing."""
-        resume.set_reducing_done(self.tmp_path)
+        self._touch_done_file("reducing_done")
 
     def clean_resume_files(self):
         """Remove all intermediate files created in execution."""
-        resume.clean_resume_files(self.tmp_path)
+        file_io.remove_directory(self.tmp_path, ignore_errors=True)
+
+    #####################################################################
+    ### Helper methods
+
+    def _done_file_exists(self, file_name):
+        return file_io.does_file_or_directory_exist(
+            file_io.append_paths_to_pointer(self.tmp_path, file_name)
+        )
+
+    def _touch_done_file(self, file_name):
+        Path(file_io.append_paths_to_pointer(self.tmp_path, file_name)).touch()
+
+    def _read_log_keys(self, file_name):
+        """Read a resume log file, containing timestamp and keys."""
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
+        if file_io.does_file_or_directory_exist(file_path):
+            mapping_log = pd.read_csv(
+                file_path,
+                delimiter="\t",
+                header=None,
+                names=["time", "key"],
+            )
+            return mapping_log["key"].tolist()
+        return []
+
+    def _write_log_key(self, file_name, key):
+        """Append a tab-delimited line to the file with the current timestamp and provided key"""
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
+        with open(file_path, "a", encoding="utf-8") as mapping_log:
+            mapping_log.write(
+                f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\t{key}\n'
+            )

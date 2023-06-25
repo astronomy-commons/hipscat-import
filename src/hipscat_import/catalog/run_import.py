@@ -12,14 +12,13 @@ from hipscat import pixel_math
 from tqdm import tqdm
 
 import hipscat_import.catalog.map_reduce as mr
-import hipscat_import.catalog.resume_files as resume
 from hipscat_import.catalog.arguments import ImportArguments
 
 
 def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
-    raw_histogram = resume.read_histogram(args.tmp_path, args.mapping_healpix_order)
+    raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
     if args.resume_plan.is_mapping_done():
         return raw_histogram
 
@@ -103,13 +102,12 @@ def _reduce_pixels(args, destination_pixel_map, client):
     if args.resume_plan.is_reducing_done():
         return
 
-    reduced_keys = set(resume.read_reducing_keys(args.tmp_path))
-
     futures = []
-    for destination_pixel, source_pixels in destination_pixel_map.items():
-        destination_pixel_key = f"{destination_pixel.order}_{destination_pixel.pixel}"
-        if destination_pixel_key in reduced_keys:
-            continue
+    for (
+        destination_pixel,
+        source_pixels,
+        destination_pixel_key,
+    ) in args.resume_plan.get_reduce_items(destination_pixel_map):
         futures.append(
             client.submit(
                 mr.reduce_pixel_shards,
