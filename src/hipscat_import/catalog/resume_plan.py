@@ -34,6 +34,16 @@ class ResumePlan:
     split_keys: List[(str, str)] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
 
+    MAPPING_START_LOG_FILE = "mapping_start_log.txt"
+    MAPPING_DONE_LOG_FILE = "mapping_done_log.txt"
+    SPLITTING_LOG_FILE = "splitting_done_log.txt"
+    HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
+    REDUCING_LOG_FILE = "reducing_log.txt"
+
+    MAPPING_DONE_FILE = "mapping_done"
+    SPLITTING_DONE_FILE = "splitting_done"
+    REDUCING_DONE_FILE = "reducing_done"
+
     def __post_init__(self):
         """Initialize the plan."""
         self.gather_plan()
@@ -74,8 +84,8 @@ class ResumePlan:
                     raise FileNotFoundError(f"{test_path} not found on local storage")
             step_progress.update(1)
             if not mapping_done:
-                mapping_start_keys = self._read_log_keys("mapping_start_log.txt")
-                mapping_done_keys = self._read_log_keys("mapping_done_log.txt")
+                mapping_start_keys = self._read_log_keys(self.MAPPING_START_LOG_FILE)
+                mapping_done_keys = self._read_log_keys(self.MAPPING_DONE_LOG_FILE)
                 if len(mapping_done_keys) != len(mapping_start_keys):
                     raise ValueError(
                         "Resume logs are corrupted. Delete temp directory and restart import pipeline."
@@ -87,7 +97,7 @@ class ResumePlan:
                     if f"map_{file_path}" not in mapped_paths
                 ]
             if not splitting_done:
-                split_keys = set(self._read_log_keys("splitting_done_log.txt"))
+                split_keys = set(self._read_log_keys(self.SPLITTING_LOG_FILE))
                 self.split_keys = [
                     (f"split_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
@@ -103,7 +113,7 @@ class ResumePlan:
         """Read a numpy array at the indicated directory.
         Otherwise, return histogram of appropriate shape."""
         file_name = file_io.append_paths_to_pointer(
-            self.tmp_path, "mapping_histogram.binary"
+            self.tmp_path, self.HISTOGRAM_BINARY_FILE
         )
         if file_io.does_file_or_directory_exist(file_name):
             with open(file_name, "rb") as file_handle:
@@ -112,33 +122,33 @@ class ResumePlan:
 
     def mark_mapping_done(self, mapping_key: str, histogram):
         """Add mapping key to done list and update raw histogram"""
-        self._write_log_key("mapping_start_log.txt", mapping_key)
+        self._write_log_key(self.MAPPING_START_LOG_FILE, mapping_key)
         file_name = file_io.append_paths_to_pointer(
-            self.tmp_path, "mapping_histogram.binary"
+            self.tmp_path, self.HISTOGRAM_BINARY_FILE
         )
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
-        self._write_log_key("mapping_done_log.txt", mapping_key)
+        self._write_log_key(self.MAPPING_DONE_LOG_FILE, mapping_key)
 
     def is_mapping_done(self) -> bool:
         """Are there files left to map?"""
-        return self._done_file_exists("mapping_done")
+        return self._done_file_exists(self.MAPPING_DONE_FILE)
 
     def set_mapping_done(self):
         """All files are done mapping."""
-        self._touch_done_file("mapping_done")
+        self._touch_done_file(self.MAPPING_DONE_FILE)
 
     def mark_splitting_done(self, splitting_key: str):
         """Add splitting key to done list"""
-        self._write_log_key("splitting_done_log.txt", splitting_key)
+        self._write_log_key(self.SPLITTING_LOG_FILE, splitting_key)
 
     def is_splitting_done(self) -> bool:
         """Are there files left to split?"""
-        return self._done_file_exists("splitting_done")
+        return self._done_file_exists(self.SPLITTING_DONE_FILE)
 
     def set_splitting_done(self):
         """All files are done splitting."""
-        self._touch_done_file("splitting_done")
+        self._touch_done_file(self.SPLITTING_DONE_FILE)
 
     def get_reduce_items(self, destination_pixel_map):
         """Fetch a triple for each partition to reduce.
@@ -149,7 +159,7 @@ class ResumePlan:
         - source pixels (list of pixels at mapping order)
         - reduce key (string of destination order+pixel)
         """
-        reduced_keys = set(self._read_log_keys("reducing_log.txt"))
+        reduced_keys = set(self._read_log_keys(self.REDUCING_LOG_FILE))
         reduce_items = [
             (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, source_pixels in destination_pixel_map.items()
@@ -163,15 +173,15 @@ class ResumePlan:
 
     def mark_reducing_done(self, reducing_key: str):
         """Add reducing key to done list"""
-        self._write_log_key("reducing_log.txt", reducing_key)
+        self._write_log_key(self.REDUCING_LOG_FILE, reducing_key)
 
     def is_reducing_done(self) -> bool:
         """Are there partitions left to reduce?"""
-        return self._done_file_exists("reducing_done")
+        return self._done_file_exists(self.REDUCING_DONE_FILE)
 
     def set_reducing_done(self):
         """All partitions are done reducing."""
-        self._touch_done_file("reducing_done")
+        self._touch_done_file(self.REDUCING_DONE_FILE)
 
     def clean_resume_files(self):
         """Remove all intermediate files created in execution."""
