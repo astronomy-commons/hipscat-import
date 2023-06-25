@@ -20,16 +20,12 @@ def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
     raw_histogram = resume.read_histogram(args.tmp_path, args.mapping_healpix_order)
-    if resume.is_mapping_done(args.tmp_path):
+    if args.resume_plan.is_mapping_done():
         return raw_histogram
 
-    mapped_paths = set(resume.read_mapping_keys(args.tmp_path))
-
     futures = []
-    for file_path in args.input_paths:
+    for file_path in args.resume_plan.map_files:
         map_key = f"map_{file_path}"
-        if map_key in mapped_paths:
-            continue
         futures.append(
             client.submit(
                 mr.map_to_pixels,
@@ -54,19 +50,17 @@ def _map_pixels(args, client):
             some_error = True
             continue
         raw_histogram = np.add(raw_histogram, result)
-        resume.write_mapping_start_key(args.tmp_path, future.key)
-        resume.write_histogram(args.tmp_path, raw_histogram)
-        resume.write_mapping_done_key(args.tmp_path, future.key)
+        args.resume_plan.mark_mapping_done(future.key, raw_histogram)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some mapping stages failed. See logs for details.")
-    resume.set_mapping_done(args.tmp_path)
+    args.resume_plan.set_mapping_done()
     return raw_histogram
 
 
 def _split_pixels(args, alignment_future, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
-    if resume.is_splitting_done(args.tmp_path):
+    if args.resume_plan.is_splitting_done():
         return
 
     split_paths = set(resume.read_splitting_keys(args.tmp_path))
@@ -102,16 +96,16 @@ def _split_pixels(args, alignment_future, client):
         if future.status == "error":  # pragma: no cover
             some_error = True
             continue
-        resume.write_splitting_done_key(args.tmp_path, future.key)
+        args.resume_plan.mark_splitting_done(future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some splitting stages failed. See logs for details.")
-    resume.set_splitting_done(args.tmp_path)
+    args.resume_plan.set_splitting_done()
 
 
 def _reduce_pixels(args, destination_pixel_map, client):
     """Loop over destination pixels and merge into parquet files"""
 
-    if resume.is_reducing_done(args.tmp_path):
+    if args.resume_plan.is_reducing_done():
         return
 
     reduced_keys = set(resume.read_reducing_keys(args.tmp_path))

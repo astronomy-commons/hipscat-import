@@ -11,6 +11,7 @@ from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math import hipscat_id
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
+from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.runtime_arguments import RuntimeArguments
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
@@ -75,6 +76,7 @@ class ImportArguments(RuntimeArguments):
     file_reader: InputReader | None = None
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
+    resume_plan: ResumePlan | None = None
 
     def __post_init__(self):
 
@@ -97,7 +99,9 @@ class ImportArguments(RuntimeArguments):
                 self.highest_healpix_order, "highest_healpix_order"
             )
             if not 100 <= self.pixel_threshold <= 1_000_000_000:
-                raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
+                raise ValueError(
+                    "pixel_threshold should be between 100 and 1,000,000,000"
+                )
             self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
@@ -124,18 +128,13 @@ class ImportArguments(RuntimeArguments):
                 )
         elif self.input_file_list:
             self.input_paths = self.input_file_list
-            for test_path in self.input_paths:
-                if not file_io.does_file_or_directory_exist(test_path):
-                    raise FileNotFoundError(f"{test_path} not found on local storage")
-        self.input_paths.sort()
 
-        if not self.resume:
-            if file_io.directory_has_contents(self.tmp_path):
-                raise ValueError(
-                    f"tmp_path ({self.tmp_path}) contains intermediate files."
-                    " choose a different directory or use --resume flag"
-                )
-        file_io.make_directory(self.tmp_path, exist_ok=True)
+        self.resume_plan = ResumePlan(
+            resume=self.resume,
+            progress_bar=self.progress_bar,
+            input_paths=self.input_paths,
+            tmp_path=self.tmp_path,
+        )
 
         if not self.filter_function:
             self.filter_function = passthrough_filter_function
