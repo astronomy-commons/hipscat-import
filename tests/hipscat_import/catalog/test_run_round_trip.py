@@ -320,6 +320,7 @@ def test_import_constant_healpix_order(
     ids = data_frame["id"]
     assert np.logical_and(ids >= 700, ids < 832).all()
 
+
 @pytest.mark.dask
 def test_import_starr_file(
     dask_client,

@@ -164,10 +164,11 @@ def mixed_schema_csv_parquet(test_data_dir):
 def resume_dir(test_data_dir):
     return os.path.join(test_data_dir, "resume")
 
+
 @pytest.fixture
 def basic_data_shard_df():
-    ras = np.arange(0.,360.)
-    dec = np.full(360, 0.)
+    ras = np.arange(0.0, 360.0)
+    dec = np.full(360, 0.0)
     ppix = np.full(360, 21)
     porder = np.full(360, 1)
     norder = np.full(360, 1)
@@ -176,13 +177,13 @@ def basic_data_shard_df():
     test_df = pd.DataFrame(
         data=zip(ras, dec, ppix, porder, norder, npix),
         columns=[
-            "weird_ra", 
+            "weird_ra",
             "weird_dec",
             "partition_pixel",
             "partition_order",
             "Norder",
-            "Npix"
-        ]
+            "Npix",
+        ],
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
@@ -190,14 +191,15 @@ def basic_data_shard_df():
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
-        nest=True
+        nest=True,
     )
 
     return test_df
 
+
 @pytest.fixture
 def polar_data_shard_df():
-    ras = np.arange(0.,360.)
+    ras = np.arange(0.0, 360.0)
     dec = np.full(360, 89.9)
     ppix = np.full(360, 15)
     porder = np.full(360, 2)
@@ -207,13 +209,13 @@ def polar_data_shard_df():
     test_df = pd.DataFrame(
         data=zip(ras, dec, ppix, porder, norder, npix),
         columns=[
-            "weird_ra", 
+            "weird_ra",
             "weird_dec",
             "partition_pixel",
             "partition_order",
             "Norder",
-            "Npix"
-        ]
+            "Npix",
+        ],
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
@@ -221,10 +223,11 @@ def polar_data_shard_df():
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
-        nest=True
+        nest=True,
     )
 
     return test_df
+
 
 @pytest.fixture
 def assert_text_file_matches():

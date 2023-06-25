@@ -23,6 +23,7 @@ def _map_pixels(args, client):
     if args.resume_plan.is_mapping_done():
         return raw_histogram
 
+    reader_future = client.scatter(args.file_reader)
     futures = []
     for file_path in args.resume_plan.map_files:
         map_key = f"map_{file_path}"
@@ -31,8 +32,7 @@ def _map_pixels(args, client):
                 mr.map_to_pixels,
                 key=map_key,
                 input_file=file_path,
-                file_reader=args.file_reader,
-                filter_function=args.filter_function,
+                file_reader=reader_future,
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
@@ -63,6 +63,7 @@ def _split_pixels(args, alignment_future, client):
     if args.resume_plan.is_splitting_done():
         return
 
+    reader_future = client.scatter(args.file_reader)
     futures = []
     for key, file_path in args.resume_plan.split_keys:
         futures.append(
@@ -70,8 +71,7 @@ def _split_pixels(args, alignment_future, client):
                 mr.split_pixels,
                 key=key,
                 input_file=file_path,
-                file_reader=args.file_reader,
-                filter_function=args.filter_function,
+                file_reader=reader_future,
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,

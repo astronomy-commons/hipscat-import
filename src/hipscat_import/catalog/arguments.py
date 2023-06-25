@@ -69,10 +69,6 @@ class ImportArguments(RuntimeArguments):
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
-    filter_function: Callable | None = None
-    """optional method which takes a pandas dataframe as input, performs some 
-    filtering or transformation of the data, and returns a dataframe with the 
-    rows that will be used to create the new catalog"""
     file_reader: InputReader | None = None
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
@@ -136,9 +132,6 @@ class ImportArguments(RuntimeArguments):
             tmp_path=self.tmp_path,
         )
 
-        if not self.filter_function:
-            self.filter_function = passthrough_filter_function
-
     def to_catalog_info(self, total_rows) -> CatalogInfo:
         """Catalog-type-specific dataset info."""
         info = {
@@ -199,8 +192,3 @@ def check_healpix_order_range(
         raise ValueError(
             f"{field_name} should be between {lower_bound} and {upper_bound}"
         )
-
-
-def passthrough_filter_function(data: pd.DataFrame) -> pd.DataFrame:
-    """No-op filter function to be used when no user-defined filter is provided"""
-    return data
