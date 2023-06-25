@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from hipscat.io import FilePointer, file_io
+from tqdm import tqdm
 
 import hipscat_import.catalog.resume_files as resume
 
@@ -24,52 +25,60 @@ class ResumePlan:
 
     def __post_init__(self):
         """Initialize the plan."""
+        with tqdm(
+            total=4, desc="Planning ", disable=not self.progress_bar
+        ) as step_progress:
+            ## Make sure it's safe to use existing resume state.
+            if not self.resume:
+                if file_io.directory_has_contents(self.tmp_path):
+                    raise ValueError(
+                        f"tmp_path ({self.tmp_path}) contains intermediate files."
+                        " choose a different directory or use --resume flag"
+                    )
+            file_io.make_directory(self.tmp_path, exist_ok=True)
+            step_progress.update(1)
 
-        ## Make sure it's safe to use existing resume state.
-        if not self.resume:
-            if file_io.directory_has_contents(self.tmp_path):
+            ## Validate existing resume state.
+            ## - if a later stage is complete, the earlier stages should be complete too.
+            mapping_done = self.is_mapping_done()
+            splitting_done = self.is_splitting_done()
+            reducing_done = self.is_reducing_done()
+
+            if reducing_done and (not mapping_done or not splitting_done):
                 raise ValueError(
-                    f"tmp_path ({self.tmp_path}) contains intermediate files."
-                    " choose a different directory or use --resume flag"
+                    "mapping and splitting must be complete before reducing"
                 )
-        file_io.make_directory(self.tmp_path, exist_ok=True)
+            if splitting_done and not mapping_done:
+                raise ValueError("mapping must be complete before splitting")
+            step_progress.update(1)
 
-        ## Validate existing resume state.
-        ## - if a later stage is complete, the earlier stages should be complete too.
-        mapping_done = self.is_mapping_done()
-        splitting_done = self.is_splitting_done()
-        reducing_done = self.is_reducing_done()
-
-        if reducing_done and (not mapping_done or not splitting_done):
-            raise ValueError("mapping and splitting must be complete before reducing")
-        if splitting_done and not mapping_done:
-            raise ValueError("mapping must be complete before splitting")
-
-        ## Gather keys for execution.
-        self.input_paths.sort()
-        for test_path in self.input_paths:
-            if not file_io.does_file_or_directory_exist(test_path):
-                raise FileNotFoundError(f"{test_path} not found on local storage")
-
-        if not mapping_done:
-            mapped_paths = set(resume.read_mapping_keys(self.tmp_path))
-            self.map_files = [
-                file_path
-                for file_path in self.input_paths
-                if f"map_{file_path}" not in mapped_paths
-            ]
-        if not splitting_done:
-            split_keys = set(resume.read_splitting_keys(self.tmp_path))
-            self.split_keys = [
-                (f"split_{i}", file_path)
-                for i, file_path in enumerate(self.input_paths)
-            ]
-            print(self.split_keys)
-            self.split_keys = [
-                (key, file) for (key, file) in self.split_keys if key not in split_keys
-            ]
-        if not reducing_done:
-            ...
+            ## Gather keys for execution.
+            self.input_paths.sort()
+            for test_path in self.input_paths:
+                if not file_io.does_file_or_directory_exist(test_path):
+                    raise FileNotFoundError(f"{test_path} not found on local storage")
+            step_progress.update(1)
+            if not mapping_done:
+                mapped_paths = set(resume.read_mapping_keys(self.tmp_path))
+                self.map_files = [
+                    file_path
+                    for file_path in self.input_paths
+                    if f"map_{file_path}" not in mapped_paths
+                ]
+            if not splitting_done:
+                split_keys = set(resume.read_splitting_keys(self.tmp_path))
+                self.split_keys = [
+                    (f"split_{i}", file_path)
+                    for i, file_path in enumerate(self.input_paths)
+                ]
+                self.split_keys = [
+                    (key, file)
+                    for (key, file) in self.split_keys
+                    if key not in split_keys
+                ]
+            if not reducing_done:
+                ...
+            step_progress.update(1)
 
     def mark_mapping_done(self, mapping_key: str, histogram):
         """Add mapping key to done list and update raw histogram"""
@@ -101,6 +110,18 @@ class ResumePlan:
         """All files are done splitting."""
         resume.set_splitting_done(self.tmp_path)
 
+    def mark_reducing_done(self, reducing_key: str):
+        """Add reducing key to done list"""
+        resume.write_reducing_key(self.tmp_path, reducing_key)
+
     def is_reducing_done(self) -> bool:
         """Are there partitions left to reduce?"""
         return resume.is_reducing_done(self.tmp_path)
+
+    def set_reducing_done(self):
+        """All partitions are done reducing."""
+        resume.set_reducing_done(self.tmp_path)
+
+    def clean_resume_files(self):
+        """Remove all intermediate files created in execution."""
+        resume.clean_resume_files(self.tmp_path)

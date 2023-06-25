@@ -48,9 +48,9 @@ def _map_pixels(args, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
-            continue
-        raw_histogram = np.add(raw_histogram, result)
-        args.resume_plan.mark_mapping_done(future.key, raw_histogram)
+        else:
+            raw_histogram = np.add(raw_histogram, result)
+            args.resume_plan.mark_mapping_done(future.key, raw_histogram)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some mapping stages failed. See logs for details.")
     args.resume_plan.set_mapping_done()
@@ -63,24 +63,19 @@ def _split_pixels(args, alignment_future, client):
     if args.resume_plan.is_splitting_done():
         return
 
-    split_paths = set(resume.read_splitting_keys(args.tmp_path))
-
     futures = []
-    for i, file_path in enumerate(args.input_paths):
-        split_key = f"split_{file_path}"
-        if split_key in split_paths:
-            continue
+    for key, file_path in args.resume_plan.split_keys:
         futures.append(
             client.submit(
                 mr.split_pixels,
-                key=split_key,
+                key=key,
                 input_file=file_path,
                 file_reader=args.file_reader,
                 filter_function=args.filter_function,
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
-                shard_suffix=i,
+                shard_suffix=key,
                 cache_path=args.tmp_path,
                 alignment=alignment_future,
             )
@@ -95,8 +90,8 @@ def _split_pixels(args, alignment_future, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
-            continue
-        args.resume_plan.mark_splitting_done(future.key)
+        else:
+            args.resume_plan.mark_splitting_done(future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some splitting stages failed. See logs for details.")
     args.resume_plan.set_splitting_done()
@@ -141,11 +136,11 @@ def _reduce_pixels(args, destination_pixel_map, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
-            continue
-        resume.write_reducing_key(args.tmp_path, future.key)
+        else:
+            args.resume_plan.mark_reducing_done(future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some reducing stages failed. See logs for details.")
-    resume.set_reducing_done(args.tmp_path)
+    args.resume_plan.set_reducing_done()
 
 
 def run(args, client):
@@ -216,5 +211,5 @@ def run(args, client):
             destination_healpix_pixel_map=destination_pixel_map,
         )
         step_progress.update(1)
-        resume.clean_resume_files(args.tmp_path)
+        args.resume_plan.clean_resume_files()
         step_progress.update(1)
