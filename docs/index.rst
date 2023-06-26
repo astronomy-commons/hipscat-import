@@ -20,7 +20,7 @@ Installation
 
     .. code-block:: bash
 
-        $ conda config --add channels conda-forge
+        $ conda config --append channels conda-forge
         $ conda install healpy
 
 Setting up a pipeline
