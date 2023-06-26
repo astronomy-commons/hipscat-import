@@ -3,4 +3,4 @@ Notebooks
 
 .. toctree::
 
-    Introducing Jupyter Notebooks <notebooks/intro_notebook>
+    Estimate Pixel Threshold <notebooks/estimate_pixel_threshold>
