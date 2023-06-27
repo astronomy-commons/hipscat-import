@@ -8,6 +8,7 @@ from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 
 from hipscat_import.catalog.file_readers import InputReader
+from hipscat_import.catalog.resume_plan import ResumePlan
 
 # pylint: disable=too-many-locals,too-many-arguments
 
@@ -86,6 +87,8 @@ def _iterate_input_file(
 def map_to_pixels(
     input_file: FilePointer,
     file_reader: InputReader,
+    cache_path: FilePointer,
+    mapping_key,
     highest_order,
     ra_column,
     dec_column,
@@ -115,6 +118,9 @@ def map_to_pixels(
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
+    ResumePlan.write_partial_histogram(
+        tmp_path=cache_path, mapping_key=mapping_key, histogram=histo
+    )
     return histo
 
 

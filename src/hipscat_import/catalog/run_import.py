@@ -18,20 +18,21 @@ from hipscat_import.catalog.arguments import ImportArguments
 def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
-    raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
     if args.resume_plan.is_mapping_done():
+        raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
         return raw_histogram
 
     reader_future = client.scatter(args.file_reader)
     futures = []
-    for file_path in args.resume_plan.map_files:
-        map_key = f"map_{file_path}"
+    for key, file_path in args.resume_plan.map_files:
         futures.append(
             client.submit(
                 mr.map_to_pixels,
-                key=map_key,
+                key=key,
                 input_file=file_path,
+                cache_path=args.tmp_path,
                 file_reader=reader_future,
+                mapping_key=key,
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
@@ -39,8 +40,8 @@ def _map_pixels(args, client):
         )
 
     some_error = False
-    for future, result in tqdm(
-        as_completed(futures, with_results=True),
+    for future in tqdm(
+        as_completed(futures),
         desc="Mapping  ",
         total=len(futures),
         disable=(not args.progress_bar),
@@ -48,10 +49,10 @@ def _map_pixels(args, client):
         if future.status == "error":  # pragma: no cover
             some_error = True
         else:
-            raw_histogram = np.add(raw_histogram, result)
-            args.resume_plan.mark_mapping_done(future.key, raw_histogram)
+            args.resume_plan.mark_mapping_done(future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some mapping stages failed. See logs for details.")
+    raw_histogram = args.resume_plan.combine_histograms(args.mapping_healpix_order)
     args.resume_plan.set_mapping_done()
     return raw_histogram
 

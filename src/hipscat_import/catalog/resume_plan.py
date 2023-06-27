@@ -29,15 +29,17 @@ class ResumePlan:
     feedback of planning progress"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
-    map_files: List[str] = field(default_factory=list)
-    """list of files that have yet to be mapped"""
+    map_files: List[Tuple[str, str]] = field(default_factory=list)
+    """list of files (and job keys) that have yet to be mapped"""
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
 
     MAPPING_START_LOG_FILE = "mapping_start_log.txt"
     MAPPING_DONE_LOG_FILE = "mapping_done_log.txt"
+    MAPPING_LOG_FILE = "mapping_log.txt"
     SPLITTING_LOG_FILE = "splitting_log.txt"
     HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
+    HISTOGRAMS_DIR = "histograms"
     REDUCING_LOG_FILE = "reducing_log.txt"
 
     MAPPING_DONE_FILE = "mapping_done"
@@ -84,35 +86,24 @@ class ResumePlan:
                     raise FileNotFoundError(f"{test_path} not found on local storage")
             step_progress.update(1)
             if not mapping_done:
-                mapping_start_keys = self._read_log_keys(self.MAPPING_START_LOG_FILE)
-                mapping_done_keys = self._read_log_keys(self.MAPPING_DONE_LOG_FILE)
-                if len(mapping_done_keys) != len(mapping_start_keys):
-                    raise ValueError(
-                        "Resume logs are corrupted. "
-                        "Delete temp directory and restart import pipeline."
-                    )
-                mapped_paths = set(mapping_start_keys)
+                mapped_keys = set(self._read_log_keys(self.MAPPING_LOG_FILE))
                 self.map_files = [
-                    file_path
-                    for file_path in self.input_paths
-                    if f"map_{file_path}" not in mapped_paths
+                    (f"map_{i}", file_path)
+                    for i, file_path in enumerate(self.input_paths)
+                    if f"map_{i}" not in mapped_keys
                 ]
             if not splitting_done:
                 split_keys = set(self._read_log_keys(self.SPLITTING_LOG_FILE))
                 self.split_keys = [
                     (f"split_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
-                ]
-                self.split_keys = [
-                    (key, file)
-                    for (key, file) in self.split_keys
-                    if key not in split_keys
+                    if f"split_{i}" not in split_keys
                 ]
             ## We don't pre-gather the plan for the reducing keys.
             ## It requires the full destination pixel map.
             step_progress.update(1)
 
-    def read_histogram(self, highest_healpix_order):
+    def read_histogram(self, healpix_order):
         """Read a numpy array at the indicated directory.
         Otherwise, return histogram of appropriate shape."""
         file_name = file_io.append_paths_to_pointer(
@@ -121,17 +112,49 @@ class ResumePlan:
         if file_io.does_file_or_directory_exist(file_name):
             with open(file_name, "rb") as file_handle:
                 return frombuffer(file_handle.read(), dtype=np.int64)
-        return pixel_math.empty_histogram(highest_healpix_order)
+        return pixel_math.empty_histogram(healpix_order)
 
-    def mark_mapping_done(self, mapping_key: str, histogram):
-        """Add mapping key to done list and update raw histogram"""
-        self._write_log_key(self.MAPPING_START_LOG_FILE, mapping_key)
+    def combine_histograms(self, healpix_order):
+        """Read all partial histogram files and combine into a sum.
+        Save it for future reads."""
+        histogram_files = file_io.find_files_matching_path(
+            self.tmp_path, self.HISTOGRAMS_DIR, "**.binary"
+        )
+        full_histogram = pixel_math.empty_histogram(healpix_order)
+        for file_name in histogram_files:
+            with open(file_name, "rb") as file_handle:
+                full_histogram = np.add(
+                    full_histogram, frombuffer(file_handle.read(), dtype=np.int64)
+                )
+
         file_name = file_io.append_paths_to_pointer(
             self.tmp_path, self.HISTOGRAM_BINARY_FILE
         )
         with open(file_name, "wb+") as file_handle:
+            file_handle.write(full_histogram.data)
+        file_io.remove_directory(
+            file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
+            ignore_errors=True,
+        )
+        return full_histogram
+
+    @classmethod
+    def write_partial_histogram(cls, tmp_path, mapping_key: str, histogram):
+        """Write partial histogram to a special intermediate directory"""
+        file_io.make_directory(
+            file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR),
+            exist_ok=True,
+        )
+
+        file_name = file_io.append_paths_to_pointer(
+            tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary"
+        )
+        with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
-        self._write_log_key(self.MAPPING_DONE_LOG_FILE, mapping_key)
+
+    def mark_mapping_done(self, mapping_key: str):
+        """Add mapping key to done list and update raw histogram"""
+        self._write_log_key(self.MAPPING_LOG_FILE, mapping_key)
 
     def is_mapping_done(self) -> bool:
         """Are there files left to map?"""

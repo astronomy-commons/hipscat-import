@@ -44,12 +44,15 @@ def test_resume_dask_runner(
     plan = ResumePlan(tmp_path=temp_path, progress_bar=False, resume=True)
     histogram = hist.empty_histogram(0)
     histogram[11] = 131
+    empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        plan.mark_mapping_done(
-            f"map_{os.path.join(small_sky_parts_dir, f'catalog_0{file_index}_of_05.csv')}",
-            histogram,
-        )
+        plan.mark_mapping_done(f"map_{file_index}")
         plan.mark_splitting_done(f"split_{file_index}")
+        ResumePlan.write_partial_histogram(
+            tmp_path=temp_path,
+            mapping_key=f"map_{file_index}",
+            histogram=histogram if file_index == 0 else empty,
+        )
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder=0"),
