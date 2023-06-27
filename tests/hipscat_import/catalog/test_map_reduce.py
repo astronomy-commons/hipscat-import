@@ -8,6 +8,7 @@ import numpy.testing as npt
 import pandas as pd
 import pyarrow as pa
 import pytest
+from numpy import frombuffer
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.file_readers import get_file_reader
@@ -69,9 +70,16 @@ def test_read_bad_fileformat(blank_data_file):
         )
 
 
+def read_partial_histogram(tmp_path, mapping_key):
+    """Helper to read in the former result of a map operation."""
+    histogram_file = os.path.join(tmp_path, "histograms", f"{mapping_key}.binary")
+    with open(histogram_file, "rb") as file_handle:
+        return frombuffer(file_handle.read(), dtype=np.int64)
+
+
 def test_read_single_fits(tmp_path, formats_fits):
     """Success case - fits file that exists being read as fits"""
-    result = mr.map_to_pixels(
+    mr.map_to_pixels(
         input_file=formats_fits,
         file_reader=get_file_reader("fits"),
         highest_order=0,
@@ -80,6 +88,8 @@ def test_read_single_fits(tmp_path, formats_fits):
         cache_path=tmp_path,
         mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
     assert len(result) == 12
     expected = hist.empty_histogram(0)
     expected[11] = 131
@@ -102,7 +112,7 @@ def test_map_headers_wrong(formats_headers_csv):
 
 def test_map_headers(tmp_path, formats_headers_csv):
     """Test loading the a file with non-default headers"""
-    result = mr.map_to_pixels(
+    mr.map_to_pixels(
         input_file=formats_headers_csv,
         file_reader=get_file_reader("csv"),
         highest_order=0,
@@ -111,6 +121,8 @@ def test_map_headers(tmp_path, formats_headers_csv):
         cache_path=tmp_path,
         mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
 
     assert len(result) == 12
 
@@ -122,7 +134,7 @@ def test_map_headers(tmp_path, formats_headers_csv):
 
 def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
-    result = mr.map_to_pixels(
+    mr.map_to_pixels(
         input_file=small_sky_single_file,
         file_reader=get_file_reader("csv"),
         highest_order=0,
@@ -131,6 +143,8 @@ def test_map_small_sky_order0(tmp_path, small_sky_single_file):
         cache_path=tmp_path,
         mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
 
     assert len(result) == 12
 
@@ -145,7 +159,7 @@ def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
     Test loading a small portion of the small sky catalog and
     partitioning objects into four smaller buckets
     """
-    result = mr.map_to_pixels(
+    mr.map_to_pixels(
         input_file=small_sky_file0,
         file_reader=get_file_reader("csv"),
         highest_order=1,
@@ -154,6 +168,8 @@ def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
         cache_path=tmp_path,
         mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
 
     assert len(result) == 48
 

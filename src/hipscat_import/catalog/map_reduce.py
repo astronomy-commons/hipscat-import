@@ -121,7 +121,6 @@ def map_to_pixels(
     ResumePlan.write_partial_histogram(
         tmp_path=cache_path, mapping_key=mapping_key, histogram=histo
     )
-    return histo
 
 
 def split_pixels(
