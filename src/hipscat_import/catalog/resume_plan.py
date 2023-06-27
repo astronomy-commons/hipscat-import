@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,8 @@ from tqdm import tqdm
 class ResumePlan:
     """Container class for holding the state of each file in the pipeline plan."""
 
+    tmp_path: FilePointer
+    """path for any intermediate files"""
     resume: bool = False
     """if there are existing intermediate resume files, should we
     read those and continue to create a new catalog where we left off"""
@@ -27,16 +29,14 @@ class ResumePlan:
     feedback of planning progress"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
-    tmp_path: str = ""
-    """path for any intermediate files"""
     map_files: List[str] = field(default_factory=list)
     """list of files that have yet to be mapped"""
-    split_keys: List[(str, str)] = field(default_factory=list)
+    split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
 
     MAPPING_START_LOG_FILE = "mapping_start_log.txt"
     MAPPING_DONE_LOG_FILE = "mapping_done_log.txt"
-    SPLITTING_LOG_FILE = "splitting_done_log.txt"
+    SPLITTING_LOG_FILE = "splitting_log.txt"
     HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
     REDUCING_LOG_FILE = "reducing_log.txt"
 
@@ -88,7 +88,8 @@ class ResumePlan:
                 mapping_done_keys = self._read_log_keys(self.MAPPING_DONE_LOG_FILE)
                 if len(mapping_done_keys) != len(mapping_start_keys):
                     raise ValueError(
-                        "Resume logs are corrupted. Delete temp directory and restart import pipeline."
+                        "Resume logs are corrupted. "
+                        "Delete temp directory and restart import pipeline."
                     )
                 mapped_paths = set(mapping_start_keys)
                 self.map_files = [
@@ -107,6 +108,8 @@ class ResumePlan:
                     for (key, file) in self.split_keys
                     if key not in split_keys
                 ]
+            ## We don't pre-gather the plan for the reducing keys.
+            ## It requires the full destination pixel map.
             step_progress.update(1)
 
     def read_histogram(self, highest_healpix_order):
@@ -188,7 +191,8 @@ class ResumePlan:
         file_io.remove_directory(self.tmp_path, ignore_errors=True)
 
     #####################################################################
-    ### Helper methods
+    ###                     Helper methods                            ###
+    #####################################################################
 
     def _done_file_exists(self, file_name):
         return file_io.does_file_or_directory_exist(

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import List
 
-import pandas as pd
 from hipscat.catalog.catalog import CatalogInfo
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math import hipscat_id
@@ -73,9 +72,9 @@ class ImportArguments(RuntimeArguments):
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
     resume_plan: ResumePlan | None = None
+    """container that handles read/write of log files for this pipeline"""
 
     def __post_init__(self):
-
         self._check_arguments()
 
     def _check_arguments(self):
@@ -117,14 +116,10 @@ class ImportArguments(RuntimeArguments):
             self.input_paths = file_io.find_files_matching_path(
                 self.input_path, f"*{self.input_format}"
             )
-
-            if len(self.input_paths) == 0:
-                raise FileNotFoundError(
-                    f"No files matched file pattern: {self.input_path}*{self.input_format} "
-                )
         elif self.input_file_list:
             self.input_paths = self.input_file_list
-
+        if len(self.input_paths) == 0:
+            raise FileNotFoundError("No input files found")
         self.resume_plan = ResumePlan(
             resume=self.resume,
             progress_bar=self.progress_bar,

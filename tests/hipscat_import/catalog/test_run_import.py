@@ -49,7 +49,7 @@ def test_resume_dask_runner(
             f"map_{os.path.join(small_sky_parts_dir, f'catalog_0{file_index}_of_05.csv')}",
             histogram,
         )
-        plan.mark_splitting_done(            f'split_{file_index}'        )
+        plan.mark_splitting_done(f"split_{file_index}")
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder=0"),

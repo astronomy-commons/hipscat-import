@@ -29,6 +29,28 @@ def test_reducing_done(tmp_path):
     assert not plan.is_reducing_done()
 
 
+def test_done_checks(tmp_path):
+    """Verify that done files imply correct pipeline execution order:
+    mapping > splitting > reducing
+    """
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)
+    plan.set_reducing_done()
+
+    with pytest.raises(ValueError, match="before reducing"):
+        plan.gather_plan()
+
+    plan.set_splitting_done()
+    with pytest.raises(ValueError, match="before reducing"):
+        plan.gather_plan()
+
+    plan.clean_resume_files()
+
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)
+    plan.set_splitting_done()
+    with pytest.raises(ValueError, match="before splitting"):
+        plan.gather_plan()
+
+
 def test_read_write_histogram(tmp_path):
     """Test that we can read what we write into a histogram file."""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)

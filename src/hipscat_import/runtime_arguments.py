@@ -1,10 +1,12 @@
 """Data class to hold common runtime arguments for dataset creation."""
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from importlib.metadata import version
 
-from hipscat.io import file_io
+from hipscat.io import FilePointer, file_io
 
 # pylint: disable=too-many-instance-attributes
 
@@ -40,10 +42,10 @@ class RuntimeArguments:
     """if provided, send an email to the indicated email address once the 
     import pipeline has complete."""
 
-    catalog_path = ""
+    catalog_path: FilePointer | None = None
     """constructed output path for the catalog that will be something like
     <output_path>/<output_catalog_name>"""
-    tmp_path = ""
+    tmp_path: FilePointer | None = None
     """constructed temp path - defaults to tmp_dir, then dask_tmp, but will create
     a new temp directory under catalog_path if no other options are provided"""
 
