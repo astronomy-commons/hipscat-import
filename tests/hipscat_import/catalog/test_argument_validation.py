@@ -66,16 +66,6 @@ def test_invalid_paths(blank_data_dir, tmp_path):
             input_format="parquet",
         )
 
-    # ## Bad input file
-    # with pytest.raises(FileNotFoundError):
-    #     ImportArguments(
-    #         output_catalog_name="catalog",
-    #         input_file_list=["/foo/path"],
-    #         overwrite=True,
-    #         output_path=tmp_path,
-    #         input_format="csv",
-    #     )
-
 
 def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     """Required arguments are provided, and paths are found."""
