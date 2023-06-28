@@ -81,9 +81,6 @@ class ResumePlan:
 
             ## Gather keys for execution.
             self.input_paths.sort()
-            for test_path in self.input_paths:
-                if not file_io.does_file_or_directory_exist(test_path):
-                    raise FileNotFoundError(f"{test_path} not found on local storage")
             step_progress.update(1)
             if not mapping_done:
                 mapped_keys = set(self._read_log_keys(self.MAPPING_LOG_FILE))

@@ -57,12 +57,6 @@ def _iterate_input_file(
     dec_column,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
-    if not file_io.does_file_or_directory_exist(input_file):
-        raise FileNotFoundError(f"File not found at path: {input_file}")
-    if not file_io.is_regular_file(input_file):
-        raise FileNotFoundError(
-            f"Directory found at path - requires regular file: {input_file}"
-        )
     if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
