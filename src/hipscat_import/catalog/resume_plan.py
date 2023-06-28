@@ -34,13 +34,12 @@ class ResumePlan:
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
 
-    MAPPING_START_LOG_FILE = "mapping_start_log.txt"
-    MAPPING_DONE_LOG_FILE = "mapping_done_log.txt"
     MAPPING_LOG_FILE = "mapping_log.txt"
     SPLITTING_LOG_FILE = "splitting_log.txt"
+    REDUCING_LOG_FILE = "reducing_log.txt"
+
     HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
     HISTOGRAMS_DIR = "histograms"
-    REDUCING_LOG_FILE = "reducing_log.txt"
 
     MAPPING_DONE_FILE = "mapping_done"
     SPLITTING_DONE_FILE = "splitting_done"
@@ -102,7 +101,7 @@ class ResumePlan:
 
     def read_histogram(self, healpix_order):
         """Return histogram with healpix_order'd shape
-        
+
         - Try to find a combined histogram
         - Otherwise, combine histograms from partials
         - Otherwise, return an empty histogram

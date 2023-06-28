@@ -335,8 +335,10 @@ def test_import_starr_file(
 
     class StarrReader(CsvReader):
         """Shallow subclass"""
+
         def read(self, input_file):
             import glob
+
             files = glob.glob(f"{input_file}/**.starr")
             files.sort()
             for file in files:
