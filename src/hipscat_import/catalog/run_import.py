@@ -133,6 +133,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 id_column=args.id_column,
                 add_hipscat_index=args.add_hipscat_index,
                 use_schema_file=args.use_schema_file,
+                manual_dtypes=args.manual_dtypes
             )
         )
 

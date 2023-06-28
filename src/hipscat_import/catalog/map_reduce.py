@@ -188,6 +188,7 @@ def reduce_pixel_shards(
     add_hipscat_index=True,
     delete_input_files=True,
     use_schema_file="",
+    manual_dtypes=None
 ):
     """Reduce sharded source pixels into destination pixels.
 
@@ -264,6 +265,8 @@ def reduce_pixel_shards(
         )
 
     dataframe = merged_table.to_pandas()
+    if manual_dtypes:
+        dataframe = dataframe.astype(manual_dtypes)
     if id_column:
         dataframe = dataframe.sort_values(id_column)
     if add_hipscat_index:

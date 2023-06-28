@@ -75,6 +75,10 @@ class ImportArguments(RuntimeArguments):
     file_reader: InputReader | None = None
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
+    manual_dtypes: dict | None = None
+    """dictionary of {columnname : dtype} ->df = df.astype(manual_dtypes) to explicitly
+    cast specific columns uniformly."""
+
 
     def __post_init__(self):
 
