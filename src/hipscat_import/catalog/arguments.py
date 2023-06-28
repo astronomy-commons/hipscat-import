@@ -60,11 +60,11 @@ class ImportArguments(RuntimeArguments):
     pixels that don't meed the threshold"""
     pixel_threshold: int = 1_000_000
     """maximum number of rows for a single resulting pixel.
-    we may combine hierarchically until we near the `pixel_threshold`"""
+    we may combine hierarchically until we near the ``pixel_threshold``"""
     mapping_healpix_order: int = -1
     """healpix order to use when mapping. will be
-    `highest_healpix_order` unless a positive value is provided for
-    `constant_healpix_order`"""
+    ``highest_healpix_order`` unless a positive value is provided for
+    ``constant_healpix_order``"""
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
@@ -100,8 +100,8 @@ class ImportArguments(RuntimeArguments):
             check_healpix_order_range(
                 self.highest_healpix_order, "highest_healpix_order"
             )
-            if not 100 <= self.pixel_threshold <= 10_000_000:
-                raise ValueError("pixel_threshold should be between 100 and 10,000,000")
+            if not 100 <= self.pixel_threshold <= 1_000_000_000:
+                raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
             self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
@@ -182,8 +182,8 @@ class ImportArguments(RuntimeArguments):
 def check_healpix_order_range(
     order, field_name, lower_bound=0, upper_bound=hipscat_id.HIPSCAT_ID_HEALPIX_ORDER
 ):
-    """Helper method to heck if the `order` is within the range determined by the
-    `lower_bound` and `upper_bound`, inclusive.
+    """Helper method to check if the ``order`` is within the range determined by the
+    ``lower_bound`` and ``upper_bound``, inclusive.
 
     Args:
         order (int): healpix order to check

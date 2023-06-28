@@ -15,7 +15,7 @@ from hipscat.catalog.catalog import Catalog
 
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
-from hipscat_import.catalog.file_readers import get_file_reader
+from hipscat_import.catalog.file_readers import CsvReader, get_file_reader
 
 
 @pytest.mark.dask
@@ -44,7 +44,7 @@ def test_import_source_table(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Catalog.read_from_hipscat(args.catalog_path)
@@ -84,7 +84,7 @@ def test_import_mixed_schema_csv(
         use_schema_file=mixed_schema_csv_parquet,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -140,7 +140,7 @@ def test_import_preserve_index(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -168,7 +168,7 @@ def test_import_preserve_index(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -235,7 +235,7 @@ def test_import_multiindex(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -263,7 +263,7 @@ def test_import_multiindex(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(
@@ -299,14 +299,16 @@ def test_import_constant_healpix_order(
         progress_bar=False,
     )
 
-    runner.run_with_client(args, dask_client)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Catalog.read_from_hipscat(args.catalog_path)
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
     # Check that the partition info file exists - all pixels at order 2!
-    assert all(pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels())
+    assert all(
+        pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels()
+    )
 
     # Pick a parquet file and make sure it contains as many rows as we expect
     output_file = os.path.join(
@@ -317,3 +319,47 @@ def test_import_constant_healpix_order(
     assert len(data_frame) == 14
     ids = data_frame["id"]
     assert np.logical_and(ids >= 700, ids < 832).all()
+
+@pytest.mark.dask
+def test_import_starr_file(
+    dask_client,
+    formats_dir,
+    assert_parquet_file_ids,
+    tmp_path,
+):
+    """Test basic execution.
+    - tests that we can run pipeline with a totally unknown file type, so long
+      as a valid InputReader implementation is provided.
+    """
+
+    class StarrReader(CsvReader):
+        """Shallow subclass"""
+
+    args = ImportArguments(
+        output_catalog_name="starr",
+        input_path=formats_dir,
+        input_format="starr",
+        file_reader=StarrReader(),
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_pixels()) == 1
+
+    # Check that the catalog parquet file exists and contains correct object IDs
+    output_file = os.path.join(
+        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
+    )
+
+    expected_ids = [*range(700, 831)]
+    assert_parquet_file_ids(output_file, "id", expected_ids)

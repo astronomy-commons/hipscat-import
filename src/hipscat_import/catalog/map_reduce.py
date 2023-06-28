@@ -98,7 +98,7 @@ def map_to_pixels(
 
     Args:
         input_file (FilePointer): file to read for catalog data.
-        file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input 
+        file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input
             reader that specifies arguments necessary for reading from the input file.
         shard_suffix (str): unique counter for this input file, used
             when creating intermediate files
@@ -137,7 +137,7 @@ def split_pixels(
 
     Args:
         input_file (FilePointer): file to read for catalog data.
-        file_reader (hipscat_import.catalog.file_readers.InputReader): instance 
+        file_reader (hipscat_import.catalog.file_readers.InputReader): instance
             of input reader that specifies arguments necessary for reading from the input file.
         shard_suffix (str): unique counter for this input file, used
             when creating intermediate files

@@ -7,7 +7,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 
 import hipscat.io.write_metadata as io
 import numpy as np
-from dask.distributed import Client, as_completed
+from dask.distributed import as_completed
 from hipscat import pixel_math
 from tqdm import tqdm
 
@@ -52,6 +52,7 @@ def _map_pixels(args, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
+            continue
         raw_histogram = np.add(raw_histogram, result)
         resume.write_mapping_start_key(args.tmp_path, future.key)
         resume.write_histogram(args.tmp_path, raw_histogram)
@@ -100,6 +101,7 @@ def _split_pixels(args, alignment_future, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
+            continue
         resume.write_splitting_done_key(args.tmp_path, future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some splitting stages failed. See logs for details.")
@@ -146,36 +148,19 @@ def _reduce_pixels(args, destination_pixel_map, client):
     ):
         if future.status == "error":  # pragma: no cover
             some_error = True
+            continue
         resume.write_reducing_key(args.tmp_path, future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some reducing stages failed. See logs for details.")
     resume.set_reducing_done(args.tmp_path)
 
 
-def _validate_args(args):
+def run(args, client):
+    """Run catalog creation pipeline."""
     if not args:
         raise ValueError("args is required and should be type ImportArguments")
     if not isinstance(args, ImportArguments):
         raise ValueError("args must be type ImportArguments")
-
-
-def run(args):
-    """Importer that creates a dask client from the arguments"""
-    _validate_args(args)
-
-    # pylint: disable=duplicate-code
-    with Client(
-        local_directory=args.dask_tmp,
-        n_workers=args.dask_n_workers,
-        threads_per_worker=args.dask_threads_per_worker,
-    ) as client:  # pragma: no cover
-        run_with_client(args, client)
-    # pylint: enable=duplicate-code
-
-
-def run_with_client(args, client):
-    """Importer, where the client context may out-live the runner"""
-    _validate_args(args)
     raw_histogram = _map_pixels(args, client)
 
     with tqdm(
