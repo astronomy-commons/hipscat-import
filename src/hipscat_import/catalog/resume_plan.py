@@ -101,23 +101,30 @@ class ResumePlan:
             step_progress.update(1)
 
     def read_histogram(self, healpix_order):
-        """Read a numpy array at the indicated directory.
-        Otherwise, return histogram of appropriate shape."""
+        """Return histogram with healpix_order'd shape
+        
+        - Try to find a combined histogram
+        - Otherwise, combine histograms from partials
+        - Otherwise, return an empty histogram
+        ."""
+        full_histogram = pixel_math.empty_histogram(healpix_order)
+
+        ## Look for the single combined histogram file.
         file_name = file_io.append_paths_to_pointer(
             self.tmp_path, self.HISTOGRAM_BINARY_FILE
         )
         if file_io.does_file_or_directory_exist(file_name):
             with open(file_name, "rb") as file_handle:
                 return frombuffer(file_handle.read(), dtype=np.int64)
-        return pixel_math.empty_histogram(healpix_order)
 
-    def combine_histograms(self, healpix_order):
-        """Read all partial histogram files and combine into a sum.
-        Save it for future reads."""
+        ## Otherwise:
+        # - read all the partial histograms
+        # - combine into a single histogram
+        # - write out as a single histogram for future reads
+        # - remove all partial histograms
         histogram_files = file_io.find_files_matching_path(
             self.tmp_path, self.HISTOGRAMS_DIR, "**.binary"
         )
-        full_histogram = pixel_math.empty_histogram(healpix_order)
         for file_name in histogram_files:
             with open(file_name, "rb") as file_handle:
                 full_histogram = np.add(

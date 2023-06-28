@@ -54,17 +54,20 @@ def test_done_checks(tmp_path):
 def test_read_write_histogram(tmp_path):
     """Test that we can read what we write into a histogram file."""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    empty = hist.empty_histogram(0)
-    result = plan.read_histogram(0)
-    npt.assert_array_equal(result, empty)
 
     expected = hist.empty_histogram(0)
     expected[11] = 131
-    plan.mark_mapping_done("ignored")
-    # result = plan.read_histogram(0)
-    # npt.assert_array_equal(result, expected)
+
+    ResumePlan.write_partial_histogram(
+        tmp_path=tmp_path, mapping_key="map_0", histogram=expected
+    )
+    result = plan.read_histogram(0)
+    npt.assert_array_equal(result, expected)
 
     plan.clean_resume_files()
+
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
+    empty = hist.empty_histogram(0)
     result = plan.read_histogram(0)
     npt.assert_array_equal(result, empty)
 
@@ -75,7 +78,6 @@ def test_read_write_map_files(tmp_path, small_sky_single_file, formats_headers_c
     plan = ResumePlan(
         tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths
     )
-    empty = hist.empty_histogram(0)
     map_files = plan.map_files
     assert len(map_files) == 2
 

@@ -19,8 +19,7 @@ def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
 
     if args.resume_plan.is_mapping_done():
-        raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
-        return raw_histogram
+        return
 
     reader_future = client.scatter(args.file_reader)
     futures = []
@@ -52,9 +51,7 @@ def _map_pixels(args, client):
             args.resume_plan.mark_mapping_done(future.key)
     if some_error:  # pragma: no cover
         raise RuntimeError("Some mapping stages failed. See logs for details.")
-    raw_histogram = args.resume_plan.combine_histograms(args.mapping_healpix_order)
     args.resume_plan.set_mapping_done()
-    return raw_histogram
 
 
 def _split_pixels(args, alignment_future, client):
@@ -148,11 +145,13 @@ def run(args, client):
         raise ValueError("args is required and should be type ImportArguments")
     if not isinstance(args, ImportArguments):
         raise ValueError("args must be type ImportArguments")
-    raw_histogram = _map_pixels(args, client)
+    _map_pixels(args, client)
 
     with tqdm(
-        total=1, desc="Binning  ", disable=not args.progress_bar
+        total=2, desc="Binning  ", disable=not args.progress_bar
     ) as step_progress:
+        raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
+        step_progress.update(1)
         if args.constant_healpix_order >= 0:
             alignment = np.full(len(raw_histogram), None)
             for pixel_num, pixel_sum in enumerate(raw_histogram):
