@@ -6,6 +6,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from astropy.table import Table
+from hipscat.io import file_io
 
 # pylint: disable=too-few-public-methods,too-many-arguments
 
@@ -87,6 +88,19 @@ class InputReader(abc.ABC):
             dictionary with all argument_name -> argument_value as key -> value pairs.
         """
 
+    def regular_file_exists(self, input_file):
+        """Check that the `input_file` points to a single regular file
+
+        Raises
+            FileNotFoundError: if nothing exists at path, or directory found.
+        """
+        if not file_io.does_file_or_directory_exist(input_file):
+            raise FileNotFoundError(f"File not found at path: {input_file}")
+        if not file_io.is_regular_file(input_file):
+            raise FileNotFoundError(
+                f"Directory found at path - requires regular file: {input_file}"
+            )
+
 
 class CsvReader(InputReader):
     """CSV reader for the most common CSV reading arguments.
@@ -126,6 +140,8 @@ class CsvReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
+        self.regular_file_exists(input_file)
+
         if self.schema_file:
             schema_parquet = pd.read_parquet(
                 self.schema_file, dtype_backend="numpy_nullable"
@@ -207,6 +223,7 @@ class FitsReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
+        self.regular_file_exists(input_file)
         table = Table.read(input_file, memmap=True, **self.kwargs)
         if self.column_names:
             table.keep_columns(self.column_names)
@@ -244,6 +261,7 @@ class ParquetReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
+        self.regular_file_exists(input_file)
         parquet_file = pq.read_table(input_file, **self.kwargs)
         for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
             yield pa.Table.from_batches([smaller_table]).to_pandas()

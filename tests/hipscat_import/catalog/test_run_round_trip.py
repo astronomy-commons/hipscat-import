@@ -320,6 +320,7 @@ def test_import_constant_healpix_order(
     ids = data_frame["id"]
     assert np.logical_and(ids >= 700, ids < 832).all()
 
+
 @pytest.mark.dask
 def test_import_starr_file(
     dask_client,
@@ -335,9 +336,17 @@ def test_import_starr_file(
     class StarrReader(CsvReader):
         """Shallow subclass"""
 
+        def read(self, input_file):
+            import glob
+
+            files = glob.glob(f"{input_file}/**.starr")
+            files.sort()
+            for file in files:
+                return super().read(file)
+
     args = ImportArguments(
         output_catalog_name="starr",
-        input_path=formats_dir,
+        input_file_list=[formats_dir],
         input_format="starr",
         file_reader=StarrReader(),
         output_path=tmp_path,

@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import List
 
-import pandas as pd
 from hipscat.catalog.catalog import CatalogInfo
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math import hipscat_id
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
+from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.runtime_arguments import RuntimeArguments
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
@@ -68,16 +68,13 @@ class ImportArguments(RuntimeArguments):
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
-    filter_function: Callable | None = None
-    """optional method which takes a pandas dataframe as input, performs some 
-    filtering or transformation of the data, and returns a dataframe with the 
-    rows that will be used to create the new catalog"""
     file_reader: InputReader | None = None
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
+    resume_plan: ResumePlan | None = None
+    """container that handles read/write of log files for this pipeline"""
 
     def __post_init__(self):
-
         self._check_arguments()
 
     def _check_arguments(self):
@@ -97,7 +94,9 @@ class ImportArguments(RuntimeArguments):
                 self.highest_healpix_order, "highest_healpix_order"
             )
             if not 100 <= self.pixel_threshold <= 1_000_000_000:
-                raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
+                raise ValueError(
+                    "pixel_threshold should be between 100 and 1,000,000,000"
+                )
             self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
@@ -117,28 +116,16 @@ class ImportArguments(RuntimeArguments):
             self.input_paths = file_io.find_files_matching_path(
                 self.input_path, f"*{self.input_format}"
             )
-
-            if len(self.input_paths) == 0:
-                raise FileNotFoundError(
-                    f"No files matched file pattern: {self.input_path}*{self.input_format} "
-                )
         elif self.input_file_list:
             self.input_paths = self.input_file_list
-            for test_path in self.input_paths:
-                if not file_io.does_file_or_directory_exist(test_path):
-                    raise FileNotFoundError(f"{test_path} not found on local storage")
-        self.input_paths.sort()
-
-        if not self.resume:
-            if file_io.directory_has_contents(self.tmp_path):
-                raise ValueError(
-                    f"tmp_path ({self.tmp_path}) contains intermediate files."
-                    " choose a different directory or use --resume flag"
-                )
-        file_io.make_directory(self.tmp_path, exist_ok=True)
-
-        if not self.filter_function:
-            self.filter_function = passthrough_filter_function
+        if len(self.input_paths) == 0:
+            raise FileNotFoundError("No input files found")
+        self.resume_plan = ResumePlan(
+            resume=self.resume,
+            progress_bar=self.progress_bar,
+            input_paths=self.input_paths,
+            tmp_path=self.tmp_path,
+        )
 
     def to_catalog_info(self, total_rows) -> CatalogInfo:
         """Catalog-type-specific dataset info."""
@@ -200,8 +187,3 @@ def check_healpix_order_range(
         raise ValueError(
             f"{field_name} should be between {lower_bound} and {upper_bound}"
         )
-
-
-def passthrough_filter_function(data: pd.DataFrame) -> pd.DataFrame:
-    """No-op filter function to be used when no user-defined filter is provided"""
-    return data

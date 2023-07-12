@@ -8,6 +8,7 @@ from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 
 from hipscat_import.catalog.file_readers import InputReader
+from hipscat_import.catalog.resume_plan import ResumePlan
 
 # pylint: disable=too-many-locals,too-many-arguments
 
@@ -54,15 +55,8 @@ def _iterate_input_file(
     highest_order,
     ra_column,
     dec_column,
-    filter_function=None,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
-    if not file_io.does_file_or_directory_exist(input_file):
-        raise FileNotFoundError(f"File not found at path: {input_file}")
-    if not file_io.is_regular_file(input_file):
-        raise FileNotFoundError(
-            f"Directory found at path - requires regular file: {input_file}"
-        )
     if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
@@ -73,9 +67,7 @@ def _iterate_input_file(
             raise ValueError(
                 f"Invalid column names in input file: {ra_column}, {dec_column} not in {input_file}"
             )
-        # Set up the data we want (filter and find pixel)
-        if filter_function:
-            data = filter_function(data)
+        # Set up the pixel data
         mapped_pixels = hp.ang2pix(
             2**highest_order,
             data[ra_column].values,
@@ -89,10 +81,11 @@ def _iterate_input_file(
 def map_to_pixels(
     input_file: FilePointer,
     file_reader: InputReader,
+    cache_path: FilePointer,
+    mapping_key,
     highest_order,
     ra_column,
     dec_column,
-    filter_function=None,
 ):
     """Map a file of input objects to their healpix pixels.
 
@@ -115,11 +108,13 @@ def map_to_pixels(
     """
     histo = pixel_math.empty_histogram(highest_order)
     for _, _, mapped_pixels in _iterate_input_file(
-        input_file, file_reader, highest_order, ra_column, dec_column, filter_function
+        input_file, file_reader, highest_order, ra_column, dec_column
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-    return histo
+    ResumePlan.write_partial_histogram(
+        tmp_path=cache_path, mapping_key=mapping_key, histogram=histo
+    )
 
 
 def split_pixels(
@@ -131,7 +126,6 @@ def split_pixels(
     dec_column,
     cache_path: FilePointer,
     alignment=None,
-    filter_function=None,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
 
@@ -145,15 +139,13 @@ def split_pixels(
         ra_column (str): where to find right ascension data in the dataframe
         dec_column (str): where to find declation in the dataframe
         cache_path (FilePointer): where to write intermediate files.
-        filter_function (function pointer): method to perform some filtering
-            or transformation of the input data
 
     Raises:
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
         FileNotFoundError: if the file does not exist, or is a directory
     """
     for chunk_number, data, mapped_pixels in _iterate_input_file(
-        input_file, file_reader, highest_order, ra_column, dec_column, filter_function
+        input_file, file_reader, highest_order, ra_column, dec_column
     ):
         aligned_pixels = alignment[mapped_pixels]
         unique_pixels, unique_inverse = np.unique(aligned_pixels, return_inverse=True)

@@ -3,12 +3,13 @@
 import os
 import shutil
 
+import hipscat.pixel_math as hist
 import pytest
 from hipscat.catalog.catalog import Catalog
 
-import hipscat_import.catalog.resume_files as rf
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.catalog.resume_plan import ResumePlan
 
 
 def test_empty_args():
@@ -40,18 +41,17 @@ def test_resume_dask_runner(
         os.path.join(resume_dir, "intermediate"),
         temp_path,
     )
+    plan = ResumePlan(tmp_path=temp_path, progress_bar=False, resume=True)
+    histogram = hist.empty_histogram(0)
+    histogram[11] = 131
+    empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        rf.write_mapping_start_key(
-            temp_path,
-            f"map_{os.path.join(small_sky_parts_dir, f'catalog_0{file_index}_of_05.csv')}",
-        )
-        rf.write_mapping_done_key(
-            temp_path,
-            f'map_{os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv")}',
-        )
-        rf.write_splitting_done_key(
-            temp_path,
-            f'split_{os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv")}',
+        plan.mark_mapping_done(f"map_{file_index}")
+        plan.mark_splitting_done(f"split_{file_index}")
+        ResumePlan.write_partial_histogram(
+            tmp_path=temp_path,
+            mapping_key=f"map_{file_index}",
+            histogram=histogram if file_index == 0 else empty,
         )
 
     shutil.copytree(
@@ -113,9 +113,10 @@ def test_resume_dask_runner(
         os.path.join(resume_dir, "intermediate"),
         temp_path,
     )
-    rf.set_mapping_done(temp_path)
-    rf.set_splitting_done(temp_path)
-    rf.set_reducing_done(temp_path)
+    plan = args.resume_plan
+    plan.set_mapping_done()
+    plan.set_splitting_done()
+    plan.set_reducing_done()
 
     args = ImportArguments(
         output_catalog_name="resume",
