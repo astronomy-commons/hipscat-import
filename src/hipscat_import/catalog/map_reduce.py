@@ -8,6 +8,7 @@ from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 
 from hipscat_import.catalog.file_readers import InputReader
+from hipscat_import.catalog.resume_plan import ResumePlan
 
 # pylint: disable=too-many-locals,too-many-arguments
 
@@ -56,12 +57,6 @@ def _iterate_input_file(
     dec_column,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
-    if not file_io.does_file_or_directory_exist(input_file):
-        raise FileNotFoundError(f"File not found at path: {input_file}")
-    if not file_io.is_regular_file(input_file):
-        raise FileNotFoundError(
-            f"Directory found at path - requires regular file: {input_file}"
-        )
     if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
@@ -86,6 +81,8 @@ def _iterate_input_file(
 def map_to_pixels(
     input_file: FilePointer,
     file_reader: InputReader,
+    cache_path: FilePointer,
+    mapping_key,
     highest_order,
     ra_column,
     dec_column,
@@ -115,7 +112,9 @@ def map_to_pixels(
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-    return histo
+    ResumePlan.write_partial_histogram(
+        tmp_path=cache_path, mapping_key=mapping_key, histogram=histo
+    )
 
 
 def split_pixels(

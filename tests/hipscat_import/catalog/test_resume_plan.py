@@ -54,17 +54,20 @@ def test_done_checks(tmp_path):
 def test_read_write_histogram(tmp_path):
     """Test that we can read what we write into a histogram file."""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    empty = hist.empty_histogram(0)
-    result = plan.read_histogram(0)
-    npt.assert_array_equal(result, empty)
 
     expected = hist.empty_histogram(0)
     expected[11] = 131
-    plan.mark_mapping_done("ignored", expected)
+
+    ResumePlan.write_partial_histogram(
+        tmp_path=tmp_path, mapping_key="map_0", histogram=expected
+    )
     result = plan.read_histogram(0)
     npt.assert_array_equal(result, expected)
 
     plan.clean_resume_files()
+
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
+    empty = hist.empty_histogram(0)
     result = plan.read_histogram(0)
     npt.assert_array_equal(result, empty)
 
@@ -75,18 +78,17 @@ def test_read_write_map_files(tmp_path, small_sky_single_file, formats_headers_c
     plan = ResumePlan(
         tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths
     )
-    empty = hist.empty_histogram(0)
     map_files = plan.map_files
     assert len(map_files) == 2
 
-    plan.mark_mapping_done(f"map_{small_sky_single_file}", empty)
+    plan.mark_mapping_done("map_0")
 
     plan.gather_plan()
     map_files = plan.map_files
     assert len(map_files) == 1
-    assert map_files[0] == formats_headers_csv
+    assert map_files[0][1] == formats_headers_csv
 
-    plan.mark_mapping_done(f"map_{formats_headers_csv}", empty)
+    plan.mark_mapping_done("map_1")
 
     ## Nothing left to map
     plan.gather_plan()
@@ -99,31 +101,6 @@ def test_read_write_map_files(tmp_path, small_sky_single_file, formats_headers_c
     plan.gather_plan()
     map_files = plan.map_files
     assert len(map_files) == 2
-
-
-def test_read_write_mapping_keys_corrupt(
-    tmp_path, small_sky_single_file, formats_headers_csv
-):
-    """Test that we can list the remaining files to map, and find corrupt save point."""
-    input_paths = [small_sky_single_file, formats_headers_csv]
-    plan = ResumePlan(
-        tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths
-    )
-    empty = hist.empty_histogram(0)
-    map_files = plan.map_files
-    assert len(map_files) == 2
-
-    plan.mark_mapping_done(f"map_{small_sky_single_file}", empty)
-
-    plan.gather_plan()
-    map_files = plan.map_files
-    assert len(map_files) == 1
-    assert map_files[0] == formats_headers_csv
-
-    with pytest.raises(AttributeError, match="NoneType"):
-        plan.mark_mapping_done(f"map_{formats_headers_csv}", None)
-    with pytest.raises(ValueError, match="logs are corrupted"):
-        plan.gather_plan()
 
 
 def test_read_write_splitting_keys(
