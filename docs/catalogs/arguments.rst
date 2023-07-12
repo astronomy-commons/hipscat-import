@@ -3,15 +3,6 @@ Catalog Import Arguments
 
 This page discusses a few topics around setting up a catalog pipeline.
 
-For a full list of the available arguments, see the API documentation for 
-:py:class:`hipscat_import.catalog.arguments.ImportArguments`, and its superclass
-:py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
-
-Reading input files
--------------------------------------------------------------------------------
-
-Catalog import reads through a list of files and converts them into a hipscatted catalog.
-
 At a minimum, you need to pass the reader arguments that include where to find the input files,
 the column names for RA, DEC and ID, and where to put the output files. A minimal arguments block
 will look something like:
@@ -33,6 +24,16 @@ or passing parameters to the file reader. For example you might use ``file_reade
 to parse a whitespace separated file.
 
 More details on each of these parameters is provided below.
+
+For a full list of the available arguments, see the API documentation for 
+:py:class:`hipscat_import.catalog.arguments.ImportArguments`, and its superclass
+:py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
+
+Reading input files
+-------------------------------------------------------------------------------
+
+Catalog import reads through a list of files and converts them into a hipscatted catalog.
+
 
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
