@@ -4,7 +4,8 @@ Catalog Import Arguments
 This page discusses a few topics around setting up a catalog pipeline.
 
 For a full list of the available arguments, see the API documentation for 
-:py:class:`hipscat_import.catalog.arguments.ImportArguments`
+:py:class:`hipscat_import.catalog.arguments.ImportArguments`, and its superclass
+:py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
 
 Reading input files
 -------------------------------------------------------------------------------
@@ -150,7 +151,7 @@ If there is already catalog data in the indicated directory, you can force a
 new catalog to be written in the directory with the ``overwrite`` flag. 
 
 In addition, you can specify a directory to use for intermediate files, using
-``tmp_dir``. This can be useful if you have additional scratch storage, or want
+``tmp_dir``, as well as a directory for dask to use for intermediate files using
+``dask_tmp``. This can be useful if you have additional scratch storage, or want
 to use local storage for intermediate files and remote storage for the final 
 catalog files.
-
