@@ -103,7 +103,8 @@ class CsvReader(InputReader):
             and column types will be pulled from the parquet schema metadata.
         column_names (list[str]): the names of columns if no header is available
         type_map (dict): the data types to use for columns
-        separator (str): the character used for separation.
+        separator (str): the character used for separation. Use '\\s+' to
+            process whitespace separated files.
     """
 
     def __init__(

@@ -12,6 +12,28 @@ Reading input files
 
 Catalog import reads through a list of files and converts them into a hipscatted catalog.
 
+At a minimum, you need to pass the reader arguments that include where to find the input files,
+the column names for RA, DEC and ID, and where to put the output files. A minimal arguments block
+will look something like:
+
+.. code-block:: python
+
+    args = ImportArguments(
+        id_column="ObjectID",
+        ra_column="ObjectRA",
+        dec_column="ObjectDec",
+        input_path="./my_data",
+        input_format="csv",
+        output_catalog_name="test_cat",
+        output_path="./output",
+    )
+
+You only need to provide the ``file_reader`` argument if you are using a custom file reader
+or passing parameters to the file reader. For example you might use ``file_reader=CsvReader(separator="\s+")``
+to parse a whitespace separated file.
+
+More details on each of these parameter is provided below.
+
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
