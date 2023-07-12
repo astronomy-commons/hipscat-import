@@ -51,6 +51,44 @@ def test_done_checks(tmp_path):
         plan.gather_plan()
 
 
+def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
+    """Test that we can only resume if the input_paths are the same."""
+    plan = ResumePlan(
+        tmp_path=tmp_path,
+        progress_bar=False,
+        resume=True,
+        input_paths=[small_sky_single_file, formats_headers_csv],
+    )
+    map_files = plan.map_files
+    assert len(map_files) == 2
+
+    with pytest.raises(ValueError, match="Different file set"):
+        ResumePlan(
+            tmp_path=tmp_path,
+            progress_bar=False,
+            resume=True,
+            input_paths=[small_sky_single_file],
+        )
+
+    ## List is the same length, but includes a duplicate
+    with pytest.raises(ValueError, match="Different file set"):
+        ResumePlan(
+            tmp_path=tmp_path,
+            progress_bar=False,
+            resume=True,
+            input_paths=[small_sky_single_file, small_sky_single_file],
+        )
+
+    ## Includes a duplicate file, but that's ok.
+    plan = ResumePlan(
+        tmp_path=tmp_path,
+        progress_bar=False,
+        resume=True,
+        input_paths=[small_sky_single_file, small_sky_single_file, formats_headers_csv],
+    )
+    map_files = plan.map_files
+    assert len(map_files) == 2
+
 def test_read_write_histogram(tmp_path):
     """Test that we can read what we write into a histogram file."""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)

@@ -37,6 +37,7 @@ class ResumePlan:
     MAPPING_LOG_FILE = "mapping_log.txt"
     SPLITTING_LOG_FILE = "splitting_log.txt"
     REDUCING_LOG_FILE = "reducing_log.txt"
+    ORIGINAL_INPUT_PATHS = "input_paths.txt"
 
     HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
     HISTOGRAMS_DIR = "histograms"
@@ -52,7 +53,7 @@ class ResumePlan:
     def gather_plan(self):
         """Initialize the plan."""
         with tqdm(
-            total=4, desc="Planning ", disable=not self.progress_bar
+            total=5, desc="Planning ", disable=not self.progress_bar
         ) as step_progress:
             ## Make sure it's safe to use existing resume state.
             if not self.resume:
@@ -78,8 +79,22 @@ class ResumePlan:
                 raise ValueError("mapping must be complete before splitting")
             step_progress.update(1)
 
-            ## Gather keys for execution.
+            ## Validate that we're operating on the same file set as the previous instance.
+            unique_file_paths = set(self.input_paths)
+            self.input_paths = list(unique_file_paths)
             self.input_paths.sort()
+            original_input_paths = set(self._read_log_keys(self.ORIGINAL_INPUT_PATHS))
+            if not original_input_paths:
+                for input_path in self.input_paths:
+                    self._write_log_key(self.ORIGINAL_INPUT_PATHS, input_path)
+            else:
+                if original_input_paths != unique_file_paths:
+                    raise ValueError(
+                        "Different file set from resumed pipeline execution."
+                    )
+            step_progress.update(1)
+
+            ## Gather keys for execution.
             step_progress.update(1)
             if not mapping_done:
                 mapped_keys = set(self._read_log_keys(self.MAPPING_LOG_FILE))
@@ -156,7 +171,7 @@ class ResumePlan:
             file_handle.write(histogram.data)
 
     def mark_mapping_done(self, mapping_key: str):
-        """Add mapping key to done list and update raw histogram"""
+        """Add mapping key to done list."""
         self._write_log_key(self.MAPPING_LOG_FILE, mapping_key)
 
     def is_mapping_done(self) -> bool:
@@ -168,7 +183,7 @@ class ResumePlan:
         self._touch_done_file(self.MAPPING_DONE_FILE)
 
     def mark_splitting_done(self, splitting_key: str):
-        """Add splitting key to done list"""
+        """Add splitting key to done list."""
         self._write_log_key(self.SPLITTING_LOG_FILE, splitting_key)
 
     def is_splitting_done(self) -> bool:
@@ -197,7 +212,7 @@ class ResumePlan:
         return reduce_items
 
     def mark_reducing_done(self, reducing_key: str):
-        """Add reducing key to done list"""
+        """Add reducing key to done list."""
         self._write_log_key(self.REDUCING_LOG_FILE, reducing_key)
 
     def is_reducing_done(self) -> bool:
