@@ -32,7 +32,7 @@ You only need to provide the ``file_reader`` argument if you are using a custom 
 or passing parameters to the file reader. For example you might use ``file_reader=CsvReader(separator="\s+")``
 to parse a whitespace separated file.
 
-More details on each of these parameter is provided below.
+More details on each of these parameters is provided below.
 
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
