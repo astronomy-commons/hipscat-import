@@ -192,11 +192,7 @@ class ResumePlan:
         reduce_items = [
             (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, source_pixels in destination_pixel_map.items()
-        ]
-        reduce_items = [
-            (hp_pixel, source_pixels, key)
-            for (hp_pixel, source_pixels, key) in reduce_items
-            if key not in reduced_keys
+            if f"{hp_pixel.order}_{hp_pixel.pixel}" not in reduced_keys
         ]
         return reduce_items
 
