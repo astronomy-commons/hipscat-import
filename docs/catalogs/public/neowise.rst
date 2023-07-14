@@ -17,6 +17,8 @@ Challenges with this data set
   type hints to the reader.
 - The numeric fields may be null, which is not directly supported by the 
   ``int64`` type in pandas, so we must use the nullable ``Int64`` type.
+- Some fields are sparsely populated, and this can create type conversion issues.
+  We use a schema parquet file to address these issues.
 
 You can download the :download:`neowise_types</static/neowise_types.csv>` CSV file we used.
 
@@ -48,7 +50,21 @@ Example import
         ).read,
         ra_column="RA",
         dec_column="DEC",
+        pixel_threshold=2_000_000,
+        highest_healpix_order=9,
+        use_schema_file="/path/to/neowise_schema.parquet",
         id_column="SOURCE_ID",
         output_path="/path/to/catalogs/",
     )
     runner.run(args)
+
+
+Our performance
+-------------------------------------------------------------------------------
+
+Running on dedicated hardware, with 10 workers, this import took around
+a week.
+
+- Mapping stage: around 58 hours
+- Splitting stage: around 72 hours
+- Reducing stage: around 14 hours

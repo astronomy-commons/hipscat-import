@@ -24,7 +24,11 @@ Challenges with this data set
   the dataframe.
 - the parquet files are all a fine size for input files, so we don't mess
   with another chunk size.
-- there are over 500 thousand data files (TODO - how we handle this=])
+- there are over 500 thousand data files, so we pass each **directory** to 
+  the map job workers, and loop over all files in the directory ourselves.
+- you may want to remove the input file, ``F0065/ztf_0065_1990_g.parquet``, 
+  as this file seems to have corrupted snappy compression. all other files
+  are readable as downloaded from caltech.
 
 .. code-block:: python
 
@@ -53,18 +57,22 @@ Challenges with this data set
                 "fieldid",
             ]
 
-            ## Parse the band from the file name, and hold onto it for later.
-            match = re.match(r".*ztf_[\d]+_[\d]+_([gir]).parquet", str(input_file))
-            band = match.group(1)
+            ## Find all the parquet files in the directory
+            files = glob.glob(f"{input_file}/**.parquet")
+            files.sort()
 
-            parquet_file = pq.read_table(input_file, columns=columns, **self.kwargs)
-            for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
-                frame = pa.Table.from_batches([smaller_table]).to_pandas()
-                frame["band"] = band
-                yield frame
+            for file in files:
+                ## Parse the band from the file name, and hold onto it for later.
+                match = re.match(r".*ztf_[\d]+_[\d]+_([gir]).parquet", str(file))
+                band = match.group(1)
+                parquet_file = pq.read_table(file, columns=columns, **self.kwargs)
+                for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
+                    frame = pa.Table.from_batches([smaller_table]).to_pandas()
+                    frame["band"] = band
+                    yield frame
 
 
-    files = glob.glob("/path/to/downloads/**/**.parquet")
+    files = glob.glob("/path/to/downloads/F**/")
     files.sort()
 
     args = ImportArguments(
@@ -83,3 +91,13 @@ Challenges with this data set
     )
 
     runner.pipeline(args)
+
+Our performance
+-------------------------------------------------------------------------------
+
+Running on dedicated hardware, with only 5 workers, this import took around
+two weeks.
+
+- Mapping stage: around 15 hours
+- Splitting stage: around 243 hours
+- Reducing stage: around 70 hours
