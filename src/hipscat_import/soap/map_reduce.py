@@ -6,6 +6,7 @@ import healpy as hp
 import numpy as np
 import pandas as pd
 from hipscat.catalog import Catalog
+from hipscat.io import FilePointer, file_io
 from hipscat.io.paths import pixel_catalog_file
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.pixel_margins import get_margin
@@ -113,21 +114,30 @@ def _write_count_results(cache_path, source_healpix, results):
     num_results = len(results)
     dataframe = pd.DataFrame(results, columns=["Norder", "Npix", "num_rows"])
 
-    dirs = [int(order / 10_000) * 10_000 if order >=0 else -1 for order, _, _ in results]
-
-    dataframe["Dir"] = dirs
+    dataframe["Dir"] = [
+        int(order / 10_000) * 10_000 if order >= 0 else -1 for order, _, _ in results
+    ]
     dataframe["join_Norder"] = np.full(
         num_results, fill_value=source_healpix.order, dtype=np.int32
     )
-    dataframe["join_Dir"] = int(dataframe["join_Norder"] / 10_000) * 10_000
+    dataframe["join_Dir"] = [
+        int(order / 10_000) * 10_000 for order in dataframe["join_Norder"]
+    ]
     dataframe["join_Npix"] = np.full(
         num_results, fill_value=source_healpix.pixel, dtype=np.int32
     )
+
+    ## Reorder columns.
     dataframe = dataframe[
         ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
     ]
-    dataframe.to_csv(
-        os.path.join(cache_path, f"{source_healpix.order}_{source_healpix.pixel}.csv")
+
+    file_io.write_dataframe_to_csv(
+        dataframe=dataframe,
+        file_pointer=file_io.append_paths_to_pointer(
+            cache_path, f"{source_healpix.order}_{source_healpix.pixel}.csv"
+        ),
+        index=False,
     )
 
 
@@ -168,3 +178,37 @@ def count_joins(
         results.append([-1, -1, remaining_sources])
 
     _write_count_results(cache_path, source_healpix, results)
+
+
+def combine_partial_results(input_path, output_path):
+    """Combine many partial CSVs into single partition join info.
+
+    Also write out a debug file with counts of unmatched sources, if any.
+    """
+    partial_files = file_io.find_files_matching_path(input_path, "**.csv")
+    partials = []
+
+    for partial_file in partial_files:
+        partials.append(file_io.load_csv_to_pandas(partial_file))
+
+    dataframe = pd.concat(partials)
+
+    matched = dataframe.loc[dataframe["Norder"] != -1]
+    unmatched = dataframe.loc[dataframe["Norder"] == -1]
+
+    file_io.write_dataframe_to_csv(
+        dataframe=matched,
+        file_pointer=file_io.append_paths_to_pointer(
+            output_path, "partition_join_info.csv"
+        ),
+        index=False,
+    )
+
+    if len(unmatched) > 0:
+        file_io.write_dataframe_to_csv(
+            dataframe=unmatched,
+            file_pointer=file_io.append_paths_to_pointer(
+                output_path, "unmatched_sources.csv"
+            ),
+            index=False,
+        )
