@@ -1,16 +1,13 @@
 """Inner methods for SOAP"""
 
-import os  # # TODO
-
 import healpy as hp
 import numpy as np
 import pandas as pd
 from hipscat.catalog import Catalog
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
 from hipscat.io.paths import pixel_catalog_file
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from hipscat.pixel_math.pixel_margins import get_margin
-from hipscat.pixel_tree.pixel_alignment import PixelAlignment, align_trees
+from hipscat.pixel_tree import PixelAlignment, align_trees
 
 
 def source_to_object_map(args):
