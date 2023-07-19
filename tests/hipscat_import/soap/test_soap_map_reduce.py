@@ -94,7 +94,7 @@ def test_count_joins(
     for source, objects in source_to_object.items():
         count_joins(args, source, objects, source_to_neighbor_object[source], tmp_path)
 
-        result = pd.read_csv(os.path.join(tmp_path, f"{source.order}_{source.pixel}.csv"))
+        result = pd.read_csv(
+            os.path.join(tmp_path, f"{source.order}_{source.pixel}.csv")
+        )
         assert len(result) != 0
-
-    

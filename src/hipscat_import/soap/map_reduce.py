@@ -108,26 +108,36 @@ def _count_joins_for_object(
     return len(joined_data)
 
 
-def count_joins(args, source_healpix, object_order_pixels, object_neighbors,
-cache_path):
-    """Count the number of equijoined source in the object pixels.
+def _write_count_results(cache_path, source_healpix, results):
+    """Build a nice dataframe with pretty columns and rows"""
+    num_results = len(results)
+    dataframe = pd.DataFrame(results, columns=["Norder", "Npix", "num_rows"])
+
+    dirs = [int(order / 10_000) * 10_000 if order >=0 else -1 for order, _, _ in results]
+
+    dataframe["Dir"] = dirs
+    dataframe["join_Norder"] = np.full(
+        num_results, fill_value=source_healpix.order, dtype=np.int32
+    )
+    dataframe["join_Dir"] = int(dataframe["join_Norder"] / 10_000) * 10_000
+    dataframe["join_Npix"] = np.full(
+        num_results, fill_value=source_healpix.pixel, dtype=np.int32
+    )
+    dataframe = dataframe[
+        ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
+    ]
+    dataframe.to_csv(
+        os.path.join(cache_path, f"{source_healpix.order}_{source_healpix.pixel}.csv")
+    )
+
+
+def count_joins(
+    args, source_healpix, object_order_pixels, object_neighbors, cache_path
+):
+    """Count the number of equijoined sources in the object pixels.
 
     If any un-joined source pixels remain, stretch out to neighboring object pixels.
     """
-    data_frame = pd.DataFrame(
-        columns=[
-            [
-                "Norder",
-                "Dir",
-                "Npix",
-                "join_Norder",
-                "join_Dir",
-                "join_Npix",
-                "num_rows",
-            ]
-        ]
-    )
-
     source_path = pixel_catalog_file(
         catalog_base_dir=args.source_catalog_dir,
         pixel_order=source_healpix.order,
@@ -136,46 +146,25 @@ cache_path):
     source_data = pd.read_parquet(
         path=source_path, columns=[args.source_object_id_column]
     ).set_index(args.source_object_id_column)
+
     remaining_sources = len(source_data)
+    results = []
+    objects_to_join = object_order_pixels + object_neighbors
 
-    for object_pixel in object_order_pixels:
-        count_joins = _count_joins_for_object(
-            source_data, args.object_catalog_dir, args.object_id_column, object_pixel
+    for object_pixel in objects_to_join:
+        if remaining_sources < 1:
+            break
+        join_count = _count_joins_for_object(
+            source_data,
+            args.object_catalog_dir,
+            args.object_id_column,
+            object_pixel,
         )
-        ## append row of results
-        ## ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
-        data_frame.loc[len(data_frame.index)] = [
-            object_pixel.order,
-            0,
-            object_pixel.pixel,
-            source_healpix.order,
-            0,
-            source_healpix.pixel,
-            count_joins,
-        ]
-        remaining_sources -= count_joins
+        results.append([object_pixel.order, object_pixel.pixel, join_count])
+        remaining_sources -= join_count
 
+    ## mark that some sources were not joined
     if remaining_sources > 0:
-        for object_pixel in object_neighbors:
-            count_joins = _count_joins_for_object(
-                source_data,
-                args.object_catalog_dir,
-                args.object_id_column,
-                object_pixel,
-            )
-            ## append row of results
-            ## ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
-            data_frame.loc[len(data_frame.index)] = [
-                object_pixel.order,
-                0,
-                object_pixel.pixel,
-                source_healpix.order,
-                0,
-                source_healpix.pixel,
-                count_joins,
-            ]
-            remaining_sources -= count_joins
-            if remaining_sources < 1:
-                break
+        results.append([-1, -1, remaining_sources])
 
-    data_frame.to_csv(os.path.join(cache_path, f"{source_healpix.order}_{source_healpix.pixel}.csv"))
+    _write_count_results(cache_path, source_healpix, results)
