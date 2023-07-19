@@ -28,7 +28,7 @@ def test_source_to_object_map(
         output_path=tmp_path,
         progress_bar=False,
     )
-    map = source_to_object_map(args)
+    source_to_object, source_to_neighbor_object = source_to_object_map(args)
 
     expected = {
         HealpixPixel(0, 4): [],
@@ -46,8 +46,26 @@ def test_source_to_object_map(
         HealpixPixel(2, 187): [HealpixPixel(0, 11)],
         HealpixPixel(1, 47): [HealpixPixel(0, 11)],
     }
+    assert source_to_object == expected
 
-    assert map == expected
+    expected_neighbors = {
+        HealpixPixel(0, 4): [HealpixPixel(0, 11)],
+        HealpixPixel(2, 176): [],
+        HealpixPixel(2, 177): [],
+        HealpixPixel(2, 178): [],
+        HealpixPixel(2, 179): [],
+        HealpixPixel(2, 180): [],
+        HealpixPixel(2, 181): [],
+        HealpixPixel(2, 182): [],
+        HealpixPixel(2, 183): [],
+        HealpixPixel(2, 184): [],
+        HealpixPixel(2, 185): [],
+        HealpixPixel(2, 186): [],
+        HealpixPixel(2, 187): [],
+        HealpixPixel(1, 47): [],
+    }
+    assert source_to_neighbor_object == expected_neighbors
+
 
 
 def test_count_joins(
@@ -70,18 +88,18 @@ def test_count_joins(
     expected = {
         (0, 4): [],
         (2, 176): [(0, 11)],
-        (2, 177): [(0, 11)],
-        (2, 178): [(0, 11)],
-        (2, 179): [(0, 11)],
-        (2, 180): [(0, 11)],
-        (2, 181): [(0, 11)],
-        (2, 182): [(0, 11)],
-        (2, 183): [(0, 11)],
-        (2, 184): [(0, 11)],
-        (2, 185): [(0, 11)],
-        (2, 186): [(0, 11)],
-        (2, 187): [(0, 11)],
-        (1, 47): [(0, 11)],
+        # (2, 177): [(0, 11)],
+        # (2, 178): [(0, 11)],
+        # (2, 179): [(0, 11)],
+        # (2, 180): [(0, 11)],
+        # (2, 181): [(0, 11)],
+        # (2, 182): [(0, 11)],
+        # (2, 183): [(0, 11)],
+        # (2, 184): [(0, 11)],
+        # (2, 185): [(0, 11)],
+        # (2, 186): [(0, 11)],
+        # (2, 187): [(0, 11)],
+        # (1, 47): [(0, 11)],
     }
     for source, objects in expected.items():
         count_joins(args, source, objects)

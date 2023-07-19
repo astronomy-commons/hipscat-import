@@ -1,9 +1,12 @@
 """Inner methods for SOAP"""
 
+import healpy as hp
+import numpy as np
 import pandas as pd
 from hipscat.catalog import Catalog
 from hipscat.io.paths import pixel_catalog_file
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from hipscat.pixel_math.pixel_margins import get_margin
 from hipscat.pixel_tree.pixel_alignment import PixelAlignment, align_trees
 
 
@@ -13,6 +16,9 @@ def source_to_object_map(args):
     """
     object_catalog = Catalog.read_from_hipscat(args.object_catalog_dir)
     source_catalog = Catalog.read_from_hipscat(args.source_catalog_dir)
+
+    ## Direct aligment from source to object
+    ###############################################
     alignment = align_trees(
         object_catalog.pixel_tree, source_catalog.pixel_tree, "outer"
     )
@@ -24,7 +30,7 @@ def source_to_object_map(args):
 
     ## Lots of cute comprehension is happening here.
     ## create tuple of (source order/pixel) and [array of tuples of (object order/pixel)]
-    mappy = [
+    source_to_object = [
         (
             HealpixPixel(source_name[0], source_name[1]),
             [
@@ -34,9 +40,51 @@ def source_to_object_map(args):
         )
         for source_name, object_group in som
     ]
-
     ## Treat the array of tuples as a dictionary.
-    return dict(mappy)
+    source_to_object = dict(source_to_object)
+
+    ## Object neighbors for source
+    ###############################################
+    max_order = max(
+        object_catalog.partition_info.get_highest_order(),
+        source_catalog.partition_info.get_highest_order(),
+    )
+
+    object_order_map = np.full(hp.order2npix(max_order), -1)
+
+    for pixel in object_catalog.partition_info.get_healpix_pixels():
+        explosion_factor = 4 ** (max_order - pixel.order)
+        exploded_pixels = [
+            *range(
+                pixel.pixel * explosion_factor,
+                (pixel.pixel + 1) * explosion_factor,
+            )
+        ]
+        object_order_map[exploded_pixels] = pixel.order
+
+    source_to_neighbor_object = {}
+
+    for source, objects in source_to_object.items():
+        # get all neighboring pixels
+        nside = hp.order2nside(source.order)
+        neighbors = hp.get_all_neighbours(nside, source.pixel, nest=True)
+
+        ## get rid of -1s and normalize to max order
+        explosion_factor = 4 ** (max_order - source.order)
+        neighbors = [
+            neighbor * explosion_factor for neighbor in neighbors if neighbor != -1
+        ]
+
+        neighbors_orders = object_order_map[neighbors]
+        desploded = [
+            HealpixPixel(order, hoo_pixel >> 2 * (max_order - order))
+            for order, hoo_pixel in list(zip(neighbors_orders, neighbors))
+            if order != -1
+        ]
+        desploded = set(desploded) - set(objects)
+        source_to_neighbor_object[source] = list(desploded)
+
+    return source_to_object, source_to_neighbor_object
 
 
 def count_joins(args, source_order_pixel, object_order_pixels):
