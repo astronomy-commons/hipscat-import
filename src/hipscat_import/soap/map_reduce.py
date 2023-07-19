@@ -1,5 +1,7 @@
 """Inner methods for SOAP"""
 
+import os  # # TODO
+
 import healpy as hp
 import numpy as np
 import pandas as pd
@@ -87,15 +89,49 @@ def source_to_object_map(args):
     return source_to_object, source_to_neighbor_object
 
 
-def count_joins(args, source_order_pixel, object_order_pixels):
+def _count_joins_for_object(
+    source_data, object_catalog_dir, object_id_column, object_pixel
+):
+    object_path = pixel_catalog_file(
+        catalog_base_dir=object_catalog_dir,
+        pixel_order=object_pixel.order,
+        pixel_number=object_pixel.pixel,
+    )
+    object_data = pd.read_parquet(
+        path=object_path, columns=[object_id_column]
+    ).set_index(object_id_column)
+
+    joined_data = source_data.merge(
+        object_data, how="inner", left_index=True, right_index=True
+    )
+
+    return len(joined_data)
+
+
+def count_joins(args, source_healpix, object_order_pixels, object_neighbors,
+cache_path):
     """Count the number of equijoined source in the object pixels.
 
     If any un-joined source pixels remain, stretch out to neighboring object pixels.
     """
+    data_frame = pd.DataFrame(
+        columns=[
+            [
+                "Norder",
+                "Dir",
+                "Npix",
+                "join_Norder",
+                "join_Dir",
+                "join_Npix",
+                "num_rows",
+            ]
+        ]
+    )
+
     source_path = pixel_catalog_file(
         catalog_base_dir=args.source_catalog_dir,
-        pixel_order=source_order_pixel[0],
-        pixel_number=source_order_pixel[1],
+        pixel_order=source_healpix.order,
+        pixel_number=source_healpix.pixel,
     )
     source_data = pd.read_parquet(
         path=source_path, columns=[args.source_object_id_column]
@@ -103,20 +139,43 @@ def count_joins(args, source_order_pixel, object_order_pixels):
     remaining_sources = len(source_data)
 
     for object_pixel in object_order_pixels:
-        object_path = pixel_catalog_file(
-            catalog_base_dir=args.object_catalog_dir,
-            pixel_order=object_pixel[0],
-            pixel_number=object_pixel[1],
+        count_joins = _count_joins_for_object(
+            source_data, args.object_catalog_dir, args.object_id_column, object_pixel
         )
-        object_data = pd.read_parquet(
-            path=object_path, columns=[args.object_id_column]
-        ).set_index(args.object_id_column)
-
-        joined_data = source_data.merge(
-            object_data, how="inner", left_index=True, right_index=True
-        )
-
-        remaining_sources -= len(joined_data)
+        ## append row of results
+        ## ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
+        data_frame.loc[len(data_frame.index)] = [
+            object_pixel.order,
+            0,
+            object_pixel.pixel,
+            source_healpix.order,
+            0,
+            source_healpix.pixel,
+            count_joins,
+        ]
+        remaining_sources -= count_joins
 
     if remaining_sources > 0:
-        print(f"ruh-roh george. {source_order_pixel}")
+        for object_pixel in object_neighbors:
+            count_joins = _count_joins_for_object(
+                source_data,
+                args.object_catalog_dir,
+                args.object_id_column,
+                object_pixel,
+            )
+            ## append row of results
+            ## ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
+            data_frame.loc[len(data_frame.index)] = [
+                object_pixel.order,
+                0,
+                object_pixel.pixel,
+                source_healpix.order,
+                0,
+                source_healpix.pixel,
+                count_joins,
+            ]
+            remaining_sources -= count_joins
+            if remaining_sources < 1:
+                break
+
+    data_frame.to_csv(os.path.join(cache_path, f"{source_healpix.order}_{source_healpix.pixel}.csv"))
