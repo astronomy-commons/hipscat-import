@@ -6,7 +6,7 @@ import pytest
 from hipscat.io import file_io, paths
 
 import hipscat_import.margin_cache.margin_cache as mc
-from hipscat_import.margin_cache import MarginCacheArguments
+from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 
 # pylint: disable=protected-access
 
