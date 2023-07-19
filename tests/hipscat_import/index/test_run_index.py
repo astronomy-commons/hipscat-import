@@ -55,12 +55,8 @@ def test_run_index(
             pa.field("id", pa.int64()),
         ]
     )
-    schema = pq.read_metadata(
-        os.path.join(args.catalog_path, "_metadata")
-    ).schema.to_arrow_schema()
+    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
-    schema = pq.read_metadata(
-        os.path.join(args.catalog_path, "_common_metadata")
-    ).schema.to_arrow_schema()
+    schema = pq.read_metadata(os.path.join(args.catalog_path, "_common_metadata")).schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)

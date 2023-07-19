@@ -58,15 +58,11 @@ def test_invalid_paths(tmp_path):
 
     ## Bad temp path
     with pytest.raises(FileNotFoundError):
-        RuntimeArguments(
-            output_catalog_name="catalog", output_path=tmp_path, tmp_dir="/foo/path"
-        )
+        RuntimeArguments(output_catalog_name="catalog", output_path=tmp_path, tmp_dir="/foo/path")
 
     ## Bad dask temp path
     with pytest.raises(FileNotFoundError):
-        RuntimeArguments(
-            output_catalog_name="catalog", output_path=tmp_path, dask_tmp="/foo/path"
-        )
+        RuntimeArguments(output_catalog_name="catalog", output_path=tmp_path, dask_tmp="/foo/path")
 
 
 def test_output_overwrite(tmp_path):

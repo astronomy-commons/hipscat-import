@@ -13,9 +13,7 @@ from hipscat_import.catalog.arguments import ImportArguments
 
 
 @pytest.mark.dask(timeout=10)
-def test_map_association(
-    dask_client, tmp_path, formats_headers_csv, small_sky_object_catalog
-):
+def test_map_association(dask_client, tmp_path, formats_headers_csv, small_sky_object_catalog):
     """Test association with partially-overlapping dataset.
 
     This has the added benefit of testing a freshly-minted catalog as input."""
@@ -35,9 +33,7 @@ def test_map_association(
 
     runner.run(args, dask_client)
 
-    with open(
-        os.path.join(subset_catalog_path, "catalog_info.json"), "r", encoding="utf-8"
-    ) as metadata_info:
+    with open(os.path.join(subset_catalog_path, "catalog_info.json"), "r", encoding="utf-8") as metadata_info:
         metadata_keywords = json.load(metadata_info)
         assert metadata_keywords["total_rows"] == 8
 
@@ -54,9 +50,7 @@ def test_map_association(
     )
 
     map_association(args)
-    intermediate_partitions_file = os.path.join(
-        args.catalog_path, "intermediate", "partitions.csv"
-    )
+    intermediate_partitions_file = os.path.join(args.catalog_path, "intermediate", "partitions.csv")
     data_frame = pd.read_csv(intermediate_partitions_file)
     assert data_frame["primary_hipscat_index"].sum() == 8
 

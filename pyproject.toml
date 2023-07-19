@@ -74,3 +74,11 @@ omit = [
     "src/hipscat_import/_version.py", # auto-generated
     "src/hipscat_import/pipeline.py", # too annoying to test
 ]
+
+[tool.black]
+line-length = 110
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 110

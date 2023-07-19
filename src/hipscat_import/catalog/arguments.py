@@ -85,26 +85,18 @@ class ImportArguments(RuntimeArguments):
             raise ValueError("input_format is required")
 
         if self.constant_healpix_order >= 0:
-            check_healpix_order_range(
-                self.constant_healpix_order, "constant_healpix_order"
-            )
+            check_healpix_order_range(self.constant_healpix_order, "constant_healpix_order")
             self.mapping_healpix_order = self.constant_healpix_order
         else:
-            check_healpix_order_range(
-                self.highest_healpix_order, "highest_healpix_order"
-            )
+            check_healpix_order_range(self.highest_healpix_order, "highest_healpix_order")
             if not 100 <= self.pixel_threshold <= 1_000_000_000:
-                raise ValueError(
-                    "pixel_threshold should be between 100 and 1,000,000,000"
-                )
+                raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
             self.mapping_healpix_order = self.highest_healpix_order
 
         if self.catalog_type not in ("source", "object"):
             raise ValueError("catalog_type should be one of `source` or `object`")
 
-        if (not self.input_path and not self.input_file_list) or (
-            self.input_path and self.input_file_list
-        ):
+        if (not self.input_path and not self.input_file_list) or (self.input_path and self.input_file_list):
             raise ValueError("exactly one of input_path or input_file_list is required")
         if not self.file_reader:
             self.file_reader = get_file_reader(self.input_format)
@@ -113,9 +105,7 @@ class ImportArguments(RuntimeArguments):
         if self.input_path:
             if not file_io.does_file_or_directory_exist(self.input_path):
                 raise FileNotFoundError("input_path not found on local storage")
-            self.input_paths = file_io.find_files_matching_path(
-                self.input_path, f"*{self.input_format}"
-            )
+            self.input_paths = file_io.find_files_matching_path(self.input_path, f"*{self.input_format}")
         elif self.input_file_list:
             self.input_paths = self.input_file_list
         if len(self.input_paths) == 0:
@@ -156,9 +146,7 @@ class ImportArguments(RuntimeArguments):
             "pixel_threshold": self.pixel_threshold,
             "mapping_healpix_order": self.mapping_healpix_order,
             "debug_stats_only": self.debug_stats_only,
-            "file_reader_info": self.file_reader.provenance_info()
-            if self.file_reader is not None
-            else {},
+            "file_reader_info": self.file_reader.provenance_info() if self.file_reader is not None else {},
         }
 
 
@@ -180,10 +168,6 @@ def check_healpix_order_range(
     if lower_bound < 0:
         raise ValueError("healpix orders must be positive")
     if upper_bound > hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
-        raise ValueError(
-            f"healpix order should be <= {hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}"
-        )
+        raise ValueError(f"healpix order should be <= {hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}")
     if not lower_bound <= order <= upper_bound:
-        raise ValueError(
-            f"{field_name} should be between {lower_bound} and {upper_bound}"
-        )
+        raise ValueError(f"{field_name} should be between {lower_bound} and {upper_bound}")

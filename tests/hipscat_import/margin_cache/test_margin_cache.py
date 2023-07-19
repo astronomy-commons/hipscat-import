@@ -30,13 +30,12 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     norder = 1
     npix = 47
 
-    test_file = paths.pixel_catalog_file(
-        args.catalog_path, norder, npix
-    )
+    test_file = paths.pixel_catalog_file(args.catalog_path, norder, npix)
 
     data = pd.read_parquet(test_file)
 
     assert len(data) == 4
+
 
 def test_partition_margin_pixel_pairs(small_sky_source_catalog, tmp_path):
     args = MarginCacheArguments(
