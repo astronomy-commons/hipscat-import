@@ -120,7 +120,8 @@ class ResumePlan:
         - Try to find a combined histogram
         - Otherwise, combine histograms from partials
         - Otherwise, return an empty histogram
-        ."""
+
+        """
         full_histogram = pixel_math.empty_histogram(healpix_order)
 
         ## Look for the single combined histogram file.
@@ -202,6 +203,7 @@ class ResumePlan:
         - destination pixel (healpix pixel with both order and pixel)
         - source pixels (list of pixels at mapping order)
         - reduce key (string of destination order+pixel)
+        
         """
         reduced_keys = set(self._read_log_keys(self.REDUCING_LOG_FILE))
         reduce_items = [
