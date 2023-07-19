@@ -6,8 +6,8 @@ Getting the data
 
 See docs at SDSS: https://data.sdss.org/sas/dr12/boss/sweeps/dr9/301/
 
-We wanted to use the SDSS dr16q ``stars`` slice, so that started with a
-:download:`wget script<static/sdss_wget.bash>`.
+We wanted to use the SDSS dr16q ``stars`` slice, so that started with this
+:download:`wget_script</static/sdss_wget.bash>`.
 
 Challenges with this data set
 -------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ Example conversion
         
         match = re.match(r".*(calibObj-.*-star).fits.gz", str(file))
         file_prefix = match.group(1)
-        out_file = f"/data3/epyc/data3/hipscat/raw/sdss/parquet/{file_prefix}.parquet"
+        out_file = f"/data/sdss/parquet/{file_prefix}.parquet"
 
         table = Table.read(in_file)        
         new_table = Table()
@@ -63,6 +63,7 @@ Example import
 -------------------------------------------------------------------------------
 
 .. code-block:: python
+
     from hipscat_import.catalog.arguments import ImportArguments
     import hipscat_import.pipeline as runner
 

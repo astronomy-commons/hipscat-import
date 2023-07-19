@@ -19,15 +19,15 @@ Challenges with this data set
   - it is non-unique, and that makes it tricky when splitting the file up
 
 - The files are written out by band, and the band is included in the file
-  name (but not as a field in the resulting data product). this uses a 
+  name (but not as a field in the resulting data product). We use a 
   regular expression to parse out the band and insert it as a column in
   the dataframe.
-- the parquet files are all a fine size for input files, so we don't mess
+- The parquet files are all a fine size for input files, so we don't mess
   with another chunk size.
-- there are over 500 thousand data files, so we pass each **directory** to 
+- There are over 500 thousand data files, so we pass each **directory** to 
   the map job workers, and loop over all files in the directory ourselves.
-- you may want to remove the input file, ``F0065/ztf_0065_1990_g.parquet``, 
-  as this file seems to have corrupted snappy compression. all other files
+- You may want to remove the input file, ``F0065/ztf_0065_1990_g.parquet``, 
+  as this file seems to have corrupted snappy compression. All other files
   are readable as downloaded from caltech.
 
 .. code-block:: python
