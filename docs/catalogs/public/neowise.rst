@@ -20,7 +20,10 @@ Challenges with this data set
 - Some fields are sparsely populated, and this can create type conversion issues.
   We use a schema parquet file to address these issues.
 
-You can download the :download:`neowise_types</static/neowise_types.csv>` CSV file we used.
+You can download our reference files, if you find that helpful:
+
+- :download:`neowise_types</static/neowise_types.csv>` CSV file with names and types
+- :download:`neowise_schema</static/neowise_schema.parquet>` column-level parquet metadata
 
 Example import
 -------------------------------------------------------------------------------
@@ -52,7 +55,7 @@ Example import
         dec_column="DEC",
         pixel_threshold=2_000_000,
         highest_healpix_order=9,
-        use_schema_file="/path/to/neowise_schema.parquet",
+        use_schema_file="neowise_schema.parquet",
         id_column="SOURCE_ID",
         output_path="/path/to/catalogs/",
     )

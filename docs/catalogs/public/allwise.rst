@@ -20,9 +20,10 @@ Challenges with this data set
 - Some fields are sparsely populated, and this can create type conversion issues.
   We use a schema parquet file to address these issues.
 
-You can download the :download:`allwise_types</static/allwise_types.csv>` CSV file we used,
-and the associated schema file :download:`allwise_schema</static/allwise_schema.parquet>`
-with column-level parquet metadata.
+You can download our reference files, if you find that helpful:
+
+- :download:`allwise_types</static/allwise_types.csv>` CSV file with names and types
+- :download:`allwise_schema</static/allwise_schema.parquet>` column-level parquet metadata
 
 Example import
 -------------------------------------------------------------------------------
