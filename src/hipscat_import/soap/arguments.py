@@ -20,6 +20,10 @@ class SoapArguments(RuntimeArguments):
     source_catalog_dir: str = ""
     source_object_id_column: str = ""
 
+    resume: bool = False
+    """if there are existing intermediate resume files, should we
+    read those and continue to run the pipeline where we left off"""
+
     compute_partition_size: int = 1_000_000_000
 
     def __post_init__(self):

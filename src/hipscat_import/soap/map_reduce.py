@@ -24,7 +24,10 @@ def source_to_object_map(args):
     )
     som = alignment.pixel_mapping
     som = som.groupby(
-        [PixelAlignment.JOIN_ORDER_COLUMN_NAME, PixelAlignment.JOIN_PIXEL_COLUMN_NAME],
+        [
+            PixelAlignment.JOIN_ORDER_COLUMN_NAME,
+            PixelAlignment.JOIN_PIXEL_COLUMN_NAME,
+        ],
         group_keys=False,
     )
 
@@ -32,9 +35,9 @@ def source_to_object_map(args):
     ## create tuple of (source order/pixel) and [array of tuples of (object order/pixel)]
     source_to_object = [
         (
-            HealpixPixel(source_name[0], source_name[1]),
+            HealpixPixel(int(source_name[0]), int(source_name[1])),
             [
-                HealpixPixel(object_elem[0], object_elem[1])
+                HealpixPixel(int(object_elem[0]), int(object_elem[1]))
                 for object_elem in object_group.dropna().to_numpy().T[:2].T
             ],
         )
@@ -81,10 +84,10 @@ def source_to_object_map(args):
             for order, hoo_pixel in list(zip(neighbors_orders, neighbors))
             if order != -1
         ]
-        desploded = set(desploded) - set(objects)
-        source_to_neighbor_object[source] = list(desploded)
+        neighbors = set(desploded) - set(objects)
+        source_to_neighbor_object[source] = objects + list(neighbors)
 
-    return source_to_object, source_to_neighbor_object
+    return source_to_neighbor_object
 
 
 def _count_joins_for_object(
@@ -138,33 +141,30 @@ def _write_count_results(cache_path, source_healpix, results):
     )
 
 
-def count_joins(
-    args, source_healpix, object_order_pixels, object_neighbors, cache_path
-):
+def count_joins(soap_args, source_pixel, object_pixels, cache_path):
     """Count the number of equijoined sources in the object pixels.
 
     If any un-joined source pixels remain, stretch out to neighboring object pixels.
     """
     source_path = pixel_catalog_file(
-        catalog_base_dir=args.source_catalog_dir,
-        pixel_order=source_healpix.order,
-        pixel_number=source_healpix.pixel,
+        catalog_base_dir=soap_args.source_catalog_dir,
+        pixel_order=source_pixel.order,
+        pixel_number=source_pixel.pixel,
     )
     source_data = pd.read_parquet(
-        path=source_path, columns=[args.source_object_id_column]
-    ).set_index(args.source_object_id_column)
+        path=source_path, columns=[soap_args.source_object_id_column]
+    ).set_index(soap_args.source_object_id_column)
 
     remaining_sources = len(source_data)
     results = []
-    objects_to_join = object_order_pixels + object_neighbors
 
-    for object_pixel in objects_to_join:
+    for object_pixel in object_pixels:
         if remaining_sources < 1:
             break
         join_count = _count_joins_for_object(
             source_data,
-            args.object_catalog_dir,
-            args.object_id_column,
+            soap_args.object_catalog_dir,
+            soap_args.object_id_column,
             object_pixel,
         )
         results.append([object_pixel.order, object_pixel.pixel, join_count])
@@ -174,7 +174,7 @@ def count_joins(
     if remaining_sources > 0:
         results.append([-1, -1, remaining_sources])
 
-    _write_count_results(cache_path, source_healpix, results)
+    _write_count_results(cache_path, source_pixel, results)
 
 
 def combine_partial_results(input_path, output_path):

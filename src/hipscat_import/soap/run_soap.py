@@ -9,11 +9,8 @@ from hipscat.io import file_io, write_metadata
 from tqdm import tqdm
 
 from hipscat_import.soap.arguments import SoapArguments
-from hipscat_import.soap.map_reduce import (
-    combine_partial_results,
-    count_joins,
-    source_to_object_map,
-)
+from hipscat_import.soap.resume_plan import SoapPlan
+from hipscat_import.soap.map_reduce import combine_partial_results, count_joins
 
 
 def run(args, client):
@@ -23,34 +20,35 @@ def run(args, client):
     if not isinstance(args, SoapArguments):
         raise TypeError("args must be type SoapArguments")
 
-    with tqdm(total=1, desc="Planning", disable=not args.progress_bar) as step_progress:
-        source_to_object, source_to_neighbor_object = source_to_object_map(args)
-        step_progress.update(1)
-
-    futures = []
-    for source, objects in source_to_object.items():
-        futures.append(
-            client.submit(
-                count_joins,
-                args,
-                source,
-                objects,
-                source_to_neighbor_object[source],
-                args.tmp_path,
+    resume_plan = SoapPlan(args    )
+    if not resume_plan.is_counting_done():
+        futures = []
+        for source_pixel, object_pixels, source_key in resume_plan.count_keys:
+            futures.append(
+                client.submit(
+                    count_joins,
+                    key=source_key,
+                    soap_args=args,
+                    source_pixel=source_pixel,
+                    object_pixels=object_pixels,
+                    cache_path=args.tmp_path,
+                )
             )
-        )
 
-    some_error = False
-    for future in tqdm(
-        as_completed(futures),
-        desc="Counting ",
-        total=len(futures),
-        disable=(not args.progress_bar),
-    ):
-        if future.status == "error":  # pragma: no cover
-            some_error = True
-    if some_error:  # pragma: no cover
-        raise RuntimeError("Some Counting stages failed. See logs for details.")
+        some_error = False
+        for future in tqdm(
+            as_completed(futures),
+            desc="Counting ",
+            total=len(futures),
+            disable=(not args.progress_bar),
+        ):
+            if future.status == "error":  # pragma: no cover
+                some_error = True
+            else:
+                resume_plan.mark_counting_done(future.key)
+        if some_error:  # pragma: no cover
+            raise RuntimeError("Some Counting stages failed. See logs for details.")
+        resume_plan.set_counting_done()
 
     # All done - write out the metadata
     with tqdm(
