@@ -100,9 +100,7 @@ def test_resume_dask_runner(
     assert len(catalog.get_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -174,9 +172,7 @@ def test_dask_runner(
     assert len(catalog.get_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -202,8 +198,6 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     assert os.path.exists(metadata_filename)
 
     # Check that the catalog parquet file DOES NOT exist
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert not os.path.exists(output_file)

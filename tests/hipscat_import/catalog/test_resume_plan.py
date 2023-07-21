@@ -89,6 +89,7 @@ def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
     map_files = plan.map_files
     assert len(map_files) == 2
 
+
 def test_read_write_histogram(tmp_path):
     """Test that we can read what we write into a histogram file."""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
@@ -96,9 +97,7 @@ def test_read_write_histogram(tmp_path):
     expected = hist.empty_histogram(0)
     expected[11] = 131
 
-    ResumePlan.write_partial_histogram(
-        tmp_path=tmp_path, mapping_key="map_0", histogram=expected
-    )
+    ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
     result = plan.read_histogram(0)
     npt.assert_array_equal(result, expected)
 
@@ -113,9 +112,7 @@ def test_read_write_histogram(tmp_path):
 def test_read_write_map_files(tmp_path, small_sky_single_file, formats_headers_csv):
     """Test that we can list the remaining files to map."""
     input_paths = [small_sky_single_file, formats_headers_csv]
-    plan = ResumePlan(
-        tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths
-    )
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths)
     map_files = plan.map_files
     assert len(map_files) == 2
 
@@ -141,14 +138,10 @@ def test_read_write_map_files(tmp_path, small_sky_single_file, formats_headers_c
     assert len(map_files) == 2
 
 
-def test_read_write_splitting_keys(
-    tmp_path, small_sky_single_file, formats_headers_csv
-):
+def test_read_write_splitting_keys(tmp_path, small_sky_single_file, formats_headers_csv):
     """Test that we can read what we write into a reducing log file."""
     input_paths = [small_sky_single_file, formats_headers_csv]
-    plan = ResumePlan(
-        tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths
-    )
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True, input_paths=input_paths)
     split_keys = plan.split_keys
     assert len(split_keys) == 2
 

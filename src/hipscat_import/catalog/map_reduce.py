@@ -42,9 +42,7 @@ def _has_named_index(dataframe):
     if dataframe.index.name is not None:
         ## Single index with a given name.
         return True
-    if len(dataframe.index.names) == 0 or all(
-        name is None for name in dataframe.index.names
-    ):
+    if len(dataframe.index.names) == 0 or all(name is None for name in dataframe.index.names):
         return False
     return True
 
@@ -112,9 +110,7 @@ def map_to_pixels(
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-    ResumePlan.write_partial_histogram(
-        tmp_path=cache_path, mapping_key=mapping_key, histogram=histo
-    )
+    ResumePlan.write_partial_histogram(tmp_path=cache_path, mapping_key=mapping_key, histogram=histo)
 
 
 def split_pixels(
@@ -221,9 +217,7 @@ def reduce_pixel_shards(
         ValueError: if the number of rows written doesn't equal provided
             `destination_pixel_size`
     """
-    destination_dir = paths.pixel_directory(
-        output_path, destination_pixel_order, destination_pixel_number
-    )
+    destination_dir = paths.pixel_directory(output_path, destination_pixel_order, destination_pixel_number)
     file_io.make_directory(destination_dir, exist_ok=True)
 
     destination_file = paths.pixel_catalog_file(
@@ -235,9 +229,7 @@ def reduce_pixel_shards(
         schema = file_io.read_parquet_metadata(use_schema_file).schema.to_arrow_schema()
 
     tables = []
-    pixel_dir = _get_pixel_directory(
-        cache_path, destination_pixel_order, destination_pixel_number
-    )
+    pixel_dir = _get_pixel_directory(cache_path, destination_pixel_order, destination_pixel_number)
 
     if schema:
         tables.append(pq.read_table(pixel_dir, schema=schema))
@@ -264,17 +256,13 @@ def reduce_pixel_shards(
             dataframe[dec_column].values,
         )
 
-    dataframe["Norder"] = np.full(
-        rows_written, fill_value=destination_pixel_order, dtype=np.int32
-    )
+    dataframe["Norder"] = np.full(rows_written, fill_value=destination_pixel_order, dtype=np.int32)
     dataframe["Dir"] = np.full(
         rows_written,
         fill_value=int(destination_pixel_number / 10_000) * 10_000,
         dtype=np.int32,
     )
-    dataframe["Npix"] = np.full(
-        rows_written, fill_value=destination_pixel_number, dtype=np.int32
-    )
+    dataframe["Npix"] = np.full(rows_written, fill_value=destination_pixel_number, dtype=np.int32)
 
     if add_hipscat_index:
         ## If we had a meaningful index before, preserve it as a column.
@@ -286,8 +274,6 @@ def reduce_pixel_shards(
     del dataframe, merged_table, tables
 
     if delete_input_files:
-        pixel_dir = _get_pixel_directory(
-            cache_path, destination_pixel_order, destination_pixel_number
-        )
+        pixel_dir = _get_pixel_directory(cache_path, destination_pixel_order, destination_pixel_number)
 
         file_io.remove_directory(pixel_dir, ignore_errors=True)

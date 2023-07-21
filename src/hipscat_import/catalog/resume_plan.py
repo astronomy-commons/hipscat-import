@@ -52,9 +52,7 @@ class ResumePlan:
 
     def gather_plan(self):
         """Initialize the plan."""
-        with tqdm(
-            total=5, desc="Planning ", disable=not self.progress_bar
-        ) as step_progress:
+        with tqdm(total=5, desc="Planning ", disable=not self.progress_bar) as step_progress:
             ## Make sure it's safe to use existing resume state.
             if not self.resume:
                 if file_io.directory_has_contents(self.tmp_path):
@@ -72,9 +70,7 @@ class ResumePlan:
             reducing_done = self.is_reducing_done()
 
             if reducing_done and (not mapping_done or not splitting_done):
-                raise ValueError(
-                    "mapping and splitting must be complete before reducing"
-                )
+                raise ValueError("mapping and splitting must be complete before reducing")
             if splitting_done and not mapping_done:
                 raise ValueError("mapping must be complete before splitting")
             step_progress.update(1)
@@ -89,9 +85,7 @@ class ResumePlan:
                     self._write_log_key(self.ORIGINAL_INPUT_PATHS, input_path)
             else:
                 if original_input_paths != unique_file_paths:
-                    raise ValueError(
-                        "Different file set from resumed pipeline execution."
-                    )
+                    raise ValueError("Different file set from resumed pipeline execution.")
             step_progress.update(1)
 
             ## Gather keys for execution.
@@ -125,9 +119,7 @@ class ResumePlan:
         full_histogram = pixel_math.empty_histogram(healpix_order)
 
         ## Look for the single combined histogram file.
-        file_name = file_io.append_paths_to_pointer(
-            self.tmp_path, self.HISTOGRAM_BINARY_FILE
-        )
+        file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
         if file_io.does_file_or_directory_exist(file_name):
             with open(file_name, "rb") as file_handle:
                 return frombuffer(file_handle.read(), dtype=np.int64)
@@ -137,18 +129,12 @@ class ResumePlan:
         # - combine into a single histogram
         # - write out as a single histogram for future reads
         # - remove all partial histograms
-        histogram_files = file_io.find_files_matching_path(
-            self.tmp_path, self.HISTOGRAMS_DIR, "**.binary"
-        )
+        histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "**.binary")
         for file_name in histogram_files:
             with open(file_name, "rb") as file_handle:
-                full_histogram = np.add(
-                    full_histogram, frombuffer(file_handle.read(), dtype=np.int64)
-                )
+                full_histogram = np.add(full_histogram, frombuffer(file_handle.read(), dtype=np.int64))
 
-        file_name = file_io.append_paths_to_pointer(
-            self.tmp_path, self.HISTOGRAM_BINARY_FILE
-        )
+        file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
         with open(file_name, "wb+") as file_handle:
             file_handle.write(full_histogram.data)
         file_io.remove_directory(
@@ -165,9 +151,7 @@ class ResumePlan:
             exist_ok=True,
         )
 
-        file_name = file_io.append_paths_to_pointer(
-            tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary"
-        )
+        file_name = file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary")
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
 
@@ -203,7 +187,7 @@ class ResumePlan:
         - destination pixel (healpix pixel with both order and pixel)
         - source pixels (list of pixels at mapping order)
         - reduce key (string of destination order+pixel)
-        
+
         """
         reduced_keys = set(self._read_log_keys(self.REDUCING_LOG_FILE))
         reduce_items = [
@@ -234,9 +218,7 @@ class ResumePlan:
     #####################################################################
 
     def _done_file_exists(self, file_name):
-        return file_io.does_file_or_directory_exist(
-            file_io.append_paths_to_pointer(self.tmp_path, file_name)
-        )
+        return file_io.does_file_or_directory_exist(file_io.append_paths_to_pointer(self.tmp_path, file_name))
 
     def _touch_done_file(self, file_name):
         Path(file_io.append_paths_to_pointer(self.tmp_path, file_name)).touch()
@@ -258,6 +240,4 @@ class ResumePlan:
         """Append a tab-delimited line to the file with the current timestamp and provided key"""
         file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
         with open(file_path, "a", encoding="utf-8") as mapping_log:
-            mapping_log.write(
-                f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\t{key}\n'
-            )
+            mapping_log.write(f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\t{key}\n')

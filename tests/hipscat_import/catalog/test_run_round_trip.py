@@ -77,9 +77,7 @@ def test_import_mixed_schema_csv(
         output_path=tmp_path,
         dask_tmp=tmp_path,
         highest_healpix_order=1,
-        file_reader=get_file_reader(
-            "csv", chunksize=1, type_map=schema_parquet.dtypes.to_dict()
-        ),
+        file_reader=get_file_reader("csv", chunksize=1, type_map=schema_parquet.dtypes.to_dict()),
         progress_bar=False,
         use_schema_file=mixed_schema_csv_parquet,
     )
@@ -87,9 +85,7 @@ def test_import_mixed_schema_csv(
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
 
@@ -143,9 +139,7 @@ def test_import_preserve_index(
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert_parquet_file_index(output_file, expected_indexes)
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
@@ -171,9 +165,7 @@ def test_import_preserve_index(
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     assert data_frame.index.name == "_hipscat_index"
@@ -238,9 +230,7 @@ def test_import_multiindex(
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert_parquet_file_index(output_file, expected_indexes)
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
@@ -266,9 +256,7 @@ def test_import_multiindex(
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     assert data_frame.index.name == "_hipscat_index"
@@ -306,14 +294,10 @@ def test_import_constant_healpix_order(
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
     # Check that the partition info file exists - all pixels at order 2!
-    assert all(
-        pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels()
-    )
+    assert all(pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels())
 
     # Pick a parquet file and make sure it contains as many rows as we expect
-    output_file = os.path.join(
-        args.catalog_path, "Norder=2", "Dir=0", "Npix=178.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=2", "Dir=0", "Npix=178.parquet")
 
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     assert len(data_frame) == 14
@@ -366,9 +350,7 @@ def test_import_starr_file(
     assert len(catalog.get_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)

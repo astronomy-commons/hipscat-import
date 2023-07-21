@@ -66,13 +66,9 @@ class RuntimeArguments:
             raise ValueError("dask_threads_per_worker should be greater than 0")
 
         if not file_io.does_file_or_directory_exist(self.output_path):
-            raise FileNotFoundError(
-                f"output_path ({self.output_path}) not found on local storage"
-            )
+            raise FileNotFoundError(f"output_path ({self.output_path}) not found on local storage")
 
-        self.catalog_path = file_io.append_paths_to_pointer(
-            self.output_path, self.output_catalog_name
-        )
+        self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_catalog_name)
         if not self.overwrite:
             if file_io.directory_has_contents(self.catalog_path):
                 raise ValueError(
@@ -83,24 +79,18 @@ class RuntimeArguments:
 
         if self.tmp_dir:
             if not file_io.does_file_or_directory_exist(self.tmp_dir):
-                raise FileNotFoundError(
-                    f"tmp_dir ({self.tmp_dir}) not found on local storage"
-                )
+                raise FileNotFoundError(f"tmp_dir ({self.tmp_dir}) not found on local storage")
             self.tmp_path = file_io.append_paths_to_pointer(
                 self.tmp_dir, self.output_catalog_name, "intermediate"
             )
         elif self.dask_tmp:
             if not file_io.does_file_or_directory_exist(self.dask_tmp):
-                raise FileNotFoundError(
-                    f"dask_tmp ({self.dask_tmp}) not found on local storage"
-                )
+                raise FileNotFoundError(f"dask_tmp ({self.dask_tmp}) not found on local storage")
             self.tmp_path = file_io.append_paths_to_pointer(
                 self.dask_tmp, self.output_catalog_name, "intermediate"
             )
         else:
-            self.tmp_path = file_io.append_paths_to_pointer(
-                self.catalog_path, "intermediate"
-            )
+            self.tmp_path = file_io.append_paths_to_pointer(self.catalog_path, "intermediate")
         file_io.make_directory(self.tmp_path, exist_ok=True)
 
     def provenance_info(self) -> dict:

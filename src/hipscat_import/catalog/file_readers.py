@@ -97,9 +97,7 @@ class InputReader(abc.ABC):
         if not file_io.does_file_or_directory_exist(input_file):
             raise FileNotFoundError(f"File not found at path: {input_file}")
         if not file_io.is_regular_file(input_file):
-            raise FileNotFoundError(
-                f"Directory found at path - requires regular file: {input_file}"
-            )
+            raise FileNotFoundError(f"Directory found at path - requires regular file: {input_file}")
 
 
 class CsvReader(InputReader):
@@ -143,9 +141,7 @@ class CsvReader(InputReader):
         self.regular_file_exists(input_file)
 
         if self.schema_file:
-            schema_parquet = pd.read_parquet(
-                self.schema_file, dtype_backend="numpy_nullable"
-            )
+            schema_parquet = pd.read_parquet(self.schema_file, dtype_backend="numpy_nullable")
 
         use_column_names = None
         if self.column_names:
@@ -214,9 +210,7 @@ class FitsReader(InputReader):
             one of `column_names` or `skip_column_names`
     """
 
-    def __init__(
-        self, chunksize=500_000, column_names=None, skip_column_names=None, **kwargs
-    ):
+    def __init__(self, chunksize=500_000, column_names=None, skip_column_names=None, **kwargs):
         self.chunksize = chunksize
         self.column_names = column_names
         self.skip_column_names = skip_column_names

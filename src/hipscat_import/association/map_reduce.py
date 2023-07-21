@@ -47,11 +47,7 @@ def map_association(args):
     }
     if not single_primary_column:
         rename_columns[args.primary_id_column] = "primary_id"
-    primary_index = (
-        primary_index.reset_index()
-        .rename(columns=rename_columns)
-        .set_index("primary_join")
-    )
+    primary_index = primary_index.reset_index().rename(columns=rename_columns).set_index("primary_join")
 
     ## Read and massage join input data
     single_join_column = args.join_id_column == args.join_foreign_key
@@ -82,16 +78,10 @@ def map_association(args):
     }
     if not single_join_column:
         rename_columns[args.join_id_column] = "join_id"
-    join_index = (
-        join_index.reset_index()
-        .rename(columns=rename_columns)
-        .set_index("join_to_primary")
-    )
+    join_index = join_index.reset_index().rename(columns=rename_columns).set_index("join_to_primary")
 
     ## Join the two data sets on the shared join predicate.
-    join_data = primary_index.merge(
-        join_index, how="inner", left_index=True, right_index=True
-    )
+    join_data = primary_index.merge(join_index, how="inner", left_index=True, right_index=True)
 
     ## Write out a summary of each partition join
     groups = (
@@ -102,12 +92,8 @@ def map_association(args):
         .count()
         .compute()
     )
-    intermediate_partitions_file = file_io.append_paths_to_pointer(
-        args.tmp_path, "partitions.csv"
-    )
-    file_io.write_dataframe_to_csv(
-        dataframe=groups, file_pointer=intermediate_partitions_file
-    )
+    intermediate_partitions_file = file_io.append_paths_to_pointer(args.tmp_path, "partitions.csv")
+    file_io.write_dataframe_to_csv(dataframe=groups, file_pointer=intermediate_partitions_file)
 
     ## Drop join predicate columns
     join_data = join_data[
@@ -137,23 +123,17 @@ def map_association(args):
 
 def reduce_association(input_path, output_path):
     """Collate sharded parquet files into a single parquet file per partition"""
-    intermediate_partitions_file = file_io.append_paths_to_pointer(
-        input_path, "partitions.csv"
-    )
+    intermediate_partitions_file = file_io.append_paths_to_pointer(input_path, "partitions.csv")
     data_frame = file_io.load_csv_to_pandas(intermediate_partitions_file)
 
     ## Clean up the dataframe and write out as our new partition join info file.
     data_frame = data_frame[data_frame["primary_hipscat_index"] != 0]
     data_frame["num_rows"] = data_frame["primary_hipscat_index"]
-    data_frame = data_frame[
-        ["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]
-    ]
+    data_frame = data_frame[["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]]
     data_frame = data_frame.sort_values(["Norder", "Npix", "join_Norder", "join_Npix"])
     file_io.write_dataframe_to_csv(
         dataframe=data_frame,
-        file_pointer=file_io.append_paths_to_pointer(
-            output_path, "partition_join_info.csv"
-        ),
+        file_pointer=file_io.append_paths_to_pointer(output_path, "partition_join_info.csv"),
         index=False,
     )
 
@@ -195,8 +175,6 @@ def reduce_association(input_path, output_path):
                 f" Expected {partition['num_rows']}, wrote {rows_written}",
             )
 
-        table.to_pandas().set_index("primary_hipscat_index").sort_index().to_parquet(
-            output_file
-        )
+        table.to_pandas().set_index("primary_hipscat_index").sort_index().to_parquet(output_file)
 
     return data_frame["num_rows"].sum()

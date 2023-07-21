@@ -195,15 +195,11 @@ def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_
         alignment=alignment,
     )
 
-    file_name = os.path.join(
-        tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0.parquet"
-    )
+    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0.parquet")
     expected_ids = [*range(700, 708)]
     assert_parquet_file_ids(file_name, "object_id", expected_ids)
 
-    file_name = os.path.join(
-        tmp_path, "order_0", "dir_0", "pixel_1", "shard_0_0.parquet"
-    )
+    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_1", "shard_0_0.parquet")
     assert not os.path.exists(file_name)
 
 
