@@ -111,10 +111,6 @@ def generate_margin_cache(args, client):
         partition_stats, args.margin_order
     )
 
-    # arcsec to degree conversion
-    # TODO: remove this once hipscat uses arcsec for calculation
-    args.margin_threshold = args.margin_threshold / 3600.0
-
     _create_margin_directory(partition_stats, args.catalog_path)
 
     _map_to_margin_shards(

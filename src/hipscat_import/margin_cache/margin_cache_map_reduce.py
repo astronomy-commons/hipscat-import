@@ -48,25 +48,9 @@ def _to_pixel_shard(
     order, pix = data["partition_order"].iloc[0], data["partition_pixel"].iloc[0]
     source_order, source_pix = data["Norder"].iloc[0], data["Npix"].iloc[0]
 
-    scale = pixel_math.get_margin_scale(order, margin_threshold)
-    bounding_polygons = pixel_math.get_margin_bounds_and_wcs(order, pix, scale)
-    is_polar, _ = pixel_math.pixel_is_polar(order, pix)
-
-    if is_polar:
-        data = _margin_filter_polar(
-            data,
-            order,
-            pix,
-            margin_order,
-            margin_threshold,
-            ra_column,
-            dec_column,
-            bounding_polygons,
-        )
-    else:
-        data["margin_check"] = pixel_math.check_margin_bounds(
-            data[ra_column].values, data[dec_column].values, bounding_polygons
-        )
+    data["margin_check"] = pixel_math.check_margin_bounds(
+        data[ra_column].values, data[dec_column].values, order, pix, margin_threshold
+    )
 
     # pylint: disable-next=singleton-comparison
     margin_data = data.loc[data["margin_check"] == True]
@@ -93,49 +77,9 @@ def _to_pixel_shard(
             ]
         )
 
-        if is_polar:
-            final_df = final_df.drop(columns=["is_trunc"])
-
         final_df.to_parquet(shard_path)
 
-
-def _margin_filter_polar(
-    data,
-    order,
-    pix,
-    margin_order,
-    margin_threshold,
-    ra_column,
-    dec_column,
-    bounding_polygons,
-):
-    """Filter out margin data around the poles."""
-    trunc_pix = pixel_math.get_truncated_margin_pixels(
-        order=order, pix=pix, margin_order=margin_order
-    )
-    data["is_trunc"] = np.isin(data["margin_pixel"], trunc_pix)
-
-    # pylint: disable=singleton-comparison
-    trunc_data = data.loc[data["is_trunc"] == True]
-    other_data = data.loc[data["is_trunc"] == False]
-
-    trunc_check = pixel_math.check_polar_margin_bounds(
-        trunc_data[ra_column].values,
-        trunc_data[dec_column].values,
-        order,
-        pix,
-        margin_order,
-        margin_threshold,
-    )
-    data.loc[data["is_trunc"] == True, "margin_check"] = trunc_check
-
-    no_trunc_check = pixel_math.check_margin_bounds(
-        other_data[ra_column].values, other_data[dec_column].values, bounding_polygons
-    )
-    data.loc[data["is_trunc"] == False, "margin_check"] = no_trunc_check
-    # pylint: enable=singleton-comparison
-
-    return data
+        del data, margin_data, final_df
 
 def _get_partition_directory(path, order, pix):
     """Get the directory where a partition pixel's margin shards live"""
