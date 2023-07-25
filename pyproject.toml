@@ -19,7 +19,7 @@ dependencies = [
     "dask[distributed]",
     "deprecated",
     "healpy",
-    "hipscat",
+    "hipscat < 0.1.1",
     "ipykernel", # Support for Jupyter notebooks
     "pandas",
     "pyarrow",
