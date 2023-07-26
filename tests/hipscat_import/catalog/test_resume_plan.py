@@ -1,4 +1,4 @@
-"""Test resume file operations"""
+"""Test catalog resume logic"""
 
 import hipscat.pixel_math as hist
 import numpy.testing as npt

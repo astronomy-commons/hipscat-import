@@ -3,30 +3,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
-import pandas as pd
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
 from numpy import frombuffer
 from tqdm import tqdm
 
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan
+
 
 @dataclass
-class ResumePlan:
+class ResumePlan(PipelineResumePlan):
     """Container class for holding the state of each file in the pipeline plan."""
 
-    tmp_path: FilePointer
-    """path for any intermediate files"""
-    resume: bool = False
-    """if there are existing intermediate resume files, should we
-    read those and continue to create a new catalog where we left off"""
-    progress_bar: bool = True
-    """if true, a tqdm progress bar will be displayed for user
-    feedback of planning progress"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
     map_files: List[Tuple[str, str]] = field(default_factory=list)
@@ -54,13 +45,7 @@ class ResumePlan:
         """Initialize the plan."""
         with tqdm(total=5, desc="Planning ", disable=not self.progress_bar) as step_progress:
             ## Make sure it's safe to use existing resume state.
-            if not self.resume:
-                if file_io.directory_has_contents(self.tmp_path):
-                    raise ValueError(
-                        f"tmp_path ({self.tmp_path}) contains intermediate files."
-                        " choose a different directory or use --resume flag"
-                    )
-            file_io.make_directory(self.tmp_path, exist_ok=True)
+            super().safe_to_resume()
             step_progress.update(1)
 
             ## Validate existing resume state.
@@ -79,10 +64,10 @@ class ResumePlan:
             unique_file_paths = set(self.input_paths)
             self.input_paths = list(unique_file_paths)
             self.input_paths.sort()
-            original_input_paths = set(self._read_log_keys(self.ORIGINAL_INPUT_PATHS))
+            original_input_paths = set(self.read_log_keys(self.ORIGINAL_INPUT_PATHS))
             if not original_input_paths:
                 for input_path in self.input_paths:
-                    self._write_log_key(self.ORIGINAL_INPUT_PATHS, input_path)
+                    self.write_log_key(self.ORIGINAL_INPUT_PATHS, input_path)
             else:
                 if original_input_paths != unique_file_paths:
                     raise ValueError("Different file set from resumed pipeline execution.")
@@ -91,14 +76,14 @@ class ResumePlan:
             ## Gather keys for execution.
             step_progress.update(1)
             if not mapping_done:
-                mapped_keys = set(self._read_log_keys(self.MAPPING_LOG_FILE))
+                mapped_keys = set(self.read_log_keys(self.MAPPING_LOG_FILE))
                 self.map_files = [
                     (f"map_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
                     if f"map_{i}" not in mapped_keys
                 ]
             if not splitting_done:
-                split_keys = set(self._read_log_keys(self.SPLITTING_LOG_FILE))
+                split_keys = set(self.read_log_keys(self.SPLITTING_LOG_FILE))
                 self.split_keys = [
                     (f"split_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
@@ -157,27 +142,27 @@ class ResumePlan:
 
     def mark_mapping_done(self, mapping_key: str):
         """Add mapping key to done list."""
-        self._write_log_key(self.MAPPING_LOG_FILE, mapping_key)
+        self.write_log_key(self.MAPPING_LOG_FILE, mapping_key)
 
     def is_mapping_done(self) -> bool:
         """Are there files left to map?"""
-        return self._done_file_exists(self.MAPPING_DONE_FILE)
+        return self.done_file_exists(self.MAPPING_DONE_FILE)
 
     def set_mapping_done(self):
         """All files are done mapping."""
-        self._touch_done_file(self.MAPPING_DONE_FILE)
+        self.touch_done_file(self.MAPPING_DONE_FILE)
 
     def mark_splitting_done(self, splitting_key: str):
         """Add splitting key to done list."""
-        self._write_log_key(self.SPLITTING_LOG_FILE, splitting_key)
+        self.write_log_key(self.SPLITTING_LOG_FILE, splitting_key)
 
     def is_splitting_done(self) -> bool:
         """Are there files left to split?"""
-        return self._done_file_exists(self.SPLITTING_DONE_FILE)
+        return self.done_file_exists(self.SPLITTING_DONE_FILE)
 
     def set_splitting_done(self):
         """All files are done splitting."""
-        self._touch_done_file(self.SPLITTING_DONE_FILE)
+        self.touch_done_file(self.SPLITTING_DONE_FILE)
 
     def get_reduce_items(self, destination_pixel_map):
         """Fetch a triple for each partition to reduce.
@@ -189,7 +174,7 @@ class ResumePlan:
         - reduce key (string of destination order+pixel)
 
         """
-        reduced_keys = set(self._read_log_keys(self.REDUCING_LOG_FILE))
+        reduced_keys = set(self.read_log_keys(self.REDUCING_LOG_FILE))
         reduce_items = [
             (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, source_pixels in destination_pixel_map.items()
@@ -199,45 +184,12 @@ class ResumePlan:
 
     def mark_reducing_done(self, reducing_key: str):
         """Add reducing key to done list."""
-        self._write_log_key(self.REDUCING_LOG_FILE, reducing_key)
+        self.write_log_key(self.REDUCING_LOG_FILE, reducing_key)
 
     def is_reducing_done(self) -> bool:
         """Are there partitions left to reduce?"""
-        return self._done_file_exists(self.REDUCING_DONE_FILE)
+        return self.done_file_exists(self.REDUCING_DONE_FILE)
 
     def set_reducing_done(self):
         """All partitions are done reducing."""
-        self._touch_done_file(self.REDUCING_DONE_FILE)
-
-    def clean_resume_files(self):
-        """Remove all intermediate files created in execution."""
-        file_io.remove_directory(self.tmp_path, ignore_errors=True)
-
-    #####################################################################
-    ###                     Helper methods                            ###
-    #####################################################################
-
-    def _done_file_exists(self, file_name):
-        return file_io.does_file_or_directory_exist(file_io.append_paths_to_pointer(self.tmp_path, file_name))
-
-    def _touch_done_file(self, file_name):
-        Path(file_io.append_paths_to_pointer(self.tmp_path, file_name)).touch()
-
-    def _read_log_keys(self, file_name):
-        """Read a resume log file, containing timestamp and keys."""
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
-        if file_io.does_file_or_directory_exist(file_path):
-            mapping_log = pd.read_csv(
-                file_path,
-                delimiter="\t",
-                header=None,
-                names=["time", "key"],
-            )
-            return mapping_log["key"].tolist()
-        return []
-
-    def _write_log_key(self, file_name, key):
-        """Append a tab-delimited line to the file with the current timestamp and provided key"""
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
-        with open(file_path, "a", encoding="utf-8") as mapping_log:
-            mapping_log.write(f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\t{key}\n')
+        self.touch_done_file(self.REDUCING_DONE_FILE)
