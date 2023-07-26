@@ -24,7 +24,11 @@ class PipelineResumePlan:
     feedback of planning progress"""
 
     def safe_to_resume(self):
-        """Check that we are ok to resume an in-progress pipeline, if one exists"""
+        """Check that we are ok to resume an in-progress pipeline, if one exists.
+
+        Raises:
+            ValueError: if the tmp_path already exists and contains some files.
+        """
         if not self.resume:
             if file_io.directory_has_contents(self.tmp_path):
                 raise ValueError(
@@ -37,6 +41,11 @@ class PipelineResumePlan:
         """Is there a file at a given path?
         For a done file, the existence of the file is the only signal needed to indicate
         a pipeline segment is complete.
+
+        Args:
+            file_name(str): done file name, relative to tmp_path, including extension.
+        Returns:
+            boolean, True if the done file exists at tmp_path. False otherwise.
         """
         return file_io.does_file_or_directory_exist(file_io.append_paths_to_pointer(self.tmp_path, file_name))
 
@@ -44,11 +53,20 @@ class PipelineResumePlan:
         """Touch (create) a done file at the given path.
         For a done file, the existence of the file is the only signal needed to indicate
         a pipeline segment is complete.
+
+        Args:
+            file_name(str): done file name, relative to tmp_path, including extension.
         """
         Path(file_io.append_paths_to_pointer(self.tmp_path, file_name)).touch()
 
     def read_log_keys(self, file_name):
-        """Read a resume log file, containing timestamp and keys."""
+        """Read a resume log file, containing timestamp and keys.
+
+        Args:
+            file_name(str): log file name, relative to tmp_path, including extension.
+        Return:
+            List[str] - all keys found in the log file
+        """
         file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
         if file_io.does_file_or_directory_exist(file_path):
             mapping_log = pd.read_csv(
@@ -61,7 +79,12 @@ class PipelineResumePlan:
         return []
 
     def write_log_key(self, file_name, key):
-        """Append a tab-delimited line to the file with the current timestamp and provided key"""
+        """Append a tab-delimited line to the file with the current timestamp and provided key
+        
+        Args:
+            file_name(str): log file name, relative to tmp_path, including extension.
+            key(str): single key to write
+        """
         file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
         with open(file_path, "a", encoding="utf-8") as mapping_log:
             mapping_log.write(f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\t{key}\n')
