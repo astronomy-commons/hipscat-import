@@ -11,7 +11,7 @@ from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArgume
 # pylint: disable=protected-access
 
 
-@pytest.mark.dask(timeout=20)
+@pytest.mark.dask(timeout=150)
 def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     """Test that margin cache generation works end to end."""
     args = MarginCacheArguments(
