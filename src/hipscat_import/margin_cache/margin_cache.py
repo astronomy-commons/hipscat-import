@@ -52,9 +52,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
     futures = []
     mp_future = client.scatter(margin_pairs, broadcast=True)
     for pix in partition_pixels:
-        partition_file = paths.pixel_catalog_file(
-            args.input_catalog_path, pix.order, pix.pixel
-        )
+        partition_file = paths.pixel_catalog_file(args.input_catalog_path, pix.order, pix.pixel)
         futures.append(
             client.submit(
                 mcmr.map_pixel_shards,
@@ -75,6 +73,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
     ):
         ...
 
+
 def _reduce_margin_shards(client, args, partition_pixels):
     """Create all the jobs for reducing margin cache shards into singular files"""
     futures = []
@@ -85,7 +84,7 @@ def _reduce_margin_shards(client, args, partition_pixels):
                 mcmr.reduce_margin_shards,
                 output_path=args.catalog_path,
                 partition_order=pix.order,
-                partition_pixel=pix.pixel
+                partition_pixel=pix.pixel,
             )
         )
 
@@ -95,6 +94,7 @@ def _reduce_margin_shards(client, args, partition_pixels):
         total=len(futures),
     ):
         ...
+
 
 def generate_margin_cache(args, client):
     """Generate a margin cache for a given input catalog.
@@ -107,9 +107,7 @@ def generate_margin_cache(args, client):
     # determine which order to generate margin pixels for
     partition_stats = args.catalog.partition_info.get_healpix_pixels()
 
-    margin_pairs = _find_partition_margin_pixel_pairs(
-        partition_stats, args.margin_order
-    )
+    margin_pairs = _find_partition_margin_pixel_pairs(partition_stats, args.margin_order)
 
     _create_margin_directory(partition_stats, args.catalog_path)
 
@@ -120,8 +118,4 @@ def generate_margin_cache(args, client):
         margin_pairs=margin_pairs,
     )
 
-    _reduce_margin_shards(
-        client=client,
-        args=args,
-        partition_pixels=partition_stats
-    )
+    _reduce_margin_shards(client=client, args=args, partition_pixels=partition_stats)

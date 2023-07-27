@@ -19,7 +19,7 @@ dependencies = [
     "dask[distributed]",
     "deprecated",
     "healpy",
-    "hipscat",
+    "hipscat >= 0.1.1",
     "ipykernel", # Support for Jupyter notebooks
     "pandas",
     "pyarrow",
@@ -48,6 +48,7 @@ dev = [
     "ipython", # Also used in building notebooks into Sphinx
     "matplotlib", # Used in sample notebook intro_notebook.ipynb
     "numpy", # Used in sample notebook intro_notebook.ipynb
+    "ray", # Used for dask-on-ray testing.
 ]
 
 [build-system]
@@ -74,3 +75,11 @@ omit = [
     "src/hipscat_import/_version.py", # auto-generated
     "src/hipscat_import/pipeline.py", # too annoying to test
 ]
+
+[tool.black]
+line-length = 110
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 110

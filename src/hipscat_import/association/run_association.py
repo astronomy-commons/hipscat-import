@@ -24,16 +24,12 @@ def run(args):
         step_progress.update(1)
 
     rows_written = 0
-    with tqdm(
-        total=1, desc="Reducing ", disable=not args.progress_bar
-    ) as step_progress:
+    with tqdm(total=1, desc="Reducing ", disable=not args.progress_bar) as step_progress:
         rows_written = reduce_association(args.tmp_path, args.catalog_path)
         step_progress.update(1)
 
     # All done - write out the metadata
-    with tqdm(
-        total=4, desc="Finishing", disable=not args.progress_bar
-    ) as step_progress:
+    with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
         # pylint: disable=duplicate-code
         # Very similar to /index/run_index.py
         catalog_info = args.to_catalog_info(int(rows_written))
@@ -44,9 +40,7 @@ def run(args):
         )
         step_progress.update(1)
         catalog_info = args.to_catalog_info(total_rows=int(rows_written))
-        write_metadata.write_catalog_info(
-            dataset_info=catalog_info, catalog_base_dir=args.catalog_path
-        )
+        write_metadata.write_catalog_info(dataset_info=catalog_info, catalog_base_dir=args.catalog_path)
         step_progress.update(1)
         write_metadata.write_parquet_metadata(args.catalog_path)
         step_progress.update(1)

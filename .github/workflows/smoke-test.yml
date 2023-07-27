@@ -33,3 +33,4 @@ jobs:
     - name: Run unit tests with pytest
       run: |
         python -m pytest tests
+        python -m pytest tests --use_ray

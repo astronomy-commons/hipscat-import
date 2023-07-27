@@ -6,7 +6,7 @@ import pytest
 from hipscat.io import file_io, paths
 
 import hipscat_import.margin_cache.margin_cache as mc
-from hipscat_import.margin_cache import MarginCacheArguments
+from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 
 # pylint: disable=protected-access
 
@@ -15,7 +15,7 @@ from hipscat_import.margin_cache import MarginCacheArguments
 def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     """Test that margin cache generation works end to end."""
     args = MarginCacheArguments(
-        margin_threshold=5.0,
+        margin_threshold=180.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
         output_catalog_name="catalog_cache",
@@ -30,13 +30,12 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     norder = 1
     npix = 47
 
-    test_file = paths.pixel_catalog_file(
-        args.catalog_path, norder, npix
-    )
+    test_file = paths.pixel_catalog_file(args.catalog_path, norder, npix)
 
     data = pd.read_parquet(test_file)
 
-    assert len(data) == 4
+    assert len(data) == 13
+
 
 def test_partition_margin_pixel_pairs(small_sky_source_catalog, tmp_path):
     args = MarginCacheArguments(

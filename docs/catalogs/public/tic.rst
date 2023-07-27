@@ -18,7 +18,10 @@ Challenges with this data set
 - The numeric fields may be null, which is not directly supported by the 
   ``int64`` type in pandas, so we must use the nullable ``Int64`` type.
 
-You can download the :download:`tic_types</static/tic_types.csv>` CSV file we used.
+You can download our reference files, if you find that helpful:
+
+- :download:`tic_types</static/tic_types.csv>` CSV file with names and types
+- :download:`tic_schema</static/tic_schema.parquet>` column-level parquet metadata
 
 Example import
 -------------------------------------------------------------------------------
@@ -48,5 +51,6 @@ Example import
         dec_column="dec",
         id_column="ID",
         output_path="/path/to/catalogs/",
+        use_schema_file="tic_schema.parquet",
     )
     runner.run(args)

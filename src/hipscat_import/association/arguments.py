@@ -2,9 +2,7 @@
 
 from dataclasses import dataclass
 
-from hipscat.catalog.association_catalog.association_catalog import (
-    AssociationCatalogInfo,
-)
+from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 

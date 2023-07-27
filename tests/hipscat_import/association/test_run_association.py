@@ -25,7 +25,7 @@ def test_bad_args():
         runner.run(args)
 
 
-@pytest.mark.dask
+@pytest.mark.dask(skip_ray=True)
 def test_object_to_source(
     small_sky_object_catalog,
     small_sky_source_catalog,
@@ -82,7 +82,7 @@ def test_object_to_source(
     assert len(catalog.get_join_pixels()) == 14
 
 
-@pytest.mark.dask
+@pytest.mark.dask(skip_ray=True)
 def test_source_to_object(
     small_sky_object_catalog,
     small_sky_source_catalog,

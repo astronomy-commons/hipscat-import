@@ -6,6 +6,9 @@ Utility for ingesting large survey data into HiPSCat structure.
 Installation
 -------------------------------------------------------------------------------
 
+We recommend installing in a virtual environment, like venv or conda. You may
+need to install or upgrade versions of dependencies to work with hipscat-import.
+
 .. code-block:: bash
 
     pip install hipscat-import
@@ -67,6 +70,7 @@ and then wait:
    guide/association
    guide/index_table   
    Notebooks <notebooks>
+   guide/dask_on_ray
 
 .. toctree::
    :hidden:

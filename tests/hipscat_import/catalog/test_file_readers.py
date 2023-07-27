@@ -9,12 +9,7 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.catalog import CatalogInfo
 
-from hipscat_import.catalog.file_readers import (
-    CsvReader,
-    FitsReader,
-    ParquetReader,
-    get_file_reader,
-)
+from hipscat_import.catalog.file_readers import CsvReader, FitsReader, ParquetReader, get_file_reader
 
 
 # pylint: disable=redefined-outer-name
@@ -182,11 +177,7 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     schema_file = os.path.join(tmp_path, "metadata.parquet")
     pq.write_metadata(parquet_schema_types, schema_file)
 
-    frame = next(
-        CsvReader(header=None, separator="|", schema_file=schema_file).read(
-            formats_pipe_csv
-        )
-    )
+    frame = next(CsvReader(header=None, separator="|", schema_file=schema_file).read(formats_pipe_csv))
 
     assert len(frame) == 3
     assert np.all(frame["letters"] == ["AA", "BB", "CC"])
@@ -272,9 +263,7 @@ def test_read_fits_columns(formats_fits):
     frame = next(FitsReader(column_names=["id", "ra", "dec"]).read(formats_fits))
     assert list(frame.columns) == ["id", "ra", "dec"]
 
-    frame = next(
-        FitsReader(skip_column_names=["ra_error", "dec_error"]).read(formats_fits)
-    )
+    frame = next(FitsReader(skip_column_names=["ra_error", "dec_error"]).read(formats_fits))
     assert list(frame.columns) == ["id", "ra", "dec"]
 
 
