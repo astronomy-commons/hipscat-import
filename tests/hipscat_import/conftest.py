@@ -8,18 +8,11 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-from dask.distributed import Client
+
+# pylint: disable=missing-function-docstring, redefined-outer-name
 
 
-@pytest.fixture(scope="session", name="dask_client")
-def dask_client():
-    """Create a single client for use by all unit test cases."""
-    client = Client()
-    yield client
-    client.close()
-
-
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(config, items):
     """Modify dask unit tests to
         - ignore event loop deprecation warnings
         - have a longer timeout default timeout (5 seconds instead of 1 second)
@@ -32,19 +25,22 @@ def pytest_collection_modifyitems(items):
         def test_long_running():
             ...
     """
+    use_ray = config.getoption("--use_ray")
+    skip_ray = pytest.mark.skip(reason="skipping this test under dask-on-ray")
     for item in items:
         timeout = None
         for mark in item.iter_markers(name="dask"):
             timeout = 5
             if "timeout" in mark.kwargs:
                 timeout = int(mark.kwargs.get("timeout"))
+            if "skip_ray" in mark.kwargs and use_ray:
+                item.add_marker(skip_ray)
         if timeout:
             item.add_marker(pytest.mark.timeout(timeout))
             item.add_marker(pytest.mark.usefixtures("dask_client"))
             item.add_marker(pytest.mark.filterwarnings("ignore::DeprecationWarning"))
 
 
-# pylint: disable=missing-function-docstring, redefined-outer-name
 TEST_DIR = os.path.dirname(__file__)
 
 

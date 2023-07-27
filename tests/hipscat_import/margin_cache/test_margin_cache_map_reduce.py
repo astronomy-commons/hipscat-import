@@ -65,6 +65,7 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
     validate_result_dataframe(path, 317)
 
 
+@pytest.mark.dask
 def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
     partition_dir = margin_cache_map_reduce._get_partition_directory(tmp_path, 1, 21)
     shard_dir = paths.pixel_directory(partition_dir, 1, 21)

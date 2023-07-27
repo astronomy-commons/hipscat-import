@@ -48,6 +48,7 @@ dev = [
     "ipython", # Also used in building notebooks into Sphinx
     "matplotlib", # Used in sample notebook intro_notebook.ipynb
     "numpy", # Used in sample notebook intro_notebook.ipynb
+    "ray", # Used for dask-on-ray testing.
 ]
 
 [build-system]
