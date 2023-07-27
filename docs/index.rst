@@ -70,6 +70,7 @@ and then wait:
    guide/association
    guide/index_table   
    Notebooks <notebooks>
+   guide/dask_on_ray
 
 .. toctree::
    :hidden:

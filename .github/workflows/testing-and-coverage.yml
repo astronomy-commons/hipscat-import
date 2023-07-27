@@ -32,5 +32,6 @@ jobs:
     - name: Run unit tests with pytest
       run: |
         python -m pytest tests --cov=hipscat_import --cov-report=xml
+        python -m pytest tests --use_ray
     - name: Upload coverage report to codecov
       uses: codecov/codecov-action@v3
