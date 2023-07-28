@@ -11,7 +11,7 @@ def test_mapping_done(tmp_path):
     """Verify expected behavior of mapping done file"""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
     assert not plan.is_mapping_done()
-    plan.set_mapping_done()
+    plan.touch_done_file(ResumePlan.MAPPING_STAGE)
     assert plan.is_mapping_done()
 
     plan.clean_resume_files()
@@ -22,7 +22,7 @@ def test_reducing_done(tmp_path):
     """Verify expected behavior of reducing done file"""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
     assert not plan.is_reducing_done()
-    plan.set_reducing_done()
+    plan.touch_done_file(ResumePlan.REDUCING_STAGE)
     assert plan.is_reducing_done()
 
     plan.clean_resume_files()
@@ -34,19 +34,19 @@ def test_done_checks(tmp_path):
     mapping > splitting > reducing
     """
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)
-    plan.set_reducing_done()
+    plan.touch_done_file(ResumePlan.REDUCING_STAGE)
 
     with pytest.raises(ValueError, match="before reducing"):
         plan.gather_plan()
 
-    plan.set_splitting_done()
+    plan.touch_done_file(ResumePlan.SPLITTING_STAGE)
     with pytest.raises(ValueError, match="before reducing"):
         plan.gather_plan()
 
     plan.clean_resume_files()
 
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)
-    plan.set_splitting_done()
+    plan.touch_done_file(ResumePlan.SPLITTING_STAGE)
     with pytest.raises(ValueError, match="before splitting"):
         plan.gather_plan()
 
@@ -116,14 +116,14 @@ def test_read_write_map_files(tmp_path, small_sky_single_file, formats_headers_c
     map_files = plan.map_files
     assert len(map_files) == 2
 
-    plan.mark_mapping_done("map_0")
+    plan.write_log_key(ResumePlan.MAPPING_STAGE, "map_0")
 
     plan.gather_plan()
     map_files = plan.map_files
     assert len(map_files) == 1
     assert map_files[0][1] == formats_headers_csv
 
-    plan.mark_mapping_done("map_1")
+    plan.write_log_key(ResumePlan.MAPPING_STAGE, "map_1")
 
     ## Nothing left to map
     plan.gather_plan()
@@ -145,14 +145,14 @@ def test_read_write_splitting_keys(tmp_path, small_sky_single_file, formats_head
     split_keys = plan.split_keys
     assert len(split_keys) == 2
 
-    plan.mark_splitting_done("split_0")
+    plan.write_log_key(ResumePlan.SPLITTING_STAGE, "split_0")
 
     plan.gather_plan()
     split_keys = plan.split_keys
     assert len(split_keys) == 1
     assert split_keys[0][0] == "split_1"
 
-    plan.mark_splitting_done("split_1")
+    plan.write_log_key(ResumePlan.SPLITTING_STAGE, "split_1")
     plan.gather_plan()
     split_keys = plan.split_keys
     assert len(split_keys) == 0

@@ -7,7 +7,6 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 
 import hipscat.io.write_metadata as io
 import numpy as np
-from dask.distributed import as_completed
 from hipscat import pixel_math
 from tqdm import tqdm
 
@@ -37,21 +36,7 @@ def _map_pixels(args, client):
                 dec_column=args.dec_column,
             )
         )
-
-    some_error = False
-    for future in tqdm(
-        as_completed(futures),
-        desc="Mapping  ",
-        total=len(futures),
-        disable=(not args.progress_bar),
-    ):
-        if future.status == "error":  # pragma: no cover
-            some_error = True
-        else:
-            args.resume_plan.mark_mapping_done(future.key)
-    if some_error:  # pragma: no cover
-        raise RuntimeError("Some mapping stages failed. See logs for details.")
-    args.resume_plan.set_mapping_done()
+    args.resume_plan.wait_for_mapping(futures)
 
 
 def _split_pixels(args, alignment_future, client):
@@ -78,20 +63,7 @@ def _split_pixels(args, alignment_future, client):
             )
         )
 
-    some_error = False
-    for future in tqdm(
-        as_completed(futures),
-        desc="Splitting",
-        total=len(futures),
-        disable=(not args.progress_bar),
-    ):
-        if future.status == "error":  # pragma: no cover
-            some_error = True
-        else:
-            args.resume_plan.mark_splitting_done(future.key)
-    if some_error:  # pragma: no cover
-        raise RuntimeError("Some splitting stages failed. See logs for details.")
-    args.resume_plan.set_splitting_done()
+    args.resume_plan.wait_for_splitting(futures)
 
 
 def _reduce_pixels(args, destination_pixel_map, client):
@@ -123,20 +95,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
             )
         )
 
-    some_error = False
-    for future in tqdm(
-        as_completed(futures),
-        desc="Reducing ",
-        total=len(futures),
-        disable=(not args.progress_bar),
-    ):
-        if future.status == "error":  # pragma: no cover
-            some_error = True
-        else:
-            args.resume_plan.mark_reducing_done(future.key)
-    if some_error:  # pragma: no cover
-        raise RuntimeError("Some reducing stages failed. See logs for details.")
-    args.resume_plan.set_reducing_done()
+    args.resume_plan.wait_for_reducing(futures)
 
 
 def run(args, client):
