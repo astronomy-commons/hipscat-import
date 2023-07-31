@@ -46,8 +46,8 @@ def test_resume_dask_runner(
     histogram[11] = 131
     empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        plan.mark_mapping_done(f"map_{file_index}")
-        plan.mark_splitting_done(f"split_{file_index}")
+        plan.write_log_key(ResumePlan.MAPPING_STAGE,f"map_{file_index}")
+        plan.write_log_key(ResumePlan.SPLITTING_STAGE,f"split_{file_index}")
         ResumePlan.write_partial_histogram(
             tmp_path=temp_path,
             mapping_key=f"map_{file_index}",
@@ -112,9 +112,9 @@ def test_resume_dask_runner(
         temp_path,
     )
     plan = args.resume_plan
-    plan.set_mapping_done()
-    plan.set_splitting_done()
-    plan.set_reducing_done()
+    plan.touch_done_file(ResumePlan.MAPPING_STAGE)
+    plan.touch_done_file(ResumePlan.SPLITTING_STAGE)
+    plan.touch_done_file(ResumePlan.REDUCING_STAGE)
 
     args = ImportArguments(
         output_catalog_name="resume",
