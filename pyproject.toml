@@ -24,6 +24,7 @@ dependencies = [
     "pandas",
     "pyarrow",
     "tqdm",
+    "numpy < 1.25",
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
@@ -47,7 +48,6 @@ dev = [
     "ipykernel", # Also used in building notebooks into Sphinx
     "ipython", # Also used in building notebooks into Sphinx
     "matplotlib", # Used in sample notebook intro_notebook.ipynb
-    "numpy", # Used in sample notebook intro_notebook.ipynb
     "ray", # Used for dask-on-ray testing.
 ]
 
