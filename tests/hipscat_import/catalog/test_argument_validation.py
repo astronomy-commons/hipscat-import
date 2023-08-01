@@ -173,7 +173,7 @@ def test_to_catalog_info(blank_data_dir, tmp_path):
 
 
 def test_provenance_info(blank_data_dir, tmp_path):
-    """Verify that provenance info includes association-specific fields."""
+    """Verify that provenance info includes catalog-specific fields."""
     args = ImportArguments(
         output_catalog_name="catalog",
         input_path=blank_data_dir,

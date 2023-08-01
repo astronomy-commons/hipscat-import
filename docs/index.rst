@@ -36,7 +36,6 @@ See dataset-specific notes on arguments:
 
 * :doc:`catalogs/arguments` (most common)
 * :doc:`guide/margin_cache`
-* :doc:`guide/association`
 * :doc:`guide/index_table`
 
 Once you have created your arguments object, you pass it into the pipeline control,
@@ -67,7 +66,6 @@ and then wait:
    :caption: Other Datasets
 
    guide/margin_cache
-   guide/association
    guide/index_table   
    Notebooks <notebooks>
    guide/dask_on_ray
