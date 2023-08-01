@@ -144,7 +144,7 @@ def test_to_catalog_info(small_sky_object_catalog, tmp_path):
 
 
 def test_provenance_info(small_sky_object_catalog, tmp_path):
-    """Verify that provenance info includes association-specific fields."""
+    """Verify that provenance info includes index-specific fields."""
     args = IndexArguments(
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
