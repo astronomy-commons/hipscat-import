@@ -27,6 +27,7 @@ def pytest_collection_modifyitems(config, items):
     """
     use_ray = config.getoption("--use_ray")
     skip_ray = pytest.mark.skip(reason="skipping this test under dask-on-ray")
+    first_dask = True
     for item in items:
         timeout = None
         for mark in item.iter_markers(name="dask"):
@@ -36,6 +37,10 @@ def pytest_collection_modifyitems(config, items):
             if "skip_ray" in mark.kwargs and use_ray:
                 item.add_marker(skip_ray)
         if timeout:
+            if first_dask and use_ray:
+                ## The first test requires more time to set up the dask/ray client
+                timeout += 10
+                first_dask = False
             item.add_marker(pytest.mark.timeout(timeout))
             item.add_marker(pytest.mark.usefixtures("dask_client"))
             item.add_marker(pytest.mark.filterwarnings("ignore::DeprecationWarning"))
