@@ -25,17 +25,14 @@ class ResumePlan(PipelineResumePlan):
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
 
-    MAPPING_LOG_FILE = "mapping_log.txt"
-    SPLITTING_LOG_FILE = "splitting_log.txt"
-    REDUCING_LOG_FILE = "reducing_log.txt"
+    MAPPING_STAGE = "mapping"
+    SPLITTING_STAGE = "splitting"
+    REDUCING_STAGE = "reducing"
+
     ORIGINAL_INPUT_PATHS = "input_paths.txt"
 
     HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
     HISTOGRAMS_DIR = "histograms"
-
-    MAPPING_DONE_FILE = "mapping_done"
-    SPLITTING_DONE_FILE = "splitting_done"
-    REDUCING_DONE_FILE = "reducing_done"
 
     def __post_init__(self):
         """Initialize the plan."""
@@ -76,14 +73,14 @@ class ResumePlan(PipelineResumePlan):
             ## Gather keys for execution.
             step_progress.update(1)
             if not mapping_done:
-                mapped_keys = set(self.read_log_keys(self.MAPPING_LOG_FILE))
+                mapped_keys = set(self.read_log_keys(self.MAPPING_STAGE))
                 self.map_files = [
                     (f"map_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
                     if f"map_{i}" not in mapped_keys
                 ]
             if not splitting_done:
-                split_keys = set(self.read_log_keys(self.SPLITTING_LOG_FILE))
+                split_keys = set(self.read_log_keys(self.SPLITTING_STAGE))
                 self.split_keys = [
                     (f"split_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
@@ -140,29 +137,21 @@ class ResumePlan(PipelineResumePlan):
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
 
-    def mark_mapping_done(self, mapping_key: str):
-        """Add mapping key to done list."""
-        self.write_log_key(self.MAPPING_LOG_FILE, mapping_key)
+    def wait_for_mapping(self, futures):
+        """Wait for mapping futures to complete."""
+        self.wait_for_futures(futures, self.MAPPING_STAGE)
 
     def is_mapping_done(self) -> bool:
         """Are there files left to map?"""
-        return self.done_file_exists(self.MAPPING_DONE_FILE)
+        return self.done_file_exists(self.MAPPING_STAGE)
 
-    def set_mapping_done(self):
-        """All files are done mapping."""
-        self.touch_done_file(self.MAPPING_DONE_FILE)
-
-    def mark_splitting_done(self, splitting_key: str):
-        """Add splitting key to done list."""
-        self.write_log_key(self.SPLITTING_LOG_FILE, splitting_key)
+    def wait_for_splitting(self, futures):
+        """Wait for splitting futures to complete."""
+        self.wait_for_futures(futures, self.SPLITTING_STAGE)
 
     def is_splitting_done(self) -> bool:
         """Are there files left to split?"""
-        return self.done_file_exists(self.SPLITTING_DONE_FILE)
-
-    def set_splitting_done(self):
-        """All files are done splitting."""
-        self.touch_done_file(self.SPLITTING_DONE_FILE)
+        return self.done_file_exists(self.SPLITTING_STAGE)
 
     def get_reduce_items(self, destination_pixel_map):
         """Fetch a triple for each partition to reduce.
@@ -174,7 +163,7 @@ class ResumePlan(PipelineResumePlan):
         - reduce key (string of destination order+pixel)
 
         """
-        reduced_keys = set(self.read_log_keys(self.REDUCING_LOG_FILE))
+        reduced_keys = set(self.read_log_keys(self.REDUCING_STAGE))
         reduce_items = [
             (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, source_pixels in destination_pixel_map.items()
@@ -182,14 +171,10 @@ class ResumePlan(PipelineResumePlan):
         ]
         return reduce_items
 
-    def mark_reducing_done(self, reducing_key: str):
-        """Add reducing key to done list."""
-        self.write_log_key(self.REDUCING_LOG_FILE, reducing_key)
-
     def is_reducing_done(self) -> bool:
         """Are there partitions left to reduce?"""
-        return self.done_file_exists(self.REDUCING_DONE_FILE)
+        return self.done_file_exists(self.REDUCING_STAGE)
 
-    def set_reducing_done(self):
-        """All partitions are done reducing."""
-        self.touch_done_file(self.REDUCING_DONE_FILE)
+    def wait_for_reducing(self, futures):
+        """Wait for reducing futures to complete."""
+        self.wait_for_futures(futures, self.REDUCING_STAGE)

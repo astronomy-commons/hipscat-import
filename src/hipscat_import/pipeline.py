@@ -4,12 +4,10 @@ from email.message import EmailMessage
 
 from dask.distributed import Client
 
-import hipscat_import.association.run_association as association_runner
 import hipscat_import.catalog.run_import as catalog_runner
 import hipscat_import.index.run_index as index_runner
 import hipscat_import.margin_cache.margin_cache as margin_runner
 import hipscat_import.soap.run_soap as soap_runner
-from hipscat_import.association.arguments import AssociationArguments
 from hipscat_import.catalog.arguments import ImportArguments
 from hipscat_import.index.arguments import IndexArguments
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
@@ -41,8 +39,6 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
 
         if isinstance(args, ImportArguments):
             catalog_runner.run(args, client)
-        elif isinstance(args, AssociationArguments):
-            association_runner.run(args)
         elif isinstance(args, IndexArguments):
             index_runner.run(args)
         elif isinstance(args, MarginCacheArguments):

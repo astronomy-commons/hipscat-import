@@ -33,4 +33,6 @@ jobs:
     - name: Run unit tests with pytest
       run: |
         python -m pytest tests
+    - name: Run dask-on-ray tests with pytest
+      run: |
         python -m pytest tests --use_ray

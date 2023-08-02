@@ -7,7 +7,9 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+from dask.distributed import as_completed
 from hipscat.io import FilePointer, file_io
+from tqdm import tqdm
 
 
 @dataclass
@@ -37,37 +39,39 @@ class PipelineResumePlan:
                 )
         file_io.make_directory(self.tmp_path, exist_ok=True)
 
-    def done_file_exists(self, file_name):
+    def done_file_exists(self, stage_name):
         """Is there a file at a given path?
         For a done file, the existence of the file is the only signal needed to indicate
         a pipeline segment is complete.
 
         Args:
-            file_name(str): done file name, relative to tmp_path, including extension.
+            stage_name(str): name of the stage (e.g. mapping, reducing)
         Returns:
             boolean, True if the done file exists at tmp_path. False otherwise.
         """
-        return file_io.does_file_or_directory_exist(file_io.append_paths_to_pointer(self.tmp_path, file_name))
+        return file_io.does_file_or_directory_exist(
+            file_io.append_paths_to_pointer(self.tmp_path, f"{stage_name}_done")
+        )
 
-    def touch_done_file(self, file_name):
+    def touch_done_file(self, stage_name):
         """Touch (create) a done file at the given path.
         For a done file, the existence of the file is the only signal needed to indicate
         a pipeline segment is complete.
 
         Args:
-            file_name(str): done file name, relative to tmp_path, including extension.
+            stage_name(str): name of the stage (e.g. mapping, reducing)
         """
-        Path(file_io.append_paths_to_pointer(self.tmp_path, file_name)).touch()
+        Path(file_io.append_paths_to_pointer(self.tmp_path, f"{stage_name}_done")).touch()
 
-    def read_log_keys(self, file_name):
+    def read_log_keys(self, stage_name):
         """Read a resume log file, containing timestamp and keys.
 
         Args:
-            file_name(str): log file name, relative to tmp_path, including extension.
+            stage_name(str): name of the stage (e.g. mapping, reducing)
         Return:
             List[str] - all keys found in the log file
         """
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, f"{stage_name}_log.txt")
         if file_io.does_file_or_directory_exist(file_path):
             mapping_log = pd.read_csv(
                 file_path,
@@ -78,17 +82,42 @@ class PipelineResumePlan:
             return mapping_log["key"].tolist()
         return []
 
-    def write_log_key(self, file_name, key):
+    def write_log_key(self, stage_name, key):
         """Append a tab-delimited line to the file with the current timestamp and provided key
-        
+
         Args:
-            file_name(str): log file name, relative to tmp_path, including extension.
+            stage_name(str): name of the stage (e.g. mapping, reducing)
             key(str): single key to write
         """
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, file_name)
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, f"{stage_name}_log.txt")
         with open(file_path, "a", encoding="utf-8") as mapping_log:
             mapping_log.write(f'{datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\t{key}\n')
 
     def clean_resume_files(self):
         """Remove all intermediate files created in execution."""
         file_io.remove_directory(self.tmp_path, ignore_errors=True)
+
+    def wait_for_futures(self, futures, stage_name):
+        """Wait for collected futures to complete.
+
+        As each future completes, read the task key and write to the log file.
+        If all tasks complete successfully, touch the done file. Otherwise, raise an error.
+
+        Args:
+            futures(List[future]): collected futures
+            stage_name(str): name of the stage (e.g. mapping, reducing)
+        """
+        some_error = False
+        for future in tqdm(
+            as_completed(futures),
+            desc=stage_name,
+            total=len(futures),
+            disable=(not self.progress_bar),
+        ):
+            if future.status == "error":  # pragma: no cover
+                some_error = True
+            else:
+                self.write_log_key(stage_name, future.key)
+        if some_error:  # pragma: no cover
+            raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")
+        self.touch_done_file(stage_name)

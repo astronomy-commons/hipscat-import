@@ -33,9 +33,8 @@ def validate_result_dataframe(df_path, expected_len):
 def test_to_pixel_shard_equator(tmp_path, basic_data_shard_df):
     margin_cache_map_reduce._to_pixel_shard(
         basic_data_shard_df,
-        margin_threshold=0.1,
+        margin_threshold=360.0,
         output_path=tmp_path,
-        margin_order=3,
         ra_column="weird_ra",
         dec_column="weird_dec",
     )
@@ -44,16 +43,15 @@ def test_to_pixel_shard_equator(tmp_path, basic_data_shard_df):
 
     assert file_io.does_file_or_directory_exist(path)
 
-    validate_result_dataframe(path, 46)
+    validate_result_dataframe(path, 2)
 
 
 @pytest.mark.timeout(5)
 def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
     margin_cache_map_reduce._to_pixel_shard(
         polar_data_shard_df,
-        margin_threshold=0.1,
+        margin_threshold=360.0,
         output_path=tmp_path,
-        margin_order=3,
         ra_column="weird_ra",
         dec_column="weird_dec",
     )
@@ -62,7 +60,7 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
 
     assert file_io.does_file_or_directory_exist(path)
 
-    validate_result_dataframe(path, 317)
+    validate_result_dataframe(path, 360)
 
 
 @pytest.mark.dask
