@@ -28,6 +28,9 @@ class SoapPlan(PipelineResumePlan):
     SOURCE_MAP_FILE = "source_object_map.npz"
 
     def __init__(self, args: SoapArguments):
+        if not args.tmp_path:
+            # pragma: no cover (not reachable, but required for mypy)
+            raise ValueError("tmp_path is required")
         super().__init__(resume=args.resume, progress_bar=args.progress_bar, tmp_path=args.tmp_path)
         self.gather_plan(args)
 
@@ -148,6 +151,6 @@ def source_to_object_map(args):
             if order != -1
         ]
         neighbors = set(desploded) - set(objects)
-        source_to_object[source].extend(list(neighbors))
+        objects.extend(list(neighbors))
 
     return source_to_object
