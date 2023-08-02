@@ -2,6 +2,8 @@
 
 import os
 
+import pytest
+
 from hipscat_import.soap.resume_plan import SoapPlan, source_to_object_map
 
 
@@ -40,13 +42,14 @@ def test_count_keys(small_sky_soap_args):
     assert len(plan.count_keys) == 0
 
 
+@pytest.mark.timeout(2)
 def test_cached_map_file(small_sky_soap_args):
     """Verify that we cache the mapping file for later use.
     This can be expensive to compute for large survey cross-products!"""
     plan = SoapPlan(small_sky_soap_args)
     assert len(plan.count_keys) == 14
 
-    ## Mark one done and check that there's one less key to count later.
+    ## The source partition mapping should be cached in a file.
     cache_map_file = os.path.join(small_sky_soap_args.tmp_path, SoapPlan.SOURCE_MAP_FILE)
     assert os.path.exists(cache_map_file)
 
