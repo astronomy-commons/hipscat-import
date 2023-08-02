@@ -24,8 +24,7 @@ class SoapPlan(PipelineResumePlan):
     count_keys: List[Tuple[HealpixPixel, List[HealpixPixel], str]] = field(default_factory=list)
     """set of pixels (and job keys) that have yet to be counted"""
 
-    COUNTING_LOG_FILE = "counting_log.txt"
-    COUNTING_DONE_FILE = "counting_done"
+    COUNTING_STAGE = "counting"
     SOURCE_MAP_FILE = "source_object_map.npz"
 
     def __init__(self, args: SoapArguments):
@@ -54,17 +53,13 @@ class SoapPlan(PipelineResumePlan):
             self._set_sources_to_count(source_pixel_map)
             step_progress.update(1)
 
-    def mark_counting_done(self, counting_key: str):
-        """Add counting key to done list."""
-        self.write_log_key(self.COUNTING_LOG_FILE, counting_key)
+    def wait_for_counting(self, futures):
+        """Wait for counting stage futures to complete."""
+        self.wait_for_futures(futures, self.COUNTING_STAGE)
 
     def is_counting_done(self) -> bool:
         """Are there sources left to count?"""
-        return self.done_file_exists(self.COUNTING_DONE_FILE)
-
-    def set_counting_done(self):
-        """All sources are done counting."""
-        self.touch_done_file(self.COUNTING_DONE_FILE)
+        return self.done_file_exists(self.COUNTING_STAGE)
 
     def _set_sources_to_count(self, source_pixel_map):
         """Fetch a triple for each source pixel to join and count.
@@ -76,7 +71,7 @@ class SoapPlan(PipelineResumePlan):
             - source key (string of source order+pixel)
 
         """
-        counted_keys = set(self.read_log_keys(self.COUNTING_LOG_FILE))
+        counted_keys = set(self.read_log_keys(self.COUNTING_STAGE))
         self.count_keys = [
             (hp_pixel, object_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, object_pixels in source_pixel_map.items()

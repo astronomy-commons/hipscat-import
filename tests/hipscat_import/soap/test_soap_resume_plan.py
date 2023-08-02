@@ -15,7 +15,7 @@ def test_counting_done(small_sky_soap_args):
     """Verify expected behavior of counting done file"""
     plan = SoapPlan(small_sky_soap_args)
     assert not plan.is_counting_done()
-    plan.set_counting_done()
+    plan.touch_done_file(SoapPlan.COUNTING_STAGE)
     assert plan.is_counting_done()
 
     plan.clean_resume_files()
@@ -28,13 +28,13 @@ def test_count_keys(small_sky_soap_args):
     assert len(plan.count_keys) == 14
 
     ## Mark one done and check that there's one less key to count later.
-    plan.mark_counting_done("2_187")
+    plan.write_log_key(SoapPlan.COUNTING_STAGE, "2_187")
 
     plan.gather_plan(small_sky_soap_args)
     assert len(plan.count_keys) == 13
 
     ## Mark them ALL done and check that there are on keys later.
-    plan.set_counting_done()
+    plan.touch_done_file(SoapPlan.COUNTING_STAGE)
 
     plan.gather_plan(small_sky_soap_args)
     assert len(plan.count_keys) == 0

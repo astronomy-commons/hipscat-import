@@ -34,25 +34,12 @@ def run(args, client):
                 )
             )
 
-        some_error = False
-        for future in tqdm(
-            as_completed(futures),
-            desc="Counting ",
-            total=len(futures),
-            disable=(not args.progress_bar),
-        ):
-            if future.status == "error":  # pragma: no cover
-                some_error = True
-            else:
-                resume_plan.mark_counting_done(future.key)
-        if some_error:  # pragma: no cover
-            raise RuntimeError("Some Counting stages failed. See logs for details.")
-        resume_plan.set_counting_done()
+        resume_plan.wait_for_counting(futures)
 
     # All done - write out the metadata
     with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
         # pylint: disable=duplicate-code
-        # Very similar to /association/run_association.py
+        # Very similar to /index/run_index.py
         combine_partial_results(args.tmp_path, args.catalog_path)
         step_progress.update(1)
         catalog_info = args.to_catalog_info(0)
