@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
+from hipscat.catalog.catalog_type import CatalogType
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -45,7 +46,7 @@ class SoapArguments(RuntimeArguments):
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_catalog_name,
-            "catalog_type": "association",
+            "catalog_type": CatalogType.ASSOCIATION,
             "total_rows": total_rows,
             "primary_column": self.object_id_column,
             "primary_catalog": str(self.object_catalog_dir),

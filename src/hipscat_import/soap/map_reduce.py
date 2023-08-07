@@ -1,9 +1,14 @@
 """Inner methods for SOAP"""
 
+from typing import List
+
 import numpy as np
 import pandas as pd
 from hipscat.io import file_io
 from hipscat.io.paths import pixel_catalog_file
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
+
+from hipscat_import.soap.arguments import SoapArguments
 
 
 def _count_joins_for_object(source_data, object_catalog_dir, object_id_column, object_pixel):
@@ -41,12 +46,21 @@ def _write_count_results(cache_path, source_healpix, results):
     )
 
 
-def count_joins(soap_args, source_pixel, object_pixels, cache_path):
+def count_joins(
+    soap_args: SoapArguments, source_pixel: HealpixPixel, object_pixels: List[HealpixPixel], cache_path: str
+):
     """Count the number of equijoined sources in the object pixels.
     If any un-joined source pixels remain, stretch out to neighboring object pixels.
+
+    Args:
+        soap_args(SoapArguments): set of arguments for pipeline execution
+        source_pixel(HealpixPixel): order and pixel for the source catalog single pixel.
+        object_pixels(List[HealpixPixel]): set of tuples of order and pixel for the partitions
+            of the object catalog to be joined.
+        cache_path(str): path to write intermediate results CSV to.
     """
     source_path = pixel_catalog_file(
-        catalog_base_dir=soap_args.source_catalog_dir,
+        catalog_base_dir=file_io.get_file_pointer_from_path(soap_args.source_catalog_dir),
         pixel_order=source_pixel.order,
         pixel_number=source_pixel.pixel,
     )
@@ -79,6 +93,11 @@ def count_joins(soap_args, source_pixel, object_pixels, cache_path):
 def combine_partial_results(input_path, output_path):
     """Combine many partial CSVs into single partition join info.
     Also write out a debug file with counts of unmatched sources, if any.
+
+    Args:
+        input_path(str): intermediate directory with partial result CSVs. likely, the
+            directory used in the previous `count_joins` call as `cache_path`
+        output_path(str): directory to write the combined results CSVs.
     """
     partial_files = file_io.find_files_matching_path(input_path, "**.csv")
     partials = []
@@ -89,6 +108,7 @@ def combine_partial_results(input_path, output_path):
     dataframe = pd.concat(partials)
 
     matched = dataframe.loc[dataframe["Norder"] != -1]
+    matched = matched.loc[matched["num_rows"] > 0]
     unmatched = dataframe.loc[dataframe["Norder"] == -1]
 
     file_io.write_dataframe_to_csv(
