@@ -19,6 +19,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
         output_catalog_name="catalog_cache",
+        margin_order=8,
     )
 
     assert args.catalog.catalog_info.ra_column == "source_ra"
