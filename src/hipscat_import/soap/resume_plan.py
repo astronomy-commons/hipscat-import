@@ -50,7 +50,9 @@ class SoapPlan(PipelineResumePlan):
             if file_io.does_file_or_directory_exist(source_map_file):
                 source_pixel_map = np.load(source_map_file, allow_pickle=True)["arr_0"].item()
             else:
-                source_pixel_map = source_to_object_map(args)
+                object_catalog = Catalog.read_from_hipscat(args.object_catalog_dir)
+                source_catalog = Catalog.read_from_hipscat(args.source_catalog_dir)
+                source_pixel_map = source_to_object_map(object_catalog, source_catalog)
                 np.savez_compressed(source_map_file, source_pixel_map)
             self._set_sources_to_count(source_pixel_map)
             step_progress.update(1)
@@ -81,12 +83,10 @@ class SoapPlan(PipelineResumePlan):
         ]
 
 
-def source_to_object_map(args):
+def source_to_object_map(object_catalog, source_catalog):
     """Build a map of (source order/pixel) to the (object order/pixel)
     that are aligned, as well as neighboring object pixels.
     """
-    object_catalog = Catalog.read_from_hipscat(args.object_catalog_dir)
-    source_catalog = Catalog.read_from_hipscat(args.source_catalog_dir)
 
     ## Direct aligment from source to object
     ###############################################
@@ -141,7 +141,20 @@ def source_to_object_map(args):
 
         ## get rid of -1s and normalize to max order
         explosion_factor = 4 ** (max_order - source.order)
-        neighbors = [neighbor * explosion_factor for neighbor in neighbors if neighbor != -1]
+        ## explode out the source pixels to the same order as object map
+        ## NB: This may find non-bordering object neighbors, but that's ok!
+        neighbors = [
+            [
+                *range(
+                    pixel * explosion_factor,
+                    (pixel + 1) * explosion_factor,
+                )
+            ]
+            for pixel in neighbors
+            if pixel != -1
+        ]
+        ## Flatten out the exploded list of lists
+        neighbors = [item for sublist in neighbors for item in sublist]
 
         neighbors_orders = object_order_map[neighbors]
         desploded = [

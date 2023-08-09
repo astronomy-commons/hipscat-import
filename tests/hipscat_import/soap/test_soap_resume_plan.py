@@ -2,15 +2,76 @@
 
 import os
 
+import pandas as pd
 import pytest
+from hipscat.catalog import Catalog
+from hipscat.catalog.catalog_info import CatalogInfo
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.soap.resume_plan import SoapPlan, source_to_object_map
 
 
-def test_source_to_object_map(small_sky_soap_args, small_sky_soap_maps):
+def test_source_to_object_map(small_sky_object_catalog, small_sky_source_catalog, small_sky_soap_maps):
     """Test creating plan map for object and source catalogs."""
-    source_to_object = source_to_object_map(small_sky_soap_args)
+    object_catalog = Catalog.read_from_hipscat(small_sky_object_catalog)
+    source_catalog = Catalog.read_from_hipscat(small_sky_source_catalog)
+
+    source_to_object = source_to_object_map(object_catalog, source_catalog)
     assert source_to_object == small_sky_soap_maps
+
+
+def test_object_to_source_map(small_sky_object_catalog, small_sky_source_catalog):
+    """Test creating plan map for object and source catalogs."""
+    expected = {
+        HealpixPixel(0, 11): [
+            HealpixPixel(2, 176),
+            HealpixPixel(2, 177),
+            HealpixPixel(2, 178),
+            HealpixPixel(2, 179),
+            HealpixPixel(2, 180),
+            HealpixPixel(2, 181),
+            HealpixPixel(2, 182),
+            HealpixPixel(2, 183),
+            HealpixPixel(2, 184),
+            HealpixPixel(2, 185),
+            HealpixPixel(2, 186),
+            HealpixPixel(2, 187),
+            HealpixPixel(1, 47),
+            HealpixPixel(0, 4),
+        ]
+    }
+    ## Oh, we're so silly!
+    object_catalog = Catalog.read_from_hipscat(small_sky_source_catalog)
+    source_catalog = Catalog.read_from_hipscat(small_sky_object_catalog)
+
+    source_to_object = source_to_object_map(object_catalog, source_catalog)
+    assert source_to_object == expected
+
+
+def test_mismatch_order_map(catalog_info_data, source_catalog_info):
+    """Create some catalogs that will exercise edge case behavior of map-generation."""
+    catalog_pixels = pd.DataFrame(
+        data=[[1, 0, 16], [2, 0, 68], [2, 0, 69], [2, 0, 70], [2, 0, 71]],
+        columns=["Norder", "Dir", "Npix"],
+    )
+    object_catalog = Catalog(CatalogInfo(**catalog_info_data), catalog_pixels)
+    catalog_pixels = pd.DataFrame(
+        data=[[1, 0, 16]],
+        columns=["Norder", "Dir", "Npix"],
+    )
+    source_catalog = Catalog(CatalogInfo(**source_catalog_info), catalog_pixels)
+
+    expected = {
+        HealpixPixel(1, 16): [
+            HealpixPixel(1, 16),
+            HealpixPixel(2, 71),
+            HealpixPixel(2, 68),
+            HealpixPixel(2, 69),
+            HealpixPixel(2, 70),
+        ],
+    }
+    source_to_object = source_to_object_map(object_catalog, source_catalog)
+    assert source_to_object == expected
 
 
 def test_counting_done(small_sky_soap_args):

@@ -41,3 +41,27 @@ def small_sky_soap_args(small_sky_object_catalog, small_sky_source_catalog, tmp_
         overwrite=True,
         progress_bar=False,
     )
+
+
+@pytest.fixture
+def catalog_info_data() -> dict:
+    return {
+        "catalog_name": "test_name",
+        "catalog_type": "object",
+        "total_rows": 10,
+        "epoch": "J2000",
+        "ra_column": "ra",
+        "dec_column": "dec",
+    }
+
+
+@pytest.fixture
+def source_catalog_info() -> dict:
+    return {
+        "catalog_name": "test_source",
+        "catalog_type": "source",
+        "total_rows": 100,
+        "epoch": "J2000",
+        "ra_column": "source_ra",
+        "dec_column": "source_dec",
+    }
