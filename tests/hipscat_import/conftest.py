@@ -37,7 +37,7 @@ def pytest_collection_modifyitems(config, items):
             if "skip_ray" in mark.kwargs and use_ray:
                 item.add_marker(skip_ray)
         if timeout:
-            if first_dask :
+            if first_dask:
                 ## The first test requires more time to set up the dask/ray client
                 timeout += 10
                 first_dask = False

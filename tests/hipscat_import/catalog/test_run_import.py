@@ -46,8 +46,8 @@ def test_resume_dask_runner(
     histogram[11] = 131
     empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        plan.write_log_key(ResumePlan.MAPPING_STAGE,f"map_{file_index}")
-        plan.write_log_key(ResumePlan.SPLITTING_STAGE,f"split_{file_index}")
+        plan.write_log_key(ResumePlan.MAPPING_STAGE, f"map_{file_index}")
+        plan.write_log_key(ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
         ResumePlan.write_partial_histogram(
             tmp_path=temp_path,
             mapping_key=f"map_{file_index}",
