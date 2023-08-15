@@ -2,11 +2,10 @@
 
 import abc
 
-import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from astropy.table import Table
-from hipscat.io import file_io
+from hipscat.io import FilePointer, file_io
 
 # pylint: disable=too-few-public-methods,too-many-arguments
 
@@ -141,7 +140,9 @@ class CsvReader(InputReader):
         self.regular_file_exists(input_file)
 
         if self.schema_file:
-            schema_parquet = pd.read_parquet(self.schema_file, dtype_backend="numpy_nullable")
+            schema_parquet = file_io.load_parquet_to_pandas(
+                FilePointer(self.schema_file), dtype_backend="numpy_nullable"
+            )
 
         use_column_names = None
         if self.column_names:
@@ -155,8 +156,8 @@ class CsvReader(InputReader):
         elif self.schema_file:
             use_type_map = schema_parquet.dtypes.to_dict()
 
-        with pd.read_csv(
-            input_file,
+        with file_io.load_csv_to_pandas(
+            FilePointer(input_file),
             chunksize=self.chunksize,
             sep=self.separator,
             header=self.header,

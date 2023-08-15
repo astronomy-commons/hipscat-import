@@ -50,16 +50,17 @@ def test_object_to_source_map(small_sky_object_catalog, small_sky_source_catalog
 
 def test_mismatch_order_map(catalog_info_data, source_catalog_info):
     """Create some catalogs that will exercise edge case behavior of map-generation."""
-    catalog_pixels = pd.DataFrame(
-        data=[[1, 0, 16], [2, 0, 68], [2, 0, 69], [2, 0, 70], [2, 0, 71]],
-        columns=["Norder", "Dir", "Npix"],
+    object_catalog = Catalog(
+        CatalogInfo(**catalog_info_data),
+        [
+            HealpixPixel(1, 16),
+            HealpixPixel(2, 68),
+            HealpixPixel(2, 69),
+            HealpixPixel(2, 70),
+            HealpixPixel(2, 71),
+        ],
     )
-    object_catalog = Catalog(CatalogInfo(**catalog_info_data), catalog_pixels)
-    catalog_pixels = pd.DataFrame(
-        data=[[1, 0, 16]],
-        columns=["Norder", "Dir", "Npix"],
-    )
-    source_catalog = Catalog(CatalogInfo(**source_catalog_info), catalog_pixels)
+    source_catalog = Catalog(CatalogInfo(**source_catalog_info), [HealpixPixel(1, 16)])
 
     expected = {
         HealpixPixel(1, 16): [

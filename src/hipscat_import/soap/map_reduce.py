@@ -17,7 +17,9 @@ def _count_joins_for_object(source_data, object_catalog_dir, object_id_column, o
         pixel_order=object_pixel.order,
         pixel_number=object_pixel.pixel,
     )
-    object_data = pd.read_parquet(path=object_path, columns=[object_id_column]).set_index(object_id_column)
+    object_data = file_io.load_parquet_to_pandas(object_path, columns=[object_id_column]).set_index(
+        object_id_column
+    )
 
     joined_data = source_data.merge(object_data, how="inner", left_index=True, right_index=True)
 
@@ -64,9 +66,9 @@ def count_joins(
         pixel_order=source_pixel.order,
         pixel_number=source_pixel.pixel,
     )
-    source_data = pd.read_parquet(path=source_path, columns=[soap_args.source_object_id_column]).set_index(
-        soap_args.source_object_id_column
-    )
+    source_data = file_io.load_parquet_to_pandas(
+        source_path, columns=[soap_args.source_object_id_column]
+    ).set_index(soap_args.source_object_id_column)
 
     remaining_sources = len(source_data)
     results = []

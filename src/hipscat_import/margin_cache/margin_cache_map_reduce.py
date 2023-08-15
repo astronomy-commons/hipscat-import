@@ -1,5 +1,4 @@
 import healpy as hp
-import pandas as pd
 import pyarrow.dataset as ds
 from hipscat import pixel_math
 from hipscat.io import file_io, paths
@@ -17,7 +16,7 @@ def map_pixel_shards(
     dec_column,
 ):
     """Creates margin cache shards from a source partition file."""
-    data = pd.read_parquet(partition_file)
+    data = file_io.load_parquet_to_pandas(partition_file)
 
     data["margin_pixel"] = hp.ang2pix(
         2**margin_order,
