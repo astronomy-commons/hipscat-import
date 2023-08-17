@@ -41,7 +41,7 @@ def test_resume_dask_runner(
         os.path.join(resume_dir, "intermediate"),
         temp_path,
     )
-    plan = ResumePlan(tmp_path=temp_path, progress_bar=False, resume=True)
+    plan = ResumePlan(tmp_path=temp_path, progress_bar=False)
     histogram = hist.empty_histogram(0)
     histogram[11] = 131
     empty = hist.empty_histogram(0)
@@ -59,21 +59,6 @@ def test_resume_dask_runner(
         os.path.join(tmp_path, "resume", "Norder=0"),
     )
 
-    with pytest.raises(ValueError, match="resume"):
-        ## Check that we fail if there are some existing intermediate files
-        ImportArguments(
-            output_catalog_name="resume",
-            input_path=small_sky_parts_dir,
-            input_format="csv",
-            output_path=tmp_path,
-            dask_tmp=tmp_path,
-            tmp_dir=tmp_path,
-            overwrite=True,
-            highest_healpix_order=0,
-            pixel_threshold=1000,
-            progress_bar=False,
-        )
-
     args = ImportArguments(
         output_catalog_name="resume",
         input_path=small_sky_parts_dir,
@@ -82,7 +67,6 @@ def test_resume_dask_runner(
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
         overwrite=True,
-        resume=True,
         highest_healpix_order=0,
         pixel_threshold=1000,
         progress_bar=False,
@@ -124,7 +108,6 @@ def test_resume_dask_runner(
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
         overwrite=True,
-        resume=True,
         highest_healpix_order=0,
         pixel_threshold=1000,
         progress_bar=False,

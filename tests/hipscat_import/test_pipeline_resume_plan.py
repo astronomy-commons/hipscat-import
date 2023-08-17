@@ -53,7 +53,7 @@ def test_done_file(tmp_path):
 
 def test_safe_to_resume(tmp_path):
     """Check that we throw errors when it's not safe to resume."""
-    plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False)
+    plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False, resume=False)
     plan.safe_to_resume()
 
     ## check is idempotent - intermediate directory exists but does not
