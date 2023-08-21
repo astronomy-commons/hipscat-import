@@ -37,7 +37,6 @@ def small_sky_soap_args(small_sky_object_catalog, small_sky_source_catalog, tmp_
         source_object_id_column="object_id",
         output_catalog_name="small_sky_association",
         output_path=tmp_path,
-        resume=True,
         overwrite=True,
         progress_bar=False,
     )

@@ -18,7 +18,7 @@ class SoapArguments(RuntimeArguments):
     source_catalog_dir: str = ""
     source_object_id_column: str = ""
 
-    resume: bool = False
+    resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run the pipeline where we left off"""
 

@@ -18,7 +18,7 @@ class PipelineResumePlan:
 
     tmp_path: FilePointer
     """path for any intermediate files"""
-    resume: bool = False
+    resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run pipeline where we left off"""
     progress_bar: bool = True
@@ -31,13 +31,15 @@ class PipelineResumePlan:
         Raises:
             ValueError: if the tmp_path already exists and contains some files.
         """
-        if not self.resume:
-            if file_io.directory_has_contents(self.tmp_path):
+        if file_io.directory_has_contents(self.tmp_path):
+            if not self.resume:
                 raise ValueError(
                     f"tmp_path ({self.tmp_path}) contains intermediate files."
                     " choose a different directory or use --resume flag"
                 )
-        file_io.make_directory(self.tmp_path, exist_ok=True)
+            print(f"tmp_path ({self.tmp_path}) contains intermediate files. resuming prior progress.")
+        else:
+            file_io.make_directory(self.tmp_path, exist_ok=True)
 
     def done_file_exists(self, stage_name):
         """Is there a file at a given path?
