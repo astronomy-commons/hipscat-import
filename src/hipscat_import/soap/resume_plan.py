@@ -35,7 +35,9 @@ class SoapPlan(PipelineResumePlan):
 
     def gather_plan(self, args):
         """Initialize the plan."""
-        with tqdm(total=5, desc="Planning ", disable=not self.progress_bar) as step_progress:
+        with tqdm(
+            total=3, desc=self.get_formatted_stage_name("Planning"), disable=not self.progress_bar
+        ) as step_progress:
             ## Make sure it's safe to use existing resume state.
             super().safe_to_resume()
             step_progress.update(1)

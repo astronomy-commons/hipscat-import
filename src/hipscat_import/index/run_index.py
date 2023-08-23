@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 import hipscat_import.index.map_reduce as mr
 from hipscat_import.index.arguments import IndexArguments
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
 
 def run(args):
@@ -16,7 +17,9 @@ def run(args):
     rows_written = mr.create_index(args)
 
     # All done - write out the metadata
-    with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
+    with tqdm(
+        total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
+    ) as step_progress:
         # pylint: disable=duplicate-code
         catalog_info = args.to_catalog_info(int(rows_written))
         write_metadata.write_provenance_info(
