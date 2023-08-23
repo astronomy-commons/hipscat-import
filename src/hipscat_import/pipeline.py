@@ -8,11 +8,13 @@ import hipscat_import.catalog.run_import as catalog_runner
 import hipscat_import.index.run_index as index_runner
 import hipscat_import.margin_cache.margin_cache as margin_runner
 import hipscat_import.soap.run_soap as soap_runner
+import hipscat_import.verification.run_verification as verification_runner
 from hipscat_import.catalog.arguments import ImportArguments
 from hipscat_import.index.arguments import IndexArguments
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 from hipscat_import.runtime_arguments import RuntimeArguments
 from hipscat_import.soap.arguments import SoapArguments
+from hipscat_import.verification.arguments import VerificationArguments
 
 # pragma: no cover
 
@@ -45,6 +47,8 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
             margin_runner.generate_margin_cache(args, client)
         elif isinstance(args, SoapArguments):
             soap_runner.run(args, client)
+        elif isinstance(args, VerificationArguments):
+            verification_runner.run(args)
         else:
             raise ValueError("unknown args type")
     except Exception as exception:  # pylint: disable=broad-exception-caught
