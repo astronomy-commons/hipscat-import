@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
 
 def _map_pixels(args, client):
@@ -106,7 +107,9 @@ def run(args, client):
         raise ValueError("args must be type ImportArguments")
     _map_pixels(args, client)
 
-    with tqdm(total=2, desc="Binning  ", disable=not args.progress_bar) as step_progress:
+    with tqdm(
+        total=2, desc=PipelineResumePlan.get_formatted_stage_name("Binning"), disable=not args.progress_bar
+    ) as step_progress:
         raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
         step_progress.update(1)
         if args.constant_healpix_order >= 0:
@@ -141,7 +144,9 @@ def run(args, client):
         _reduce_pixels(args, destination_pixel_map, client)
 
     # All done - write out the metadata
-    with tqdm(total=6, desc="Finishing", disable=not args.progress_bar) as step_progress:
+    with tqdm(
+        total=6, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
+    ) as step_progress:
         catalog_info = args.to_catalog_info(int(raw_histogram.sum()))
         io.write_provenance_info(
             catalog_base_dir=args.catalog_path,

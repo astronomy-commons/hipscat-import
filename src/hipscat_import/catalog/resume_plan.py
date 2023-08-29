@@ -40,7 +40,9 @@ class ResumePlan(PipelineResumePlan):
 
     def gather_plan(self):
         """Initialize the plan."""
-        with tqdm(total=5, desc="Planning ", disable=not self.progress_bar) as step_progress:
+        with tqdm(
+            total=4, desc=self.get_formatted_stage_name("Planning"), disable=not self.progress_bar
+        ) as step_progress:
             ## Make sure it's safe to use existing resume state.
             super().safe_to_resume()
             step_progress.update(1)
@@ -71,7 +73,6 @@ class ResumePlan(PipelineResumePlan):
             step_progress.update(1)
 
             ## Gather keys for execution.
-            step_progress.update(1)
             if not mapping_done:
                 mapped_keys = set(self.read_log_keys(self.MAPPING_STAGE))
                 self.map_files = [
