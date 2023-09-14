@@ -41,7 +41,7 @@ class ResumePlan(PipelineResumePlan):
     def gather_plan(self):
         """Initialize the plan."""
         with tqdm(
-            total=4, desc=self.get_formatted_stage_name("Planning"), disable=not self.progress_bar
+            total=5, desc=self.get_formatted_stage_name("Planning"), disable=not self.progress_bar
         ) as step_progress:
             ## Make sure it's safe to use existing resume state.
             super().safe_to_resume()
@@ -63,10 +63,9 @@ class ResumePlan(PipelineResumePlan):
             unique_file_paths = set(self.input_paths)
             self.input_paths = list(unique_file_paths)
             self.input_paths.sort()
-            original_input_paths = set(self.read_log_keys(self.ORIGINAL_INPUT_PATHS))
+            original_input_paths = self.get_original_paths()
             if not original_input_paths:
-                for input_path in self.input_paths:
-                    self.write_log_key(self.ORIGINAL_INPUT_PATHS, input_path)
+                self.save_original_paths()
             else:
                 if original_input_paths != unique_file_paths:
                     raise ValueError("Different file set from resumed pipeline execution.")
@@ -74,14 +73,14 @@ class ResumePlan(PipelineResumePlan):
 
             ## Gather keys for execution.
             if not mapping_done:
-                mapped_keys = set(self.read_log_keys(self.MAPPING_STAGE))
+                mapped_keys = set(self.get_mapping_keys_from_histograms())
                 self.map_files = [
                     (f"map_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
                     if f"map_{i}" not in mapped_keys
                 ]
             if not splitting_done:
-                split_keys = set(self.read_log_keys(self.SPLITTING_STAGE))
+                split_keys = set(self.read_done_keys(self.SPLITTING_STAGE))
                 self.split_keys = [
                     (f"split_{i}", file_path)
                     for i, file_path in enumerate(self.input_paths)
@@ -90,6 +89,48 @@ class ResumePlan(PipelineResumePlan):
             ## We don't pre-gather the plan for the reducing keys.
             ## It requires the full destination pixel map.
             step_progress.update(1)
+            ## Go ahead and create our directories for storing resume files.
+            file_io.make_directory(
+                file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
+                exist_ok=True,
+            )
+            file_io.make_directory(
+                file_io.append_paths_to_pointer(self.tmp_path, self.SPLITTING_STAGE),
+                exist_ok=True,
+            )
+            file_io.make_directory(
+                file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
+                exist_ok=True,
+            )
+            step_progress.update(1)
+
+    def get_original_paths(self):
+        """Get all input file paths from the first pipeline attempt."""
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
+        try:
+            with open(file_path, "r", encoding="utf-8") as file_handle:
+                contents = file_handle.readlines()
+            contents = [path.strip() for path in contents]
+            original_input_paths = set(contents)
+            return original_input_paths
+        except FileNotFoundError:
+            return []
+
+    def save_original_paths(self):
+        """Save input file paths from the first pipeline attempt."""
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
+        with open(file_path, "w", encoding="utf-8") as file_handle:
+            for path in self.input_paths:
+                file_handle.write(f"{path}\n")
+
+    def get_mapping_keys_from_histograms(self):
+        """Gather keys for successful mapping tasks from histogram names.
+
+        Returns:
+            list of mapping keys taken from files like /resume/path/mapping_key.binary
+        """
+        prefix = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR)
+        return self.get_keys_from_file_names(prefix, ".binary")
 
     def read_histogram(self, healpix_order):
         """Return histogram with healpix_order'd shape
@@ -129,14 +170,19 @@ class ResumePlan(PipelineResumePlan):
     @classmethod
     def write_partial_histogram(cls, tmp_path, mapping_key: str, histogram):
         """Write partial histogram to a special intermediate directory"""
-        file_io.make_directory(
-            file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR),
-            exist_ok=True,
-        )
-
         file_name = file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary")
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
+
+    @classmethod
+    def splitting_key_done(cls, tmp_path, splitting_key: str):
+        """Mark a single splitting task as done"""
+        cls.touch_key_done_file(tmp_path, cls.SPLITTING_STAGE, splitting_key)
+
+    @classmethod
+    def reducing_key_done(cls, tmp_path, reducing_key: str):
+        """Mark a single reducing task as done"""
+        cls.touch_key_done_file(tmp_path, cls.REDUCING_STAGE, reducing_key)
 
     def wait_for_mapping(self, futures):
         """Wait for mapping futures to complete."""
@@ -164,7 +210,7 @@ class ResumePlan(PipelineResumePlan):
         - reduce key (string of destination order+pixel)
 
         """
-        reduced_keys = set(self.read_log_keys(self.REDUCING_STAGE))
+        reduced_keys = set(self.read_done_keys(self.REDUCING_STAGE))
         reduce_items = [
             (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, source_pixels in destination_pixel_map.items()

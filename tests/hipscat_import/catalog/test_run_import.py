@@ -46,13 +46,14 @@ def test_resume_dask_runner(
     histogram[11] = 131
     empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        plan.write_log_key(ResumePlan.MAPPING_STAGE, f"map_{file_index}")
-        plan.write_log_key(ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
+        ResumePlan.touch_key_done_file(temp_path, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
         ResumePlan.write_partial_histogram(
             tmp_path=temp_path,
             mapping_key=f"map_{file_index}",
             histogram=histogram if file_index == 0 else empty,
         )
+
+    ResumePlan.touch_key_done_file(temp_path, ResumePlan.REDUCING_STAGE, "0_11")
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder=0"),
@@ -96,9 +97,9 @@ def test_resume_dask_runner(
         temp_path,
     )
     plan = args.resume_plan
-    plan.touch_done_file(ResumePlan.MAPPING_STAGE)
-    plan.touch_done_file(ResumePlan.SPLITTING_STAGE)
-    plan.touch_done_file(ResumePlan.REDUCING_STAGE)
+    plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
+    plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
+    plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
 
     args = ImportArguments(
         output_catalog_name="resume",
