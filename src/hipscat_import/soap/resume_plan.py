@@ -77,7 +77,7 @@ class SoapPlan(PipelineResumePlan):
             - source key (string of source order+pixel)
 
         """
-        counted_keys = set(self.read_log_keys(self.COUNTING_STAGE))
+        counted_keys = set(self.get_keys_from_file_names(self.tmp_path, ".csv"))
         self.count_keys = [
             (hp_pixel, object_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, object_pixels in source_pixel_map.items()

@@ -29,7 +29,7 @@ def _map_pixels(args, client):
                 mr.map_to_pixels,
                 key=key,
                 input_file=file_path,
-                cache_path=args.tmp_path,
+                resume_path=args.resume_plan.tmp_path,
                 file_reader=reader_future,
                 mapping_key=key,
                 highest_order=args.mapping_healpix_order,
@@ -58,8 +58,9 @@ def _split_pixels(args, alignment_future, client):
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
-                shard_suffix=key,
-                cache_path=args.tmp_path,
+                splitting_key=key,
+                cache_shard_path=args.tmp_path,
+                resume_path=args.resume_plan.tmp_path,
                 alignment=alignment_future,
             )
         )
@@ -83,7 +84,9 @@ def _reduce_pixels(args, destination_pixel_map, client):
             client.submit(
                 mr.reduce_pixel_shards,
                 key=destination_pixel_key,
-                cache_path=args.tmp_path,
+                cache_shard_path=args.tmp_path,
+                resume_path=args.resume_plan.tmp_path,
+                reducing_key=destination_pixel_key,
                 destination_pixel_order=destination_pixel.order,
                 destination_pixel_number=destination_pixel.pixel,
                 destination_pixel_size=source_pixels[0],
