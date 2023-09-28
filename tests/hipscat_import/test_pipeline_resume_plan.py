@@ -74,3 +74,17 @@ def test_safe_to_resume(tmp_path):
     ## If there are no more intermediate files, we don't need to set resume.
     plan.clean_resume_files()
     plan.safe_to_resume()
+
+
+def test_formatted_stage_name():
+    formatted = PipelineResumePlan.get_formatted_stage_name(None)
+    assert formatted == "Progress  "
+
+    formatted = PipelineResumePlan.get_formatted_stage_name("")
+    assert formatted == "Progress  "
+
+    formatted = PipelineResumePlan.get_formatted_stage_name("stage")
+    assert formatted == "Stage     "
+
+    formatted = PipelineResumePlan.get_formatted_stage_name("very long stage name")
+    assert formatted == "Very long stage name"

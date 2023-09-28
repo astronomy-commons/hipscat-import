@@ -21,7 +21,7 @@ dependencies = [
     "healpy",
     "hipscat >= 0.1.2",
     "ipykernel", # Support for Jupyter notebooks
-    "pandas",
+    "pandas < 2.1.0",
     "pyarrow",
     "tqdm",
     "numpy < 1.25",
@@ -36,9 +36,9 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-timeout",
-    "sphinx==6.1.3", # Used to automatically generate documentation
-    "sphinx_rtd_theme==1.2.0", # Used to render documentation
-    "sphinx-autoapi==2.0.1", # Used to automatically generate api documentation
+    "sphinx", # Used to automatically generate documentation
+    "sphinx-rtd-theme", # Used to render documentation
+    "sphinx-autoapi", # Used to automatically generate api documentation
     "mypy", # Used for static type checking of files
     # if you add dependencies here while experimenting in a notebook and you
     # want that notebook to render in your documentation, please add the
@@ -53,7 +53,7 @@ dev = [
 
 [build-system]
 requires = [
-    "setuptools>=45", # Used to build and package the Python project
+    "setuptools>=62", # Used to build and package the Python project
     "setuptools_scm>=6.2", # Gets release version from git. Makes it available programmatically
 ]
 build-backend = "setuptools.build_meta"
@@ -68,6 +68,9 @@ hipscat_import = ["py.typed"]
 timeout = 1
 markers = [
     "dask: mark tests as having a dask client runtime dependency",
+]
+testpaths = [
+    "tests",
 ]
 
 [tool.coverage.report]

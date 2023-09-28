@@ -6,6 +6,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 from hipscat.io import file_io, write_metadata
 from tqdm import tqdm
 
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 from hipscat_import.soap.arguments import SoapArguments
 from hipscat_import.soap.map_reduce import combine_partial_results, count_joins
 from hipscat_import.soap.resume_plan import SoapPlan
@@ -36,7 +37,9 @@ def run(args, client):
         resume_plan.wait_for_counting(futures)
 
     # All done - write out the metadata
-    with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
+    with tqdm(
+        total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
+    ) as step_progress:
         # pylint: disable=duplicate-code
         # Very similar to /index/run_index.py
         combine_partial_results(args.tmp_path, args.catalog_path)

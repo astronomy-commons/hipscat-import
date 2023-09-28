@@ -110,9 +110,10 @@ class PipelineResumePlan:
             stage_name(str): name of the stage (e.g. mapping, reducing)
         """
         some_error = False
+        formatted_stage_name = self.get_formatted_stage_name(stage_name)
         for future in tqdm(
             as_completed(futures),
-            desc=stage_name,
+            desc=formatted_stage_name,
             total=len(futures),
             disable=(not self.progress_bar),
         ):
@@ -123,3 +124,16 @@ class PipelineResumePlan:
         if some_error:  # pragma: no cover
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")
         self.touch_done_file(stage_name)
+
+    @staticmethod
+    def get_formatted_stage_name(stage_name) -> str:
+        """Create a stage name of consistent minimum length. Ensures that the tqdm
+        progress bars can line up nicely when multiple stages must run.
+
+        Args:
+            stage_name (str): name of the stage (e.g. mapping, reducing)
+        """
+        if stage_name is None or len(stage_name) == 0:
+            stage_name = "progress"
+
+        return f"{stage_name.capitalize(): <10}"
