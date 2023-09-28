@@ -14,7 +14,10 @@ class VerificationArguments(RuntimeArguments):
 
     ## Input
     input_catalog_path: str = ""
+    """Path to an existing catalog that will be inspected."""
     input_catalog: Optional[Catalog] = None
+    """In-memory representation of a catalog. If not provided, it will be loaded
+    from the input_catalog_path."""
 
     ## Verification options
     field_distribution_cols: List[str] = field(default_factory=list)
@@ -26,9 +29,12 @@ class VerificationArguments(RuntimeArguments):
 
     def _check_arguments(self):
         super()._check_arguments()
+        if not self.input_catalog_path and not self.input_catalog:
+            raise ValueError("input catalog is required (either input_catalog_path or input_catalog)")
+        if not self.input_catalog:
+            self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
         if not self.input_catalog_path:
-            raise ValueError("input_catalog_path is required")
-        self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
+            self.input_catalog_path = self.input_catalog.catalog_path
 
     def additional_runtime_provenance_info(self) -> dict:
         return {

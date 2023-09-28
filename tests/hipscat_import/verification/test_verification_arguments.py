@@ -2,6 +2,7 @@
 
 
 import pytest
+from hipscat.catalog import Catalog
 
 from hipscat_import.verification.arguments import VerificationArguments
 
@@ -12,7 +13,7 @@ def test_none():
         VerificationArguments()
 
 
-def test_empty_required(tmp_path, small_sky_object_catalog):
+def test_empty_required(tmp_path):
     """*Most* required arguments are provided."""
     ## Input path is missing
     with pytest.raises(ValueError, match="input_catalog_path"):
@@ -45,6 +46,20 @@ def test_good_paths(tmp_path, small_sky_object_catalog):
     tmp_path_str = str(tmp_path)
     args = VerificationArguments(
         input_catalog_path=small_sky_object_catalog,
+        output_path=tmp_path,
+        output_catalog_name="small_sky_object_verification_report",
+    )
+    assert args.input_catalog_path == small_sky_object_catalog
+    assert str(args.output_path) == tmp_path_str
+    assert str(args.tmp_path).startswith(tmp_path_str)
+
+
+def test_catalog_object(tmp_path, small_sky_object_catalog):
+    """Required arguments are provided, and paths are found."""
+    small_sky_catalog_object = Catalog.read_from_hipscat(catalog_path=small_sky_object_catalog)
+    tmp_path_str = str(tmp_path)
+    args = VerificationArguments(
+        input_catalog=small_sky_catalog_object,
         output_path=tmp_path,
         output_catalog_name="small_sky_object_verification_report",
     )
