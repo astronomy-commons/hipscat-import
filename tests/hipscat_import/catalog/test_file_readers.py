@@ -33,6 +33,14 @@ def test_unknown_file_type():
         get_file_reader("unknown")
 
 
+def test_file_exists(small_sky_dir):
+    """File reader factory method should fail for missing files or directories"""
+    with pytest.raises(FileNotFoundError, match="File not found"):
+        next(CsvReader().read("foo_not_really_a_path"))
+    with pytest.raises(FileNotFoundError, match="Directory found at path"):
+        next(CsvReader().read(small_sky_dir))
+
+
 def test_csv_reader(small_sky_single_file):
     """Verify we can read the csv file into a single data frame."""
     total_chunks = 0
