@@ -46,6 +46,35 @@ def test_empty_required(tmp_path, small_sky_object_catalog, small_sky_source_cat
             )
 
 
+def test_catalog_paths(tmp_path, small_sky_object_catalog, small_sky_source_catalog):
+    """*Most* required arguments are provided."""
+    ## Object catalog path is bad.
+    with pytest.raises(ValueError, match="object_catalog_dir"):
+        SoapArguments(
+            object_catalog_dir="/foo",
+            object_id_column="id",
+            source_catalog_dir=small_sky_source_catalog,
+            source_object_id_column="object_id",
+            output_catalog_name="small_sky_association",
+            output_path=tmp_path,
+            progress_bar=False,
+            overwrite=True,
+        )
+
+    ## Source catalog path is bad.
+    with pytest.raises(ValueError, match="source_catalog_dir"):
+        SoapArguments(
+            object_catalog_dir=small_sky_object_catalog,
+            object_id_column="id",
+            source_catalog_dir="/foo",
+            source_object_id_column="object_id",
+            output_catalog_name="small_sky_association",
+            output_path=tmp_path,
+            progress_bar=False,
+            overwrite=True,
+        )
+
+
 def test_compute_partition_size(tmp_path, small_sky_object_catalog, small_sky_source_catalog):
     """Test validation of compute_partition_size."""
     with pytest.raises(ValueError, match="compute_partition_size"):
