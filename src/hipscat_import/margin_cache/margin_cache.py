@@ -107,9 +107,14 @@ def generate_margin_cache(args, client):
     # determine which order to generate margin pixels for
     partition_stats = args.catalog.partition_info.get_healpix_pixels()
 
-    margin_pairs = _find_partition_margin_pixel_pairs(partition_stats, args.margin_order)
+    # get the negative tree pixels
+    negative_pixels = args.catalog.generate_negative_tree_pixels()
 
-    _create_margin_directory(partition_stats, args.catalog_path)
+    combined_pixels = partition_stats + negative_pixels
+
+    margin_pairs = _find_partition_margin_pixel_pairs(combined_pixels, args.margin_order)
+
+    _create_margin_directory(combined_pixels, args.catalog_path)
 
     _map_to_margin_shards(
         client=client,
@@ -118,4 +123,4 @@ def generate_margin_cache(args, client):
         margin_pairs=margin_pairs,
     )
 
-    _reduce_margin_shards(client=client, args=args, partition_pixels=partition_stats)
+    _reduce_margin_shards(client=client, args=args, partition_pixels=combined_pixels)
