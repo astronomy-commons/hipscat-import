@@ -22,6 +22,17 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             output_catalog_name="small_sky_object_index",
         )
 
+    ## Input path is bad
+    with pytest.raises(ValueError, match="input_catalog_path"):
+        IndexArguments(
+            input_catalog_path="/foo",
+            indexing_column="id",
+            output_path=tmp_path,
+            output_catalog_name="small_sky_object_index",
+            overwrite=True,
+        )
+
+    ## Indexing column is required.
     with pytest.raises(ValueError, match="indexing_column "):
         IndexArguments(
             input_catalog_path=small_sky_object_catalog,

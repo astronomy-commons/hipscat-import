@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
 from hipscat.catalog.catalog_type import CatalogType
+from hipscat.io.validation import is_valid_catalog
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -33,11 +34,15 @@ class SoapArguments(RuntimeArguments):
             raise ValueError("object_catalog_dir is required")
         if not self.object_id_column:
             raise ValueError("object_id_column is required")
+        if not is_valid_catalog(self.object_catalog_dir):
+            raise ValueError("object_catalog_dir not a valid catalog")
 
         if not self.source_catalog_dir:
             raise ValueError("source_catalog_dir is required")
         if not self.source_object_id_column:
             raise ValueError("source_object_id_column is required")
+        if not is_valid_catalog(self.source_catalog_dir):
+            raise ValueError("source_catalog_dir not a valid catalog")
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
