@@ -61,6 +61,13 @@ Most folks use conda for virtual environments. You may want to as well.
 Testing
 -------------------------------------------------------------------------------
 
+We use ``pytest`` as our preferred unit test runner engine, in keeping with
+LSST DM style guide. We make heavy use of 
+`pytest fixtures <https://docs.pytest.org/en/7.1.x/explanation/fixtures.html#about-fixtures>`_, 
+which set up various resources used for unit testing, or provide consistent 
+paths. These are defined in ``conftest.py`` files. They're powerful and flexible 
+(and fun in their own way), and we encourage contributors to familiarize themselves.
+
 Please add or update unit tests for all changes made to the codebase. You can run
 unit tests locally simply with:
 
@@ -80,6 +87,9 @@ Create your PR
 -------------------------------------------------------------------------------
 
 Please use PR best practices, and get someone to review your code.
+
+The LINCC Frameworks guidelines and philosophy on code reviews can be found on 
+`our wiki <https://github.com/lincc-frameworks/docs/wiki/Design-and-Code-Review-Policy>`_.
 
 We have a suite of continuous integration tests that run on PR creation. Please
 follow the recommendations of the linter.
