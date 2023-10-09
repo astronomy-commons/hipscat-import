@@ -70,6 +70,8 @@ class PipelineResumePlan:
 
         Args:
             stage_name(str): name of the stage (e.g. mapping, reducing)
+            stage_name(str): name of the stage (e.g. mapping, reducing)
+            key (str): unique string for each task (e.g. "map_57")
         """
         Path(file_io.append_paths_to_pointer(tmp_path, stage_name, f"{key}_done")).touch()
 

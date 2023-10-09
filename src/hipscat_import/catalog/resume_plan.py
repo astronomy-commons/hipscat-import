@@ -169,19 +169,41 @@ class ResumePlan(PipelineResumePlan):
 
     @classmethod
     def write_partial_histogram(cls, tmp_path, mapping_key: str, histogram):
-        """Write partial histogram to a special intermediate directory"""
+        """Write partial histogram to a special intermediate directory
+
+        Args:
+            tmp_path (str): where to write intermediate resume files.
+            mapping_key (str): unique string for each mapping task (e.g. "map_57")
+            histogram (np.array): one-dimensional numpy array of long integers where
+                the value at each index corresponds to the number of objects found at
+                the healpix pixel.
+        """
+        file_io.make_directory(
+            file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR),
+            exist_ok=True,
+        )
         file_name = file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary")
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
 
     @classmethod
     def splitting_key_done(cls, tmp_path, splitting_key: str):
-        """Mark a single splitting task as done"""
+        """Mark a single splitting task as done
+
+        Args:
+            tmp_path (str): where to write intermediate resume files.
+            splitting_key (str): unique string for each splitting task (e.g. "split_57")
+        """
         cls.touch_key_done_file(tmp_path, cls.SPLITTING_STAGE, splitting_key)
 
     @classmethod
     def reducing_key_done(cls, tmp_path, reducing_key: str):
-        """Mark a single reducing task as done"""
+        """Mark a single reducing task as done
+
+        Args:
+            tmp_path (str): where to write intermediate resume files.
+            reducing_key (str): unique string for each reducing task (e.g. "3_57")
+        """
         cls.touch_key_done_file(tmp_path, cls.REDUCING_STAGE, reducing_key)
 
     def wait_for_mapping(self, futures):
