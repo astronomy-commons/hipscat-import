@@ -87,9 +87,6 @@ target-version = ["py38"]
 profile = "black"
 line_length = 110
 
-[tool.setuptools.package-data]
-hipscat_import = ["py.typed"]
-
 [tool.coverage.run]
 omit = [
     "src/hipscat_import/_version.py", # auto-generated
