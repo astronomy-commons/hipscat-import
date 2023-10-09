@@ -204,7 +204,7 @@ def reduce_pixel_shards(
           for more in-depth discussion of this field.
 
     Args:
-        cache_path (FilePointer): where to read intermediate parquet files
+        cache_shard_path (FilePointer): where to read intermediate parquet files.
         resume_path (FilePointer): where to write resume files.
         reducing_key (str): unique string for this task, used for resume files.
         origin_pixel_numbers (list[int]): high order pixels, with object
