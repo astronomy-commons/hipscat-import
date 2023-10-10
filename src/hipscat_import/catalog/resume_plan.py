@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from numpy import frombuffer
 from tqdm import tqdm
 
@@ -24,7 +25,7 @@ class ResumePlan(PipelineResumePlan):
     """list of files (and job keys) that have yet to be mapped"""
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
-    destination_pixel_map: Optional[np.array] = None
+    destination_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"
