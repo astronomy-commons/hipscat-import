@@ -62,6 +62,7 @@ class SoapPlan(PipelineResumePlan):
     def wait_for_counting(self, futures):
         """Wait for counting stage futures to complete."""
         self.wait_for_futures(futures, self.COUNTING_STAGE)
+        self.touch_stage_done_file(self.COUNTING_STAGE)
 
     def is_counting_done(self) -> bool:
         """Are there sources left to count?"""

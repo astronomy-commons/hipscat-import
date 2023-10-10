@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from hipscat import pixel_math
@@ -24,6 +24,7 @@ class ResumePlan(PipelineResumePlan):
     """list of files (and job keys) that have yet to be mapped"""
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
+    destination_pixel_map: Optional[np.array] = None
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"
@@ -73,19 +74,9 @@ class ResumePlan(PipelineResumePlan):
 
             ## Gather keys for execution.
             if not mapping_done:
-                mapped_keys = set(self.get_mapping_keys_from_histograms())
-                self.map_files = [
-                    (f"map_{i}", file_path)
-                    for i, file_path in enumerate(self.input_paths)
-                    if f"map_{i}" not in mapped_keys
-                ]
+                self.map_files = self.get_remaining_map_keys()
             if not splitting_done:
-                split_keys = set(self.read_done_keys(self.SPLITTING_STAGE))
-                self.split_keys = [
-                    (f"split_{i}", file_path)
-                    for i, file_path in enumerate(self.input_paths)
-                    if f"split_{i}" not in split_keys
-                ]
+                self.split_keys = self.get_remaining_split_keys()
             ## We don't pre-gather the plan for the reducing keys.
             ## It requires the full destination pixel map.
             step_progress.update(1)
@@ -123,14 +114,19 @@ class ResumePlan(PipelineResumePlan):
             for path in self.input_paths:
                 file_handle.write(f"{path}\n")
 
-    def get_mapping_keys_from_histograms(self):
-        """Gather keys for successful mapping tasks from histogram names.
+    def get_remaining_map_keys(self):
+        """Gather remaining keys, dropping successful mapping tasks from histogram names.
 
         Returns:
-            list of mapping keys taken from files like /resume/path/mapping_key.binary
+            list of mapping keys *not* found in files like /resume/path/mapping_key.binary
         """
         prefix = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR)
-        return self.get_keys_from_file_names(prefix, ".binary")
+        mapped_keys = self.get_keys_from_file_names(prefix, ".binary")
+        return [
+            (f"map_{i}", file_path)
+            for i, file_path in enumerate(self.input_paths)
+            if f"map_{i}" not in mapped_keys
+        ]
 
     def read_histogram(self, healpix_order):
         """Return histogram with healpix_order'd shape
@@ -153,6 +149,9 @@ class ResumePlan(PipelineResumePlan):
         # - combine into a single histogram
         # - write out as a single histogram for future reads
         # - remove all partial histograms
+        remaining_map_files = self.get_remaining_map_keys()
+        if len(remaining_map_files) > 0:
+            raise RuntimeError("some map stages did not complete successfully.")
         histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "**.binary")
         for file_name in histogram_files:
             with open(file_name, "rb") as file_handle:
@@ -186,6 +185,19 @@ class ResumePlan(PipelineResumePlan):
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
 
+    def get_remaining_split_keys(self):
+        """Gather remaining keys, dropping successful split tasks from done file names.
+
+        Returns:
+            list of splitting keys *not* found in files like /resume/path/split_key.done
+        """
+        split_keys = set(self.read_done_keys(self.SPLITTING_STAGE))
+        return [
+            (f"split_{i}", file_path)
+            for i, file_path in enumerate(self.input_paths)
+            if f"split_{i}" not in split_keys
+        ]
+
     @classmethod
     def splitting_key_done(cls, tmp_path, splitting_key: str):
         """Mark a single splitting task as done
@@ -209,6 +221,10 @@ class ResumePlan(PipelineResumePlan):
     def wait_for_mapping(self, futures):
         """Wait for mapping futures to complete."""
         self.wait_for_futures(futures, self.MAPPING_STAGE)
+        remaining_map_items = self.get_remaining_map_keys()
+        if len(remaining_map_items) > 0:
+            raise RuntimeError("some map stages did not complete successfully.")
+        self.touch_stage_done_file(self.MAPPING_STAGE)
 
     def is_mapping_done(self) -> bool:
         """Are there files left to map?"""
@@ -217,12 +233,16 @@ class ResumePlan(PipelineResumePlan):
     def wait_for_splitting(self, futures):
         """Wait for splitting futures to complete."""
         self.wait_for_futures(futures, self.SPLITTING_STAGE)
+        remaining_split_items = self.get_remaining_split_keys()
+        if len(remaining_split_items) > 0:
+            raise RuntimeError("some split stages did not complete successfully.")
+        self.touch_stage_done_file(self.SPLITTING_STAGE)
 
     def is_splitting_done(self) -> bool:
         """Are there files left to split?"""
         return self.done_file_exists(self.SPLITTING_STAGE)
 
-    def get_reduce_items(self, destination_pixel_map):
+    def get_reduce_items(self, destination_pixel_map=None):
         """Fetch a triple for each partition to reduce.
 
         Triple contains:
@@ -233,6 +253,12 @@ class ResumePlan(PipelineResumePlan):
 
         """
         reduced_keys = set(self.read_done_keys(self.REDUCING_STAGE))
+        if destination_pixel_map is None:
+            destination_pixel_map = self.destination_pixel_map
+        elif self.destination_pixel_map is None:
+            self.destination_pixel_map = destination_pixel_map
+        if self.destination_pixel_map is None:
+            raise RuntimeError("destination pixel map not provided for progress tracking.")
         reduce_items = [
             (hp_pixel, source_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, source_pixels in destination_pixel_map.items()
@@ -247,3 +273,7 @@ class ResumePlan(PipelineResumePlan):
     def wait_for_reducing(self, futures):
         """Wait for reducing futures to complete."""
         self.wait_for_futures(futures, self.REDUCING_STAGE)
+        remaining_reduce_items = self.get_reduce_items()
+        if len(remaining_reduce_items) > 0:
+            raise RuntimeError("some reduce stages did not complete successfully.")
+        self.touch_stage_done_file(self.REDUCING_STAGE)
