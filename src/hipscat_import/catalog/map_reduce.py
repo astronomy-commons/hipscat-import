@@ -79,7 +79,7 @@ def _iterate_input_file(
 def map_to_pixels(
     input_file: FilePointer,
     file_reader: InputReader,
-    cache_path: FilePointer,
+    resume_path: FilePointer,
     mapping_key,
     highest_order,
     ra_column,
@@ -91,7 +91,8 @@ def map_to_pixels(
         input_file (FilePointer): file to read for catalog data.
         file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input
             reader that specifies arguments necessary for reading from the input file.
-        shard_suffix (str): unique counter for this input file, used
+        resume_path (FilePointer): where to write resume partial results.
+        mapping_key (str): unique counter for this input file, used
             when creating intermediate files
         highest_order (int): healpix order to use when mapping
         ra_column (str): where to find right ascension data in the dataframe
@@ -110,17 +111,18 @@ def map_to_pixels(
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-    ResumePlan.write_partial_histogram(tmp_path=cache_path, mapping_key=mapping_key, histogram=histo)
+    ResumePlan.write_partial_histogram(tmp_path=resume_path, mapping_key=mapping_key, histogram=histo)
 
 
 def split_pixels(
     input_file: FilePointer,
     file_reader: InputReader,
-    shard_suffix,
+    splitting_key,
     highest_order,
     ra_column,
     dec_column,
-    cache_path: FilePointer,
+    cache_shard_path: FilePointer,
+    resume_path: FilePointer,
     alignment=None,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
@@ -129,12 +131,13 @@ def split_pixels(
         input_file (FilePointer): file to read for catalog data.
         file_reader (hipscat_import.catalog.file_readers.InputReader): instance
             of input reader that specifies arguments necessary for reading from the input file.
-        shard_suffix (str): unique counter for this input file, used
+        splitting_key (str): unique counter for this input file, used
             when creating intermediate files
         highest_order (int): healpix order to use when mapping
         ra_column (str): where to find right ascension data in the dataframe
         dec_column (str): where to find declation in the dataframe
-        cache_path (FilePointer): where to write intermediate files.
+        cache_shard_path (FilePointer): where to write intermediate parquet files.
+        resume_path (FilePointer): where to write resume files.
 
     Raises:
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
@@ -152,10 +155,10 @@ def split_pixels(
 
             filtered_data = data.filter(items=data_indexes, axis=0)
 
-            pixel_dir = _get_pixel_directory(cache_path, order, pixel)
+            pixel_dir = _get_pixel_directory(cache_shard_path, order, pixel)
             file_io.make_directory(pixel_dir, exist_ok=True)
             output_file = file_io.append_paths_to_pointer(
-                pixel_dir, f"shard_{shard_suffix}_{chunk_number}.parquet"
+                pixel_dir, f"shard_{splitting_key}_{chunk_number}.parquet"
             )
             if _has_named_index(filtered_data):
                 filtered_data.to_parquet(output_file, index=True)
@@ -163,9 +166,13 @@ def split_pixels(
                 filtered_data.to_parquet(output_file, index=False)
         del filtered_data, data_indexes
 
+    ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
+
 
 def reduce_pixel_shards(
-    cache_path,
+    cache_shard_path,
+    resume_path,
+    reducing_key,
     destination_pixel_order,
     destination_pixel_number,
     destination_pixel_size,
@@ -197,14 +204,16 @@ def reduce_pixel_shards(
           for more in-depth discussion of this field.
 
     Args:
-        cache_path (str): where to read intermediate files
+        cache_shard_path (FilePointer): where to read intermediate parquet files.
+        resume_path (FilePointer): where to write resume files.
+        reducing_key (str): unique string for this task, used for resume files.
         origin_pixel_numbers (list[int]): high order pixels, with object
             data written to intermediate directories.
         destination_pixel_order (int): order of the final catalog pixel
         destination_pixel_number (int): pixel number at the above order
         destination_pixel_size (int): expected number of rows to write
             for the catalog's final pixel
-        output_path (str): where to write the final catalog pixel data
+        output_path (FilePointer): where to write the final catalog pixel data
         id_column (str): column for survey identifier, or other sortable column
         add_hipscat_index (bool): should we add a _hipscat_index column to
             the resulting parquet file?
@@ -229,7 +238,7 @@ def reduce_pixel_shards(
         schema = file_io.read_parquet_metadata(use_schema_file).schema.to_arrow_schema()
 
     tables = []
-    pixel_dir = _get_pixel_directory(cache_path, destination_pixel_order, destination_pixel_number)
+    pixel_dir = _get_pixel_directory(cache_shard_path, destination_pixel_order, destination_pixel_number)
 
     if schema:
         tables.append(pq.read_table(pixel_dir, schema=schema))
@@ -274,6 +283,8 @@ def reduce_pixel_shards(
     del dataframe, merged_table, tables
 
     if delete_input_files:
-        pixel_dir = _get_pixel_directory(cache_path, destination_pixel_order, destination_pixel_number)
+        pixel_dir = _get_pixel_directory(cache_shard_path, destination_pixel_order, destination_pixel_number)
 
         file_io.remove_directory(pixel_dir, ignore_errors=True)
+
+    ResumePlan.reducing_key_done(tmp_path=resume_path, reducing_key=reducing_key)
