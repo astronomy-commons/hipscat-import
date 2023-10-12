@@ -113,10 +113,9 @@ def test_read_write_histogram(tmp_path):
     npt.assert_array_equal(result, expected)
 
 
-def error_on_even(argument):
-    """Silly little method used to test futures that fail under predictable conditions"""
-    if argument % 2 == 0:
-        raise RuntimeError("we are at odds with evens")
+def never_fails():
+    """Method never fails, but never marks intermediate success file."""
+    return
 
 
 @pytest.mark.dask
@@ -125,7 +124,8 @@ def test_some_map_task_failures(tmp_path, dask_client):
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
 
     ## Method doesn't FAIL, but it doesn't write out the partial histogram either.
-    futures = [dask_client.submit(error_on_even, 1)]
+    ## Since the intermediate files aren't found, we throw an error.
+    futures = [dask_client.submit(never_fails)]
     with pytest.raises(RuntimeError, match="map stages"):
         plan.wait_for_mapping(futures)
 
@@ -134,8 +134,8 @@ def test_some_map_task_failures(tmp_path, dask_client):
 
     ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
 
-    ## Method succeeds, and partial histogram is present.
-    futures = [dask_client.submit(error_on_even, 1)]
+    ## Method succeeds, *and* partial histogram is present.
+    futures = [dask_client.submit(never_fails)]
     plan.wait_for_mapping(futures)
 
 
@@ -170,14 +170,15 @@ def test_some_split_task_failures(tmp_path, dask_client):
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
 
     ## Method doesn't FAIL, but it doesn't write out the done file either.
-    futures = [dask_client.submit(error_on_even, 1)]
+    ## Since the intermediate files aren't found, we throw an error.
+    futures = [dask_client.submit(never_fails)]
     with pytest.raises(RuntimeError, match="split stages"):
         plan.wait_for_splitting(futures)
 
     ResumePlan.touch_key_done_file(tmp_path, ResumePlan.SPLITTING_STAGE, "split_0")
 
     ## Method succeeds, and done file is present.
-    futures = [dask_client.submit(error_on_even, 1)]
+    futures = [dask_client.submit(never_fails)]
     plan.wait_for_splitting(futures)
 
 
@@ -207,12 +208,13 @@ def test_some_reduce_task_failures(tmp_path, dask_client):
     assert len(remaining_reduce_items) == 1
 
     ## Method doesn't FAIL, but it doesn't write out the done file either.
-    futures = [dask_client.submit(error_on_even, 1)]
+    ## Since the intermediate files aren't found, we throw an error.
+    futures = [dask_client.submit(never_fails)]
     with pytest.raises(RuntimeError, match="reduce stages"):
         plan.wait_for_reducing(futures)
 
     ResumePlan.touch_key_done_file(tmp_path, ResumePlan.REDUCING_STAGE, "0_11")
 
     ## Method succeeds, and done file is present.
-    futures = [dask_client.submit(error_on_even, 1)]
+    futures = [dask_client.submit(never_fails)]
     plan.wait_for_reducing(futures)

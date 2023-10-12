@@ -117,3 +117,32 @@ def test_cached_map_file(small_sky_soap_args):
 
     plan = SoapPlan(small_sky_soap_args)
     assert len(plan.count_keys) == 14
+
+
+def never_fails():
+    """Method never fails, but never marks intermediate success file."""
+    return
+
+
+@pytest.mark.dask
+def test_some_reduce_task_failures(small_sky_soap_args, dask_client):
+    """Test that we only consider reduce stage successful if all done files are written"""
+    plan = SoapPlan(small_sky_soap_args)
+
+    ## Method doesn't FAIL, but it doesn't write out the intermediate results file either.
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="14 counting stages"):
+        plan.wait_for_counting(futures)
+
+    ## Write one intermediate results file. There are fewer unsuccessful stages.
+    Path(small_sky_soap_args.tmp_path, "2_187.csv").touch()
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="13 counting stages"):
+        plan.wait_for_counting(futures)
+
+    ## Write ALL the intermediate results files. Waiting for results will succeed.
+    for _, _, count_key in plan.count_keys:
+        Path(small_sky_soap_args.tmp_path, f"{count_key}.csv").touch()
+    ## Method succeeds, and done file is present.
+    futures = [dask_client.submit(never_fails)]
+    plan.wait_for_counting(futures)

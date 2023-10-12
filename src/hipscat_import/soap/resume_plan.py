@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import healpy as hp
 import numpy as np
@@ -23,6 +23,8 @@ class SoapPlan(PipelineResumePlan):
 
     count_keys: List[Tuple[HealpixPixel, List[HealpixPixel], str]] = field(default_factory=list)
     """set of pixels (and job keys) that have yet to be counted"""
+    source_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
+    """Map of object pixels to source pixels, with counting key."""
 
     COUNTING_STAGE = "counting"
     SOURCE_MAP_FILE = "source_object_map.npz"
@@ -56,19 +58,24 @@ class SoapPlan(PipelineResumePlan):
                 source_catalog = Catalog.read_from_hipscat(args.source_catalog_dir)
                 source_pixel_map = source_to_object_map(object_catalog, source_catalog)
                 np.savez_compressed(source_map_file, source_pixel_map)
-            self._set_sources_to_count(source_pixel_map)
+            self.count_keys = self.get_sources_to_count(source_pixel_map=source_pixel_map)
             step_progress.update(1)
 
     def wait_for_counting(self, futures):
         """Wait for counting stage futures to complete."""
         self.wait_for_futures(futures, self.COUNTING_STAGE)
+        remaining_sources_to_count = self.get_sources_to_count()
+        if len(remaining_sources_to_count) > 0:
+            raise RuntimeError(
+                f"{len(remaining_sources_to_count)} counting stages did not complete successfully."
+            )
         self.touch_stage_done_file(self.COUNTING_STAGE)
 
     def is_counting_done(self) -> bool:
         """Are there sources left to count?"""
         return self.done_file_exists(self.COUNTING_STAGE)
 
-    def _set_sources_to_count(self, source_pixel_map):
+    def get_sources_to_count(self, source_pixel_map=None):
         """Fetch a triple for each source pixel to join and count.
 
         Triple contains:
@@ -76,10 +83,16 @@ class SoapPlan(PipelineResumePlan):
             - object pixels (healpix pixel with both order and pixel, for aligning and
               neighboring object pixels)
             - source key (string of source order+pixel)
-
         """
+        if source_pixel_map is None:
+            source_pixel_map = self.source_pixel_map
+        elif self.source_pixel_map is None:
+            self.source_pixel_map = source_pixel_map
+        if self.source_pixel_map is None:
+            raise RuntimeError("source_pixel_map not provided for progress tracking.")
+
         counted_keys = set(self.get_keys_from_file_names(self.tmp_path, ".csv"))
-        self.count_keys = [
+        return [
             (hp_pixel, object_pixels, f"{hp_pixel.order}_{hp_pixel.pixel}")
             for hp_pixel, object_pixels in source_pixel_map.items()
             if f"{hp_pixel.order}_{hp_pixel.pixel}" not in counted_keys

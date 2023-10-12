@@ -26,6 +26,7 @@ class ResumePlan(PipelineResumePlan):
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
     destination_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
+    """Fully resolved map of destination pixels to constituent smaller pixels"""
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"
@@ -152,7 +153,7 @@ class ResumePlan(PipelineResumePlan):
         # - remove all partial histograms
         remaining_map_files = self.get_remaining_map_keys()
         if len(remaining_map_files) > 0:
-            raise RuntimeError("some map stages did not complete successfully.")
+            raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
         histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "**.binary")
         for file_name in histogram_files:
             with open(file_name, "rb") as file_handle:
@@ -236,7 +237,7 @@ class ResumePlan(PipelineResumePlan):
         self.wait_for_futures(futures, self.SPLITTING_STAGE)
         remaining_split_items = self.get_remaining_split_keys()
         if len(remaining_split_items) > 0:
-            raise RuntimeError("some split stages did not complete successfully.")
+            raise RuntimeError(f"{len(remaining_split_items)} split stages did not complete successfully.")
         self.touch_stage_done_file(self.SPLITTING_STAGE)
 
     def is_splitting_done(self) -> bool:
@@ -276,5 +277,5 @@ class ResumePlan(PipelineResumePlan):
         self.wait_for_futures(futures, self.REDUCING_STAGE)
         remaining_reduce_items = self.get_reduce_items()
         if len(remaining_reduce_items) > 0:
-            raise RuntimeError("some reduce stages did not complete successfully.")
+            raise RuntimeError(f"{len(remaining_reduce_items)} reduce stages did not complete successfully.")
         self.touch_stage_done_file(self.REDUCING_STAGE)
