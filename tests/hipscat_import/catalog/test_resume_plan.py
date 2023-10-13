@@ -3,6 +3,7 @@
 import hipscat.pixel_math as hist
 import numpy.testing as npt
 import pytest
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.catalog.resume_plan import ResumePlan
 
@@ -92,30 +93,50 @@ def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
 
 def test_read_write_histogram(tmp_path):
     """Test that we can read what we write into a histogram file."""
-    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
+
+    ## We're not ready to read the final histogram - missing partial histograms.
+    with pytest.raises(RuntimeError, match="map stages"):
+        result = plan.read_histogram(0)
+
+    expected = hist.empty_histogram(0)
+    expected[11] = 131
+
+    remaining_keys = plan.get_remaining_map_keys()
+    assert remaining_keys == [("map_0", "foo1")]
+
+    ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
+
+    remaining_keys = plan.get_remaining_map_keys()
+    assert len(remaining_keys) == 0
+    result = plan.read_histogram(0)
+    npt.assert_array_equal(result, expected)
+
+
+def never_fails():
+    """Method never fails, but never marks intermediate success file."""
+    return
+
+
+@pytest.mark.dask
+def test_some_map_task_failures(tmp_path, dask_client):
+    """Test that we only consider map stage successful if all partial files are written"""
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
+
+    ## Method doesn't FAIL, but it doesn't write out the partial histogram either.
+    ## Since the intermediate files aren't found, we throw an error.
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="map stages"):
+        plan.wait_for_mapping(futures)
 
     expected = hist.empty_histogram(0)
     expected[11] = 131
 
     ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
 
-    keys = plan.get_mapping_keys_from_histograms()
-    assert keys == ["map_0"]
-    result = plan.read_histogram(0)
-    npt.assert_array_equal(result, expected)
-
-    keys = plan.get_mapping_keys_from_histograms()
-    assert len(keys) == 0
-
-    plan.clean_resume_files()
-
-    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    empty = hist.empty_histogram(0)
-    result = plan.read_histogram(0)
-    npt.assert_array_equal(result, empty)
-
-    keys = plan.get_mapping_keys_from_histograms()
-    assert len(keys) == 0
+    ## Method succeeds, *and* partial histogram is present.
+    futures = [dask_client.submit(never_fails)]
+    plan.wait_for_mapping(futures)
 
 
 def test_read_write_splitting_keys(tmp_path, small_sky_single_file, formats_headers_csv):
@@ -141,3 +162,59 @@ def test_read_write_splitting_keys(tmp_path, small_sky_single_file, formats_head
     plan.gather_plan()
     split_keys = plan.split_keys
     assert len(split_keys) == 2
+
+
+@pytest.mark.dask
+def test_some_split_task_failures(tmp_path, dask_client):
+    """Test that we only consider split stage successful if all done files are written"""
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
+
+    ## Method doesn't FAIL, but it doesn't write out the done file either.
+    ## Since the intermediate files aren't found, we throw an error.
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="split stages"):
+        plan.wait_for_splitting(futures)
+
+    ResumePlan.touch_key_done_file(tmp_path, ResumePlan.SPLITTING_STAGE, "split_0")
+
+    ## Method succeeds, and done file is present.
+    futures = [dask_client.submit(never_fails)]
+    plan.wait_for_splitting(futures)
+
+
+def test_get_reduce_items(tmp_path):
+    """Test generation of remaining reduce items"""
+    destination_pixel_map = {HealpixPixel(0, 11): (131, [44, 45, 46])}
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
+
+    with pytest.raises(RuntimeError, match="destination pixel map"):
+        remaining_reduce_items = plan.get_reduce_items()
+
+    remaining_reduce_items = plan.get_reduce_items(destination_pixel_map=destination_pixel_map)
+    assert len(remaining_reduce_items) == 1
+
+    ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key="0_11")
+    remaining_reduce_items = plan.get_reduce_items(destination_pixel_map=destination_pixel_map)
+    assert len(remaining_reduce_items) == 0
+
+
+@pytest.mark.dask
+def test_some_reduce_task_failures(tmp_path, dask_client):
+    """Test that we only consider reduce stage successful if all done files are written"""
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
+
+    destination_pixel_map = {HealpixPixel(0, 11): (131, [44, 45, 46])}
+    remaining_reduce_items = plan.get_reduce_items(destination_pixel_map=destination_pixel_map)
+    assert len(remaining_reduce_items) == 1
+
+    ## Method doesn't FAIL, but it doesn't write out the done file either.
+    ## Since the intermediate files aren't found, we throw an error.
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="reduce stages"):
+        plan.wait_for_reducing(futures)
+
+    ResumePlan.touch_key_done_file(tmp_path, ResumePlan.REDUCING_STAGE, "0_11")
+
+    ## Method succeeds, and done file is present.
+    futures = [dask_client.submit(never_fails)]
+    plan.wait_for_reducing(futures)

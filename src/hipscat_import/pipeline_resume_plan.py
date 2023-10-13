@@ -113,12 +113,13 @@ class PipelineResumePlan:
     def wait_for_futures(self, futures, stage_name):
         """Wait for collected futures to complete.
 
-        As each future completes, read the task key and write to the log file.
-        If all tasks complete successfully, touch the done file. Otherwise, raise an error.
+        As each future completes, check the returned status.
 
         Args:
             futures(List[future]): collected futures
             stage_name(str): name of the stage (e.g. mapping, reducing)
+        Raises:
+            RuntimeError if any future returns an error status.
         """
         some_error = False
         formatted_stage_name = self.get_formatted_stage_name(stage_name)
@@ -128,11 +129,10 @@ class PipelineResumePlan:
             total=len(futures),
             disable=(not self.progress_bar),
         ):
-            if future.status == "error":  # pragma: no cover
+            if future.status == "error":
                 some_error = True
-        if some_error:  # pragma: no cover
+        if some_error:
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")
-        self.touch_stage_done_file(stage_name)
 
     @staticmethod
     def get_formatted_stage_name(stage_name) -> str:

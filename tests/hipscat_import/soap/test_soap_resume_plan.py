@@ -117,3 +117,54 @@ def test_cached_map_file(small_sky_soap_args):
 
     plan = SoapPlan(small_sky_soap_args)
     assert len(plan.count_keys) == 14
+
+
+def test_get_sources_to_count(small_sky_soap_args):
+    """Test generation of remaining count items"""
+    source_pixel_map = {HealpixPixel(0, 11): (131, [44, 45, 46])}
+    plan = SoapPlan(small_sky_soap_args)
+
+    ## Kind of silly, but clear out the pixel map, since it's populated on init.
+    ## Fail to find the remaining sources to count because we don't know the map.
+    plan.source_pixel_map = None
+    with pytest.raises(ValueError, match="source_pixel_map"):
+        remaining_count_items = plan.get_sources_to_count()
+
+    ## Can now successfully find sources to count.
+    remaining_count_items = plan.get_sources_to_count(source_pixel_map=source_pixel_map)
+    assert len(remaining_count_items) == 1
+
+    ## Use previous value of sources map, and find intermediate file, so there are no
+    ## remaining sources to count.
+    Path(small_sky_soap_args.tmp_path, "0_11.csv").touch()
+    remaining_count_items = plan.get_sources_to_count()
+    assert len(remaining_count_items) == 0
+
+
+def never_fails():
+    """Method never fails, but never marks intermediate success file."""
+    return
+
+
+@pytest.mark.dask
+def test_some_reduce_task_failures(small_sky_soap_args, dask_client):
+    """Test that we only consider reduce stage successful if all done files are written"""
+    plan = SoapPlan(small_sky_soap_args)
+
+    ## Method doesn't FAIL, but it doesn't write out the intermediate results file either.
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="14 counting stages"):
+        plan.wait_for_counting(futures)
+
+    ## Write one intermediate results file. There are fewer unsuccessful stages.
+    Path(small_sky_soap_args.tmp_path, "2_187.csv").touch()
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="13 counting stages"):
+        plan.wait_for_counting(futures)
+
+    ## Write ALL the intermediate results files. Waiting for results will succeed.
+    for _, _, count_key in plan.count_keys:
+        Path(small_sky_soap_args.tmp_path, f"{count_key}.csv").touch()
+    ## Method succeeds, and done file is present.
+    futures = [dask_client.submit(never_fails)]
+    plan.wait_for_counting(futures)

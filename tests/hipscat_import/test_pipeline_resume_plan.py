@@ -97,6 +97,26 @@ def test_safe_to_resume(tmp_path):
     plan.safe_to_resume()
 
 
+@pytest.mark.dask
+def test_wait_for_futures(tmp_path, dask_client):
+    """Test that we can wait around for futures to complete."""
+    plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False, resume=False)
+
+    def error_on_even(argument):
+        """Silly little method used to test futures that fail under predictable conditions"""
+        if argument % 2 == 0:
+            raise RuntimeError("we are at odds with evens")
+
+    ## Everything is fine if we're all odd
+    futures = [dask_client.submit(error_on_even, 1)]
+    plan.wait_for_futures(futures, "test")
+
+    ## Throw an even in the mix, and we'll see some stages fail. Should cause whole stage to fail.
+    futures = [dask_client.submit(error_on_even, 1), dask_client.submit(error_on_even, 2)]
+    with pytest.raises(RuntimeError, match="Some test stages failed"):
+        plan.wait_for_futures(futures, "test")
+
+
 def test_formatted_stage_name():
     """Test that we make pretty stage names for presenting in progress bars"""
     formatted = PipelineResumePlan.get_formatted_stage_name(None)
