@@ -89,7 +89,7 @@ class SoapPlan(PipelineResumePlan):
         elif self.source_pixel_map is None:
             self.source_pixel_map = source_pixel_map
         if self.source_pixel_map is None:
-            raise RuntimeError("source_pixel_map not provided for progress tracking.")
+            raise ValueError("source_pixel_map not provided for progress tracking.")
 
         counted_keys = set(self.get_keys_from_file_names(self.tmp_path, ".csv"))
         return [

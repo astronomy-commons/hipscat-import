@@ -119,6 +119,27 @@ def test_cached_map_file(small_sky_soap_args):
     assert len(plan.count_keys) == 14
 
 
+def test_get_sources_to_count(small_sky_soap_args):
+    """Test generation of remaining count items"""
+    source_pixel_map = {HealpixPixel(0, 11): (131, [44, 45, 46])}
+    plan = SoapPlan(small_sky_soap_args)
+
+    ## Kind of silly, but clear out the pixel map, since it's populated on init.
+    ## Fail to find the remaining sources to count because we don't know the map.
+    plan.source_pixel_map = None
+    with pytest.raises(ValueError, match="source_pixel_map"):
+        remaining_count_items = plan.get_sources_to_count()
+
+    ## Can now successfully find sources to count.
+    remaining_count_items = plan.get_sources_to_count(source_pixel_map=source_pixel_map)
+    assert len(remaining_count_items) == 1
+
+    ## Use previous value of sources map, and find intermediate file, so there are no 
+    ## remaining sources to count.
+    Path(small_sky_soap_args.tmp_path, "0_11.csv").touch()
+    remaining_count_items = plan.get_sources_to_count()
+    assert len(remaining_count_items) == 0
+
 def never_fails():
     """Method never fails, but never marks intermediate success file."""
     return
