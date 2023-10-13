@@ -134,11 +134,12 @@ def test_get_sources_to_count(small_sky_soap_args):
     remaining_count_items = plan.get_sources_to_count(source_pixel_map=source_pixel_map)
     assert len(remaining_count_items) == 1
 
-    ## Use previous value of sources map, and find intermediate file, so there are no 
+    ## Use previous value of sources map, and find intermediate file, so there are no
     ## remaining sources to count.
     Path(small_sky_soap_args.tmp_path, "0_11.csv").touch()
     remaining_count_items = plan.get_sources_to_count()
     assert len(remaining_count_items) == 0
+
 
 def never_fails():
     """Method never fails, but never marks intermediate success file."""
