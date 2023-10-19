@@ -82,7 +82,7 @@ def test_resume_dask_runner(
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
@@ -122,7 +122,7 @@ def test_resume_dask_runner(
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
@@ -153,7 +153,7 @@ def test_dask_runner(
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
