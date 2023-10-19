@@ -5,6 +5,7 @@ regression the test case is exercising.
 """
 
 
+import glob
 import os
 
 import numpy as np
@@ -321,8 +322,6 @@ def test_import_starr_file(
         """Shallow subclass"""
 
         def read(self, input_file):
-            import glob
-
             files = glob.glob(f"{input_file}/**.starr")
             files.sort()
             for file in files:
