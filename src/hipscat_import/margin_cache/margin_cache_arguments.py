@@ -2,7 +2,6 @@ import warnings
 from dataclasses import dataclass
 
 import healpy as hp
-import numpy as np
 from hipscat.catalog import Catalog
 from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
 from hipscat.io.validation import is_valid_catalog
