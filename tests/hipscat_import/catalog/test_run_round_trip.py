@@ -5,6 +5,7 @@ regression the test case is exercising.
 """
 
 
+import glob
 import os
 
 import numpy as np
@@ -52,7 +53,7 @@ def test_import_source_table(
     assert catalog.catalog_path == args.catalog_path
     assert catalog.catalog_info.ra_column == "source_ra"
     assert catalog.catalog_info.dec_column == "source_dec"
-    assert len(catalog.get_pixels()) == 14
+    assert len(catalog.get_healpix_pixels()) == 14
 
 
 @pytest.mark.dask
@@ -321,8 +322,6 @@ def test_import_starr_file(
         """Shallow subclass"""
 
         def read(self, input_file):
-            import glob
-
             files = glob.glob(f"{input_file}/**.starr")
             files.sort()
             for file in files:
@@ -347,7 +346,7 @@ def test_import_starr_file(
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
