@@ -1,16 +1,16 @@
 from dataclasses import dataclass, field
 from os import path
+from typing import List
 
 from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
 from hipscat.catalog.catalog_type import CatalogType
-from hipscat.io.validation import is_valid_catalog
 from hipscat.io import FilePointer, file_io
+from hipscat.io.validation import is_valid_catalog
 
-from hipscat_import.runtime_arguments import RuntimeArguments
 from hipscat_import.catalog.arguments import check_healpix_order_range
-from typing import List
-
 from hipscat_import.catalog.resume_plan import ResumePlan
+from hipscat_import.runtime_arguments import RuntimeArguments
+
 
 @dataclass
 class MacauffArguments(RuntimeArguments):

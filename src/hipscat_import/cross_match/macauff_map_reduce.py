@@ -1,10 +1,13 @@
-import hipscat_import.catalog.map_reduce as mr
-from hipscat_import.cross_match.macauff_arguments import MacauffArguments
-# import hipscat_import.catalog.run_import as ri
-from hipscat_import.catalog.file_readers import CsvReader
-from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 from hipscat import pixel_math
 from tqdm import tqdm
+
+import hipscat_import.catalog.map_reduce as mr
+
+# import hipscat_import.catalog.run_import as ri
+from hipscat_import.catalog.file_readers import CsvReader
+from hipscat_import.cross_match.macauff_arguments import MacauffArguments
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan
+
 
 def _map_pixels(args, client):
     """Generate a raw histogram of object counts in each healpix pixel"""
