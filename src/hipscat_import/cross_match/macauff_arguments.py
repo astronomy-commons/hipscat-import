@@ -2,14 +2,14 @@ from dataclasses import dataclass, field
 from os import path
 from typing import List
 
-from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
-from hipscat.catalog.catalog_type import CatalogType
 from hipscat.io import FilePointer, file_io
 from hipscat.io.validation import is_valid_catalog
 
-from hipscat_import.catalog.arguments import check_healpix_order_range
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.runtime_arguments import RuntimeArguments
+
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=unsupported-binary-operation
 
 
 @dataclass
@@ -28,10 +28,6 @@ class MacauffArguments(RuntimeArguments):
     """resolved list of all files that will be used in the importer"""
     add_hipscat_index: bool = True
     """add the hipscat spatial index field alongside the data"""
-    constant_healpix_order: int = -1
-    """healpix order to use when mapping. if this is
-    a positive number, this will be the order of all final pixels and we
-    will not combine pixels according to the threshold"""
     highest_healpix_order: int = 10
     """healpix order to use when mapping. this will
     not necessarily be the order used in the final catalog, as we may combine
@@ -70,31 +66,24 @@ class MacauffArguments(RuntimeArguments):
     def _check_arguments(self):
         super()._check_arguments()
 
+        if not self.input_path and not self.input_file_list:
+            raise ValueError("input files/path not provided")
         if not self.input_format:
             raise ValueError("input_format is required")
 
-        if self.constant_healpix_order >= 0:
-            check_healpix_order_range(self.constant_healpix_order, "constant_healpix_order")
-            self.mapping_healpix_order = self.constant_healpix_order
-        else:
-            check_healpix_order_range(self.highest_healpix_order, "highest_healpix_order")
-            if not 100 <= self.pixel_threshold <= 1_000_000_000:
-                raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
-            self.mapping_healpix_order = self.highest_healpix_order
-
-        # if not self.left_catalog_dir:
-        #     raise ValueError("left_catalog_dir is required")
+        if not self.left_catalog_dir:
+            raise ValueError("left_catalog_dir is required")
         if not self.left_id_column:
             raise ValueError("left_id_column is required")
-        # if not is_valid_catalog(self.left_catalog_dir):
-        #     raise ValueError("left_catalog_dir not a valid catalog")
+        if not is_valid_catalog(self.left_catalog_dir):
+            raise ValueError("left_catalog_dir not a valid catalog")
 
-        # if not self.right_catalog_dir:
-        #     raise ValueError("right_catalog_dir is required")
+        if not self.right_catalog_dir:
+            raise ValueError("right_catalog_dir is required")
         if not self.right_id_column:
-            raise ValueError("right_object_id_column is required")
-        # if not is_valid_catalog(self.right_catalog_dir):
-        #     raise ValueError("right_catalog_dir not a valid catalog")
+            raise ValueError("right_id_column is required")
+        if not is_valid_catalog(self.right_catalog_dir):
+            raise ValueError("right_catalog_dir not a valid catalog")
 
         if not self.metadata_file_path:
             raise ValueError("column metadata file required for macauff crossmatch")
@@ -148,4 +137,3 @@ class MacauffArguments(RuntimeArguments):
             'CatWISE_cont_f10',
             'CatWISE_fit_sig',
         ]
-
