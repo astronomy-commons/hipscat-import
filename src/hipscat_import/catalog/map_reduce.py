@@ -4,6 +4,7 @@ import healpy as hp
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pandas as pd
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 
@@ -258,23 +259,31 @@ def reduce_pixel_shards(
         )
 
     dataframe = merged_table.to_pandas()
+    add_columns = {}
     if manual_dtypes:
+        dataframe = dataframe.fillna(-999)
         dataframe = dataframe.astype(manual_dtypes)
     if id_column:
         dataframe = dataframe.sort_values(id_column)
     if add_hipscat_index:
-        dataframe["_hipscat_index"] = pixel_math.compute_hipscat_id(
+        add_columns["_hipscat_index"] = pixel_math.compute_hipscat_id(
             dataframe[ra_column].values,
             dataframe[dec_column].values,
         )
 
-    dataframe["Norder"] = np.full(rows_written, fill_value=destination_pixel_order, dtype=np.int32)
-    dataframe["Dir"] = np.full(
+    add_columns["Norder"] = np.full(
+            rows_written, fill_value=destination_pixel_order, dtype=np.int32
+        )
+    add_columns["Dir"] = np.full(
         rows_written,
         fill_value=int(destination_pixel_number / 10_000) * 10_000,
         dtype=np.int32,
     )
-    dataframe["Npix"] = np.full(rows_written, fill_value=destination_pixel_number, dtype=np.int32)
+    add_columns["Npix"] = np.full(
+        rows_written, fill_value=destination_pixel_number, dtype=np.int32
+    )
+    add_columns_df = pd.DataFrame(add_columns, columns=list(add_columns.keys()))
+    dataframe = pd.concat([dataframe, add_columns_df], axis=1)
 
     if add_hipscat_index:
         ## If we had a meaningful index before, preserve it as a column.
