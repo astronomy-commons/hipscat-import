@@ -8,6 +8,7 @@ import numpy.testing as npt
 import pandas as pd
 import pyarrow as pa
 import pytest
+from numpy import frombuffer
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.file_readers import get_file_reader
@@ -22,6 +23,8 @@ def test_read_empty_filename():
             highest_order=10,
             ra_column="ra",
             dec_column="dec",
+            resume_path="",
+            mapping_key="map_0",
         )
 
 
@@ -34,6 +37,8 @@ def test_read_wrong_fileformat(small_sky_file0):
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
+            resume_path="",
+            mapping_key="map_0",
         )
 
 
@@ -46,6 +51,8 @@ def test_read_directory(test_data_dir):
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
+            resume_path="",
+            mapping_key="map_0",
         )
 
 
@@ -58,18 +65,32 @@ def test_read_bad_fileformat(blank_data_file):
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
+            resume_path="",
+            mapping_key="map_0",
         )
 
 
-def test_read_single_fits(formats_fits):
+def read_partial_histogram(tmp_path, mapping_key):
+    """Helper to read in the former result of a map operation."""
+    histogram_file = os.path.join(tmp_path, "histograms", f"{mapping_key}.binary")
+    with open(histogram_file, "rb") as file_handle:
+        return frombuffer(file_handle.read(), dtype=np.int64)
+
+
+def test_read_single_fits(tmp_path, formats_fits):
     """Success case - fits file that exists being read as fits"""
-    result = mr.map_to_pixels(
+    os.makedirs(os.path.join(tmp_path, "histograms"))
+    mr.map_to_pixels(
         input_file=formats_fits,
         file_reader=get_file_reader("fits"),
         highest_order=0,
         ra_column="ra",
         dec_column="dec",
+        resume_path=tmp_path,
+        mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
     assert len(result) == 12
     expected = hist.empty_histogram(0)
     expected[11] = 131
@@ -85,18 +106,25 @@ def test_map_headers_wrong(formats_headers_csv):
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
+            resume_path="",
+            mapping_key="map_0",
         )
 
 
-def test_map_headers(formats_headers_csv):
+def test_map_headers(tmp_path, formats_headers_csv):
     """Test loading the a file with non-default headers"""
-    result = mr.map_to_pixels(
+    os.makedirs(os.path.join(tmp_path, "histograms"))
+    mr.map_to_pixels(
         input_file=formats_headers_csv,
         file_reader=get_file_reader("csv"),
         highest_order=0,
         ra_column="ra_mean",
         dec_column="dec_mean",
+        resume_path=tmp_path,
+        mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
 
     assert len(result) == 12
 
@@ -106,42 +134,20 @@ def test_map_headers(formats_headers_csv):
     assert (result == expected).all()
 
 
-def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_path):
-    """Test loading the a file with non-default headers"""
-    alignment = np.full(12, None)
-    alignment[11] = (0, 11, 131)
-    mr.split_pixels(
-        input_file=formats_headers_csv,
-        file_reader=get_file_reader("csv"),
-        highest_order=0,
-        ra_column="ra_mean",
-        dec_column="dec_mean",
-        shard_suffix=0,
-        cache_path=tmp_path,
-        alignment=alignment,
-    )
-
-    file_name = os.path.join(
-        tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0.parquet"
-    )
-    expected_ids = [*range(700, 708)]
-    assert_parquet_file_ids(file_name, "object_id", expected_ids)
-
-    file_name = os.path.join(
-        tmp_path, "order_0", "dir_0", "pixel_1", "shard_0_0.parquet"
-    )
-    assert not os.path.exists(file_name)
-
-
-def test_map_small_sky_order0(small_sky_single_file):
+def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
-    result = mr.map_to_pixels(
+    os.makedirs(os.path.join(tmp_path, "histograms"))
+    mr.map_to_pixels(
         input_file=small_sky_single_file,
         file_reader=get_file_reader("csv"),
         highest_order=0,
         ra_column="ra",
         dec_column="dec",
+        resume_path=tmp_path,
+        mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
 
     assert len(result) == 12
 
@@ -151,18 +157,23 @@ def test_map_small_sky_order0(small_sky_single_file):
     assert (result == expected).all()
 
 
-def test_map_small_sky_part_order1(small_sky_file0):
+def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
     """
     Test loading a small portion of the small sky catalog and
     partitioning objects into four smaller buckets
     """
-    result = mr.map_to_pixels(
+    os.makedirs(os.path.join(tmp_path, "histograms"))
+    mr.map_to_pixels(
         input_file=small_sky_file0,
         file_reader=get_file_reader("csv"),
         highest_order=1,
         ra_column="ra",
         dec_column="dec",
+        resume_path=tmp_path,
+        mapping_key="map_0",
     )
+
+    result = read_partial_histogram(tmp_path, "map_0")
 
     assert len(result) == 48
 
@@ -173,10 +184,38 @@ def test_map_small_sky_part_order1(small_sky_file0):
     assert (result == expected).all()
 
 
+def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_path):
+    """Test loading the a file with non-default headers"""
+    os.makedirs(os.path.join(tmp_path, "splitting"))
+    alignment = np.full(12, None)
+    alignment[11] = (0, 11, 131)
+    mr.split_pixels(
+        input_file=formats_headers_csv,
+        file_reader=get_file_reader("csv"),
+        highest_order=0,
+        ra_column="ra_mean",
+        dec_column="dec_mean",
+        splitting_key="0",
+        cache_shard_path=tmp_path,
+        resume_path=tmp_path,
+        alignment=alignment,
+    )
+
+    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0.parquet")
+    expected_ids = [*range(700, 708)]
+    assert_parquet_file_ids(file_name, "object_id", expected_ids)
+
+    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_1", "shard_0_0.parquet")
+    assert not os.path.exists(file_name)
+
+
 def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     """Test reducing into one large pixel"""
+    os.makedirs(os.path.join(tmp_path, "reducing"))
     mr.reduce_pixel_shards(
-        cache_path=parquet_shards_dir,
+        cache_shard_path=parquet_shards_dir,
+        resume_path=tmp_path,
+        reducing_key="0_11",
         destination_pixel_order=0,
         destination_pixel_number=11,
         destination_pixel_size=131,
@@ -196,8 +235,11 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
 
 def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     """Test reducing with or without a _hipscat_index field"""
+    os.makedirs(os.path.join(tmp_path, "reducing"))
     mr.reduce_pixel_shards(
-        cache_path=parquet_shards_dir,
+        cache_shard_path=parquet_shards_dir,
+        resume_path=tmp_path,
+        reducing_key="0_11",
         destination_pixel_order=0,
         destination_pixel_number=11,
         destination_pixel_size=131,
@@ -241,7 +283,9 @@ def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_p
     )
 
     mr.reduce_pixel_shards(
-        cache_path=parquet_shards_dir,
+        cache_shard_path=parquet_shards_dir,
+        resume_path=tmp_path,
+        reducing_key="0_11",
         destination_pixel_order=0,
         destination_pixel_number=11,
         destination_pixel_size=131,
@@ -268,7 +312,9 @@ def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
     """Test reducing into one large pixel"""
     with pytest.raises(ValueError, match="Unexpected number of objects"):
         mr.reduce_pixel_shards(
-            cache_path=parquet_shards_dir,
+            cache_shard_path=parquet_shards_dir,
+            resume_path=tmp_path,
+            reducing_key="0_11",
             destination_pixel_order=0,
             destination_pixel_number=11,
             destination_pixel_size=11,  ## should be 131

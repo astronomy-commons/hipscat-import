@@ -29,9 +29,7 @@ def test_create_index(
     )
     mr.create_index(args)
 
-    output_file = os.path.join(
-        tmp_path, "small_sky_object_index", "index", "part.0.parquet"
-    )
+    output_file = os.path.join(tmp_path, "small_sky_object_index", "index", "part.0.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_index(output_file, expected_ids)
@@ -59,9 +57,7 @@ def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
     )
     mr.create_index(args)
 
-    output_file = os.path.join(
-        tmp_path, "small_sky_object_index", "index", "part.0.parquet"
-    )
+    output_file = os.path.join(tmp_path, "small_sky_object_index", "index", "part.0.parquet")
 
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     npt.assert_array_equal(data_frame.columns, ["Norder", "Dir", "Npix"])
@@ -82,9 +78,7 @@ def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path):
     )
     mr.create_index(args)
 
-    output_file = os.path.join(
-        tmp_path, "small_sky_object_index", "index", "part.0.parquet"
-    )
+    output_file = os.path.join(tmp_path, "small_sky_object_index", "index", "part.0.parquet")
 
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
     npt.assert_array_equal(data_frame.columns, ["_hipscat_index"])
@@ -108,9 +102,7 @@ def test_create_index_source(
     )
     mr.create_index(args)
 
-    output_file = os.path.join(
-        tmp_path, "small_sky_source_index", "index", "part.0.parquet"
-    )
+    output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
     expected_ids = [*range(70_000, 87_161)]
     assert_parquet_file_index(output_file, expected_ids)
@@ -142,9 +134,7 @@ def test_create_index_source_by_object(
     )
     mr.create_index(args)
 
-    output_file = os.path.join(
-        tmp_path, "small_sky_source_index", "index", "part.0.parquet"
-    )
+    output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
     expected_ids = np.repeat([*range(700, 831)], 131)
     assert_parquet_file_index(output_file, expected_ids)
@@ -176,9 +166,7 @@ def test_create_index_extra_columns(
     )
     mr.create_index(args)
 
-    output_file = os.path.join(
-        tmp_path, "small_sky_source_index", "index", "part.0.parquet"
-    )
+    output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
     expected_ids = np.repeat([*range(700, 831)], 131)
     assert_parquet_file_index(output_file, expected_ids)

@@ -2,12 +2,9 @@ import warnings
 from dataclasses import dataclass
 
 import healpy as hp
-import numpy as np
 from hipscat.catalog import Catalog
-from hipscat.catalog.margin_cache.margin_cache_catalog_info import (
-    MarginCacheCatalogInfo,
-)
-from hipscat.io import file_io
+from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
+from hipscat.io.validation import is_valid_catalog
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -35,13 +32,14 @@ class MarginCacheArguments(RuntimeArguments):
 
     def _check_arguments(self):
         super()._check_arguments()
-        if not file_io.does_file_or_directory_exist(self.input_catalog_path):
-            raise FileNotFoundError("input_catalog_path not found on local storage")
+        if not self.input_catalog_path:
+            raise ValueError("input_catalog_path is required")
+        if not is_valid_catalog(self.input_catalog_path):
+            raise ValueError("input_catalog_path not a valid catalog")
 
         self.catalog = Catalog.read_from_hipscat(self.input_catalog_path)
 
-        partition_stats = self.catalog.get_pixels()
-        highest_order = np.max(partition_stats["Norder"].values)
+        highest_order = self.catalog.partition_info.get_highest_order()
         margin_pixel_k = highest_order + 1
         if self.margin_order > -1:
             if self.margin_order < margin_pixel_k:
@@ -56,10 +54,7 @@ class MarginCacheArguments(RuntimeArguments):
 
         margin_pixel_nside = hp.order2nside(self.margin_order)
 
-        if (
-            hp.nside2resol(margin_pixel_nside, arcmin=True) * 60.0
-            < self.margin_threshold
-        ):
+        if hp.nside2resol(margin_pixel_nside, arcmin=True) * 60.0 < self.margin_threshold:
             # pylint: disable=line-too-long
             warnings.warn(
                 "Warning: margin pixels have a smaller resolution than margin_threshold; this may lead to data loss in the margin cache."

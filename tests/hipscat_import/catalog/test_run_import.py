@@ -3,12 +3,13 @@
 import os
 import shutil
 
+import hipscat.pixel_math as hist
 import pytest
 from hipscat.catalog.catalog import Catalog
 
-import hipscat_import.catalog.resume_files as rf
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.catalog.resume_plan import ResumePlan
 
 
 def test_empty_args():
@@ -40,39 +41,24 @@ def test_resume_dask_runner(
         os.path.join(resume_dir, "intermediate"),
         temp_path,
     )
+    plan = ResumePlan(tmp_path=temp_path, progress_bar=False)
+    histogram = hist.empty_histogram(0)
+    histogram[11] = 131
+    empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        rf.write_mapping_start_key(
-            temp_path,
-            f"map_{os.path.join(small_sky_parts_dir, f'catalog_0{file_index}_of_05.csv')}",
+        ResumePlan.touch_key_done_file(temp_path, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
+        ResumePlan.write_partial_histogram(
+            tmp_path=temp_path,
+            mapping_key=f"map_{file_index}",
+            histogram=histogram if file_index == 0 else empty,
         )
-        rf.write_mapping_done_key(
-            temp_path,
-            f'map_{os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv")}',
-        )
-        rf.write_splitting_done_key(
-            temp_path,
-            f'split_{os.path.join(small_sky_parts_dir, f"catalog_0{file_index}_of_05.csv")}',
-        )
+
+    ResumePlan.touch_key_done_file(temp_path, ResumePlan.REDUCING_STAGE, "0_11")
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder=0"),
         os.path.join(tmp_path, "resume", "Norder=0"),
     )
-
-    with pytest.raises(ValueError, match="resume"):
-        ## Check that we fail if there are some existing intermediate files
-        ImportArguments(
-            output_catalog_name="resume",
-            input_path=small_sky_parts_dir,
-            input_format="csv",
-            output_path=tmp_path,
-            dask_tmp=tmp_path,
-            tmp_dir=tmp_path,
-            overwrite=True,
-            highest_healpix_order=0,
-            pixel_threshold=1000,
-            progress_bar=False,
-        )
 
     args = ImportArguments(
         output_catalog_name="resume",
@@ -82,7 +68,6 @@ def test_resume_dask_runner(
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
         overwrite=True,
-        resume=True,
         highest_healpix_order=0,
         pixel_threshold=1000,
         progress_bar=False,
@@ -97,12 +82,10 @@ def test_resume_dask_runner(
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -113,9 +96,10 @@ def test_resume_dask_runner(
         os.path.join(resume_dir, "intermediate"),
         temp_path,
     )
-    rf.set_mapping_done(temp_path)
-    rf.set_splitting_done(temp_path)
-    rf.set_reducing_done(temp_path)
+    plan = args.resume_plan
+    plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
+    plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
+    plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
 
     args = ImportArguments(
         output_catalog_name="resume",
@@ -125,7 +109,6 @@ def test_resume_dask_runner(
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
         overwrite=True,
-        resume=True,
         highest_healpix_order=0,
         pixel_threshold=1000,
         progress_bar=False,
@@ -139,7 +122,7 @@ def test_resume_dask_runner(
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
 
@@ -170,12 +153,10 @@ def test_dask_runner(
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert catalog.catalog_info.total_rows == 131
-    assert len(catalog.get_pixels()) == 1
+    assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -201,8 +182,6 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     assert os.path.exists(metadata_filename)
 
     # Check that the catalog parquet file DOES NOT exist
-    output_file = os.path.join(
-        args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet"
-    )
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert not os.path.exists(output_file)

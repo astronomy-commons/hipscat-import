@@ -19,11 +19,12 @@ dependencies = [
     "dask[distributed]",
     "deprecated",
     "healpy",
-    "hipscat",
+    "hipscat >= 0.1.2",
     "ipykernel", # Support for Jupyter notebooks
-    "pandas",
+    "pandas < 2.1.0",
     "pyarrow",
     "tqdm",
+    "numpy < 1.25",
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
@@ -35,9 +36,9 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-timeout",
-    "sphinx==6.1.3", # Used to automatically generate documentation
-    "sphinx_rtd_theme==1.2.0", # Used to render documentation
-    "sphinx-autoapi==2.0.1", # Used to automatically generate api documentation
+    "sphinx", # Used to automatically generate documentation
+    "sphinx-rtd-theme", # Used to render documentation
+    "sphinx-autoapi", # Used to automatically generate api documentation
     "mypy", # Used for static type checking of files
     # if you add dependencies here while experimenting in a notebook and you
     # want that notebook to render in your documentation, please add the
@@ -47,12 +48,12 @@ dev = [
     "ipykernel", # Also used in building notebooks into Sphinx
     "ipython", # Also used in building notebooks into Sphinx
     "matplotlib", # Used in sample notebook intro_notebook.ipynb
-    "numpy", # Used in sample notebook intro_notebook.ipynb
+    "ray", # Used for dask-on-ray testing.
 ]
 
 [build-system]
 requires = [
-    "setuptools>=45", # Used to build and package the Python project
+    "setuptools>=62", # Used to build and package the Python project
     "setuptools_scm>=6.2", # Gets release version from git. Makes it available programmatically
 ]
 build-backend = "setuptools.build_meta"
@@ -68,8 +69,25 @@ timeout = 1
 markers = [
     "dask: mark tests as having a dask client runtime dependency",
 ]
+testpaths = [
+    "tests",
+]
 
 [tool.coverage.report]
+omit = [
+    "src/hipscat_import/_version.py", # auto-generated
+    "src/hipscat_import/pipeline.py", # too annoying to test
+]
+
+[tool.black]
+line-length = 110
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 110
+
+[tool.coverage.run]
 omit = [
     "src/hipscat_import/_version.py", # auto-generated
     "src/hipscat_import/pipeline.py", # too annoying to test

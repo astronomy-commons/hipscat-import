@@ -3,7 +3,7 @@
 
 import pytest
 
-from hipscat_import.margin_cache import MarginCacheArguments
+from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 
 # pylint: disable=protected-access
 
@@ -11,11 +11,21 @@ from hipscat_import.margin_cache import MarginCacheArguments
 def test_empty_required(tmp_path):
     """*Most* required arguments are provided."""
     ## Input catalog path is missing
-    with pytest.raises(FileNotFoundError, match="input_catalog_path"):
+    with pytest.raises(ValueError, match="input_catalog_path"):
         MarginCacheArguments(
             margin_threshold=5.0,
             output_path=tmp_path,
             output_catalog_name="catalog_cache",
+        )
+
+    ## Input catalog path is bad
+    with pytest.raises(ValueError, match="input_catalog_path"):
+        MarginCacheArguments(
+            input_catalog_path="/foo",
+            margin_threshold=5.0,
+            output_path=tmp_path,
+            output_catalog_name="catalog_cache",
+            overwrite=True,
         )
 
 

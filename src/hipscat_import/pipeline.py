@@ -4,15 +4,17 @@ from email.message import EmailMessage
 
 from dask.distributed import Client
 
-import hipscat_import.association.run_association as association_runner
 import hipscat_import.catalog.run_import as catalog_runner
 import hipscat_import.index.run_index as index_runner
 import hipscat_import.margin_cache.margin_cache as margin_runner
-from hipscat_import.association.arguments import AssociationArguments
+import hipscat_import.soap.run_soap as soap_runner
+import hipscat_import.verification.run_verification as verification_runner
 from hipscat_import.catalog.arguments import ImportArguments
 from hipscat_import.index.arguments import IndexArguments
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 from hipscat_import.runtime_arguments import RuntimeArguments
+from hipscat_import.soap.arguments import SoapArguments
+from hipscat_import.verification.arguments import VerificationArguments
 
 # pragma: no cover
 
@@ -39,12 +41,14 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
 
         if isinstance(args, ImportArguments):
             catalog_runner.run(args, client)
-        elif isinstance(args, AssociationArguments):
-            association_runner.run(args)
         elif isinstance(args, IndexArguments):
             index_runner.run(args)
         elif isinstance(args, MarginCacheArguments):
             margin_runner.generate_margin_cache(args, client)
+        elif isinstance(args, SoapArguments):
+            soap_runner.run(args, client)
+        elif isinstance(args, VerificationArguments):
+            verification_runner.run(args)
         else:
             raise ValueError("unknown args type")
     except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -59,7 +63,11 @@ def _send_failure_email(args: RuntimeArguments, exception: Exception):
     message = EmailMessage()
     message["Subject"] = "hipscat-import failure."
     message["To"] = args.completion_email_address
-    message.set_content(f"failed with message:\n{exception}")
+    message.set_content(
+        f"output_catalog_name: {args.output_catalog_name}"
+        "\n\nSee logs for more details"
+        f"\n\nFailed with message:\n\n{exception}"
+    )
 
     _send_email(message)
 

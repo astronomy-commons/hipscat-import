@@ -3,13 +3,37 @@ Catalog Import Arguments
 
 This page discusses a few topics around setting up a catalog pipeline.
 
+At a minimum, you need to pass the reader arguments that include where to find the input files,
+the column names for RA, DEC and ID, and where to put the output files. A minimal arguments block
+will look something like:
+
+.. code-block:: python
+
+    args = ImportArguments(
+        id_column="ObjectID",
+        ra_column="ObjectRA",
+        dec_column="ObjectDec",
+        input_path="./my_data",
+        input_format="csv",
+        output_catalog_name="test_cat",
+        output_path="./output",
+    )
+
+You only need to provide the ``file_reader`` argument if you are using a custom file reader
+or passing parameters to the file reader. For example you might use ``file_reader=CsvReader(separator="\s+")``
+to parse a whitespace separated file.
+
+More details on each of these parameters is provided below.
+
 For a full list of the available arguments, see the API documentation for 
-:py:class:`hipscat_import.catalog.arguments.ImportArguments`
+:py:class:`hipscat_import.catalog.arguments.ImportArguments`, and its superclass
+:py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
 
 Reading input files
 -------------------------------------------------------------------------------
 
 Catalog import reads through a list of files and converts them into a hipscatted catalog.
+
 
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -113,3 +137,44 @@ Alternatively, you can use the ``constant_healpix_order`` argument. This will
 **ignore** both of the ``pixel_threshold`` and ``highest_healpix_order`` arguments
 and the catalog will be partitioned by healpix pixels at the
 ``constant_healpix_order``. This can be useful for very sparse datasets.
+
+Progress Reporting
+-------------------------------------------------------------------------------
+
+By default, we will display some progress bars during pipeline execution. To 
+disable these (e.g. when you expect no output to standard out), you can set
+``progress_bar=False``.
+
+There are several stages to the pipeline execution, and you can expect progress
+reporting to look like the following:
+
+.. code-block::
+
+    Mapping  : 100%|██████████| 72/72 [58:55:18<00:00, 2946.09s/it]
+    Binning  : 100%|██████████| 1/1 [01:15<00:00, 75.16s/it]
+    Splitting: 100%|██████████| 72/72 [72:50:03<00:00, 3641.71s/it]
+    Reducing : 100%|██████████| 10895/10895 [7:46:07<00:00,  2.57s/it]
+    Finishing: 100%|██████████| 6/6 [08:03<00:00, 80.65s/it]
+
+For very long-running pipelines (e.g. multi-TB inputs), you can get an 
+email notification when the pipeline completes using the 
+``completion_email_address`` argument. This will send a brief email, 
+for either pipeline success or failure.
+
+Output
+-------------------------------------------------------------------------------
+
+You must specify a name for the catalog, using ``output_catalog_name``.
+
+You must specify where you want your catalog data to be written, using
+``output_path``. This path should be the base directory for your catalogs, as 
+the full path for the catalog will take the form of ``output_path/output_catalog_name``.
+
+If there is already catalog data in the indicated directory, you can force a 
+new catalog to be written in the directory with the ``overwrite`` flag. 
+
+In addition, you can specify a directory to use for intermediate files, using
+``tmp_dir``, as well as a directory for dask to use for intermediate files using
+``dask_tmp``. This can be useful if you have additional scratch storage, or want
+to use local storage for intermediate files and remote storage for the final 
+catalog files.

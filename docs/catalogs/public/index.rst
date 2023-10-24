@@ -17,6 +17,8 @@ and provide steps to import those catalogs in case these hints help anyone else.
 
    allwise
    neowise
+   panstarrs
+   sdss
    tic
    zubercal
 

@@ -8,18 +8,11 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-from dask.distributed import Client
+
+# pylint: disable=missing-function-docstring, redefined-outer-name
 
 
-@pytest.fixture(scope="session", name="dask_client")
-def dask_client():
-    """Create a single client for use by all unit test cases."""
-    client = Client()
-    yield client
-    client.close()
-
-
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(config, items):
     """Modify dask unit tests to
         - ignore event loop deprecation warnings
         - have a longer timeout default timeout (5 seconds instead of 1 second)
@@ -32,19 +25,27 @@ def pytest_collection_modifyitems(items):
         def test_long_running():
             ...
     """
+    use_ray = config.getoption("--use_ray")
+    skip_ray = pytest.mark.skip(reason="skipping this test under dask-on-ray")
+    first_dask = True
     for item in items:
         timeout = None
         for mark in item.iter_markers(name="dask"):
             timeout = 5
             if "timeout" in mark.kwargs:
                 timeout = int(mark.kwargs.get("timeout"))
+            if "skip_ray" in mark.kwargs and use_ray:
+                item.add_marker(skip_ray)
         if timeout:
+            if first_dask:
+                ## The first test requires more time to set up the dask/ray client
+                timeout += 10
+                first_dask = False
             item.add_marker(pytest.mark.timeout(timeout))
             item.add_marker(pytest.mark.usefixtures("dask_client"))
             item.add_marker(pytest.mark.filterwarnings("ignore::DeprecationWarning"))
 
 
-# pylint: disable=missing-function-docstring, redefined-outer-name
 TEST_DIR = os.path.dirname(__file__)
 
 
@@ -164,10 +165,11 @@ def mixed_schema_csv_parquet(test_data_dir):
 def resume_dir(test_data_dir):
     return os.path.join(test_data_dir, "resume")
 
+
 @pytest.fixture
 def basic_data_shard_df():
-    ras = np.arange(0.,360.)
-    dec = np.full(360, 0.)
+    ras = np.arange(0.0, 360.0)
+    dec = np.full(360, 0.0)
     ppix = np.full(360, 21)
     porder = np.full(360, 1)
     norder = np.full(360, 1)
@@ -176,13 +178,13 @@ def basic_data_shard_df():
     test_df = pd.DataFrame(
         data=zip(ras, dec, ppix, porder, norder, npix),
         columns=[
-            "weird_ra", 
+            "weird_ra",
             "weird_dec",
             "partition_pixel",
             "partition_order",
             "Norder",
-            "Npix"
-        ]
+            "Npix",
+        ],
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
@@ -190,14 +192,15 @@ def basic_data_shard_df():
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
-        nest=True
+        nest=True,
     )
 
     return test_df
 
+
 @pytest.fixture
 def polar_data_shard_df():
-    ras = np.arange(0.,360.)
+    ras = np.arange(0.0, 360.0)
     dec = np.full(360, 89.9)
     ppix = np.full(360, 15)
     porder = np.full(360, 2)
@@ -207,13 +210,13 @@ def polar_data_shard_df():
     test_df = pd.DataFrame(
         data=zip(ras, dec, ppix, porder, norder, npix),
         columns=[
-            "weird_ra", 
+            "weird_ra",
             "weird_dec",
             "partition_pixel",
             "partition_order",
             "Norder",
-            "Npix"
-        ]
+            "Npix",
+        ],
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
@@ -221,10 +224,11 @@ def polar_data_shard_df():
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
-        nest=True
+        nest=True,
     )
 
     return test_df
+
 
 @pytest.fixture
 def assert_text_file_matches():
@@ -257,8 +261,7 @@ def assert_text_file_matches():
         ), f"files not the same length ({len(contents)} vs {len(expected_lines)})"
         for i, expected in enumerate(expected_lines):
             assert re.match(expected, contents[i]), (
-                f"files do not match at line {i+1} "
-                f"(actual: [{contents[i]}] vs expected: [{expected}])"
+                f"files do not match at line {i+1} " f"(actual: [{contents[i]}] vs expected: [{expected}])"
             )
 
     return assert_text_file_matches
