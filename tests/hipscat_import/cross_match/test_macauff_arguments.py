@@ -8,6 +8,7 @@ import pytest
 from hipscat_import.cross_match.macauff_arguments import MacauffArguments
 
 # pylint: disable=unused-variable
+# pylint: disable=duplicate-code
 
 
 def test_macauff_arguments(

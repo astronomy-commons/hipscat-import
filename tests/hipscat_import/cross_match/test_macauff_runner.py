@@ -3,6 +3,8 @@ import pytest
 import hipscat_import.cross_match.run_macauff_import as runner
 from hipscat_import.cross_match.macauff_arguments import MacauffArguments
 
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=duplicate-code
 
 def test_bad_args(dask_client):
     """Runner should fail with empty or mis-typed arguments"""
