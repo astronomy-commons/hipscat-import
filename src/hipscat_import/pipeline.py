@@ -5,7 +5,7 @@ from email.message import EmailMessage
 from dask.distributed import Client
 
 import hipscat_import.catalog.run_import as catalog_runner
-import hipscat_import.cross_match.macauff_map_reduce as macauff_runner
+import hipscat_import.cross_match.run_macauff_import as macauff_runner
 import hipscat_import.index.run_index as index_runner
 import hipscat_import.margin_cache.margin_cache as margin_runner
 import hipscat_import.soap.run_soap as soap_runner
