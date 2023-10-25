@@ -2,7 +2,6 @@ import warnings
 from dataclasses import dataclass
 
 import healpy as hp
-import numpy as np
 from hipscat.catalog import Catalog
 from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
 from hipscat.io.validation import is_valid_catalog
@@ -40,8 +39,7 @@ class MarginCacheArguments(RuntimeArguments):
 
         self.catalog = Catalog.read_from_hipscat(self.input_catalog_path)
 
-        partition_stats = self.catalog.get_pixels()
-        highest_order = np.max(partition_stats["Norder"].values)
+        highest_order = self.catalog.partition_info.get_highest_order()
         margin_pixel_k = highest_order + 1
         if self.margin_order > -1:
             if self.margin_order < margin_pixel_k:

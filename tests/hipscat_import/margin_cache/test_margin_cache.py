@@ -35,6 +35,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
 
     assert len(data) == 13
 
+
 @pytest.mark.dask(timeout=150)
 def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, dask_client):
     """Test that margin cache generation can generate a file for a negative pixel."""
@@ -78,6 +79,7 @@ def test_partition_margin_pixel_pairs(small_sky_source_catalog, tmp_path):
     npt.assert_array_equal(margin_pairs.iloc[:10]["margin_pixel"], expected)
     assert len(margin_pairs) == 196
 
+
 def test_partition_margin_pixel_pairs_negative(small_sky_source_catalog, tmp_path):
     """Ensure partition_margin_pixel_pairs can generate negative tree pixels."""
     args = MarginCacheArguments(
@@ -91,9 +93,7 @@ def test_partition_margin_pixel_pairs_negative(small_sky_source_catalog, tmp_pat
     negative_pixels = args.catalog.generate_negative_tree_pixels()
     combined_pixels = partition_stats + negative_pixels
 
-    margin_pairs = mc._find_partition_margin_pixel_pairs(
-        combined_pixels, args.margin_order
-    )
+    margin_pairs = mc._find_partition_margin_pixel_pairs(combined_pixels, args.margin_order)
 
     expected_order = 0
     expected_pixel = 10
@@ -103,6 +103,7 @@ def test_partition_margin_pixel_pairs_negative(small_sky_source_catalog, tmp_pat
     assert margin_pairs.iloc[-1]["partition_pixel"] == expected_pixel
     npt.assert_array_equal(margin_pairs.iloc[-10:]["margin_pixel"], expected)
     assert len(margin_pairs) == 536
+
 
 def test_create_margin_directory(small_sky_source_catalog, tmp_path):
     """Ensure create_margin_directory works on main partition_pixels"""
