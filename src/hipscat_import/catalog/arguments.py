@@ -54,7 +54,7 @@ class ImportArguments(RuntimeArguments):
     """healpix order to use when mapping. if this is
     a positive number, this will be the order of all final pixels and we
     will not combine pixels according to the threshold"""
-    highest_healpix_order: int = 10
+    highest_healpix_order: int = 7
     """healpix order to use when mapping. this will
     not necessarily be the order used in the final catalog, as we may combine
     pixels that don't meed the threshold"""
