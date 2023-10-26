@@ -7,7 +7,6 @@ from typing import List
 from hipscat.io import FilePointer, file_io
 from hipscat.io.validation import is_valid_catalog
 
-from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.runtime_arguments import RuntimeArguments
 
 # pylint: disable=too-many-instance-attributes
@@ -30,17 +29,6 @@ class MacauffArguments(RuntimeArguments):
     """resolved list of all files that will be used in the importer"""
     add_hipscat_index: bool = True
     """add the hipscat spatial index field alongside the data"""
-    highest_healpix_order: int = 10
-    """healpix order to use when mapping. this will
-    not necessarily be the order used in the final catalog, as we may combine
-    pixels that don't meed the threshold"""
-    pixel_threshold: int = 1_000_000
-    """maximum number of rows for a single resulting pixel.
-    we may combine hierarchically until we near the ``pixel_threshold``"""
-    mapping_healpix_order: int = -1
-    """healpix order to use when mapping. will be
-    ``highest_healpix_order`` unless a positive value is provided for
-    ``constant_healpix_order``"""
 
     ## Input - Left catalog
     left_catalog_dir: str = ""
@@ -56,11 +44,8 @@ class MacauffArguments(RuntimeArguments):
 
     ## `macauff` specific attributes
     metadata_file_path: str = ""
-    match_probability_column: str = "match_p"
+    match_probability_columns: List[str] = field(default_factory=list)
     column_names: List[str] = field(default_factory=list)
-
-    resume: bool = True
-    resume_plan: ResumePlan | None = None
 
     def __post_init__(self):
         self._check_arguments()
@@ -111,13 +96,6 @@ class MacauffArguments(RuntimeArguments):
             raise FileNotFoundError("No input files found")
 
         self.column_names = self.get_column_names()
-
-        self.resume_plan = ResumePlan(
-            resume=self.resume,
-            progress_bar=True,
-            input_paths=self.input_paths,
-            tmp_path=self.tmp_path,
-        )
 
     def get_column_names(self):
         """Grab the macauff column names."""
