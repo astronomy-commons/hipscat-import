@@ -69,7 +69,7 @@ class MacauffArguments(RuntimeArguments):
         super()._check_arguments()
 
         if not self.input_path and not self.input_file_list:
-            raise ValueError("input files/path not provided")
+            raise ValueError("input_path nor input_file_list not provided")
         if not self.input_format:
             raise ValueError("input_format is required")
 
@@ -77,6 +77,10 @@ class MacauffArguments(RuntimeArguments):
             raise ValueError("left_catalog_dir is required")
         if not self.left_id_column:
             raise ValueError("left_id_column is required")
+        if not self.left_ra_column:
+            raise ValueError("left_ra_column is required")
+        if not self.left_dec_column:
+            raise ValueError("left_dec_column is required")
         if not is_valid_catalog(self.left_catalog_dir):
             raise ValueError("left_catalog_dir not a valid catalog")
 
@@ -84,11 +88,15 @@ class MacauffArguments(RuntimeArguments):
             raise ValueError("right_catalog_dir is required")
         if not self.right_id_column:
             raise ValueError("right_id_column is required")
+        if not self.right_ra_column:
+            raise ValueError("right_ra_column is required")
+        if not self.right_dec_column:
+            raise ValueError("right_dec_column is required")
         if not is_valid_catalog(self.right_catalog_dir):
             raise ValueError("right_catalog_dir not a valid catalog")
 
         if not self.metadata_file_path:
-            raise ValueError("column metadata file required for macauff crossmatch")
+            raise ValueError("metadata_file_path required for macauff crossmatch")
         if not path.isfile(self.metadata_file_path):
             raise ValueError("Macauff column metadata file must point to valid file path.")
 
