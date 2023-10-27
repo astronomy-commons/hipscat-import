@@ -1,0 +1,244 @@
+<columns>
+	<column>
+		<name>
+			Gaia_designation
+		</name>
+		<description>
+			The Gaia DR3 object ID.
+		</description>
+		<units>
+			string
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_RA
+		</name>
+		<description>
+			Right Ascension of the Gaia DR3 source.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_Dec
+		</name>
+		<description>
+			The Gaia DR3 declination.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			BP
+		</name>
+		<description>
+			The BP magnitude, from Gaia DR3.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			G
+		</name>
+		<description>
+			The Gaia DR3 G magnitude.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			RP
+		</name>
+		<description>
+			The Gaia DR3 RP magnitude.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_Name
+		</name>
+		<description>
+			The object identifier from the CatWISE 2020 catalogue.
+		</description>
+		<units>
+			string
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_RA
+		</name>
+		<description>
+			Right Ascension of the object as quoted by the CatWISE 2020 catalogue.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_Dec
+		</name>
+		<description>
+			CatWISE 2020 Declination.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			W1
+		</name>
+		<description>
+			W1 magnitude from CatWISE 2020.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			W2
+		</name>
+		<description>
+			W2 magnitude from CatWISE 2020.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			match_p
+		</name>
+		<description>
+			Overall probability that the Gaia DR3 and CatWISE sources are detections of the same object, as given by equation 26 of Wilson &amp; Naylor (2018a).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			Separation
+		</name>
+		<description>
+			On-sky distance between the two detections, in arcseconds.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			eta
+		</name>
+		<description>
+			Photometric logarithmic likelihood ratio of Gaia DR3-CatWISE match, as described by equation 37 of Wilson &amp; Naylor (2018a).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			xi
+		</name>
+		<description>
+			Astrometric logarithmic likelihood ratio of Gaia DR3-CatWISE match, as described by equation 38 of Wilson &amp; Naylor (2018a).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_avg_cont
+		</name>
+		<description>
+			Mean contaminating relative flux within simulated Gaia PSFs perturbation component of the Astrometric Uncertainty Function at the local density and magnitude of the source.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_avg_cont
+		</name>
+		<description>
+			Mean contaminating relative flux within simulated CatWISE PSFs perturbation component of the Astrometric Uncertainty Function at the local density and magnitude of the source.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_cont_f1
+		</name>
+		<description>
+			Probability of Gaia source having contaminant of at least 1% relative flux given its separation from its corresponding Gaia detection, as given by equation 12 of Wilson &amp; Naylor (2018b).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_cont_f10
+		</name>
+		<description>
+			Probability of Gaia source having contaminant of at least 10% relative flux given its separation from its corresponding Gaia detection, as given by equation 12 of Wilson &amp; Naylor (2018b).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_cont_f1
+		</name>
+		<description>
+			Probability of CatWISE source having contaminant of at least 1% relative flux given its separation from its corresponding Gaia detection, as given by equation 12 of Wilson &amp; Naylor (2018b).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_cont_f10
+		</name>
+		<description>
+			Probability of CatWISE source having contaminant of at least 10% relative flux given its separation from its corresponding Gaia detection, as given by equation 12 of Wilson &amp; Naylor (2018b).
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_fit_sig
+		</name>
+		<description>
+			Re-derived CatWISE astrometric uncertainty, based on ensemble neighbour separations as a function of magnitude and quoted astrometric precision.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+</columns>
