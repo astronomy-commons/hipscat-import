@@ -33,15 +33,15 @@ def _construct_field(name, units, metadata_dict):
 def from_xml(input_file, output_file):
     """Read XML file with column metadata for a cross-match file from macauff.
 
-    Expects XML with the format:
+    Expects XML with the format::
 
-    <columns>
-        <column>
-            <name>$COLUMN_NAME</name>
-            <description>$COLUMN_DESCRIPTION</description>
-            <units>$COLUMN_UNIT_DESCRIPTOR</units>
-        </column>
-    </columns>
+        <columns>
+            <column>
+                <name>$COLUMN_NAME</name>
+                <description>$COLUMN_DESCRIPTION</description>
+                <units>$COLUMN_UNIT_DESCRIPTOR</units>
+            </column>
+        </columns>
 
     Args:
         input file (str): file to read for match metadata
@@ -68,26 +68,23 @@ def from_xml(input_file, output_file):
 def from_yaml(input_file, output_directory):
     """Read YAML file with column metadata for the various cross-match files from macauff.
 
-    Expects YAML with the format:
+    Expects YAML with the format::
 
-    name: macauff_GaiaDR3xCatWISE2020
-    description: Match and non-match table for macauff cross-matches of Gaia DR3 and CatWISE 2020.
-    tables:
+        name: macauff_GaiaDR3xCatWISE2020
+        description: Match and non-match table for macauff cross-matches of Gaia DR3 and CatWISE 2020.
+        tables:
         - name: macauff_GaiaDR3xCatWISE2020_matches
           "@id": "#macauff_GaiaDR3xCatWISE2020_matches"
-          description: Counterpart associations between Gaia and WISE, as well as derived values from the cross-match process such as match probability and contamination flux.
+          description: Counterpart associations between Gaia and WISE
           columns:
-            - name: gaia_source_id
-              datatype: long
-              description: The Gaia DR3 object ID.
+          - name: gaia_source_id
+            datatype: long
+            description: The Gaia DR3 object ID.
 
     Args:
         input file (str): file to read for match metadata
         output_dir (str): desired location for output parquet metadata files
             We will write one file per table in the "tables" element.
-
-    Raises
-        ValueError: if the YAML is mal-formed
     """
     with open(input_file, "r", encoding="utf-8") as file_handle:
         metadata = yaml.safe_load(file_handle)
