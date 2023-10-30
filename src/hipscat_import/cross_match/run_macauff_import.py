@@ -2,6 +2,7 @@ from hipscat_import.cross_match.macauff_arguments import MacauffArguments
 
 # pylint: disable=unused-argument
 
+
 def run(args, client):
     """run macauff cross-match import pipeline"""
     if not args:

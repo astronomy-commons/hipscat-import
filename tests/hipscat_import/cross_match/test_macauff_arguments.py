@@ -11,11 +11,7 @@ from hipscat_import.cross_match.macauff_arguments import MacauffArguments
 
 
 def test_macauff_arguments(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path
+    small_sky_object_catalog, small_sky_source_catalog, small_sky_dir, formats_yaml, tmp_path
 ):
     """Test that we can create a MacauffArguments instance with two valid catalogs."""
     args = MacauffArguments(
@@ -37,12 +33,9 @@ def test_macauff_arguments(
 
     assert len(args.input_paths) > 0
 
+
 def test_empty_required(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path
+    small_sky_object_catalog, small_sky_source_catalog, small_sky_dir, formats_yaml, tmp_path
 ):
     """All non-runtime arguments are required."""
 
@@ -62,7 +55,7 @@ def test_empty_required(
         ["right_id_column", "source_id"],
         ["input_path", small_sky_dir],
         ["input_format", "csv"],
-        ["metadata_file_path", formats_yaml]
+        ["metadata_file_path", formats_yaml],
     ]
 
     ## For each required argument, check that a ValueError is raised that matches the
@@ -96,11 +89,7 @@ def test_empty_required(
 
 
 def test_macauff_arguments_file_list(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path
+    small_sky_object_catalog, small_sky_source_catalog, small_sky_dir, formats_yaml, tmp_path
 ):
     """Test that we can create a MacauffArguments instance with two valid catalogs."""
     files = [path.join(small_sky_dir, "catalog.csv")]
@@ -123,18 +112,14 @@ def test_macauff_arguments_file_list(
 
     assert len(args.input_paths) > 0
 
-def test_macauff_args_invalid_catalog(
-        small_sky_source_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path
-):
+
+def test_macauff_args_invalid_catalog(small_sky_source_catalog, small_sky_dir, formats_yaml, tmp_path):
     with pytest.raises(ValueError, match="left_catalog_dir"):
         MacauffArguments(
             output_path=tmp_path,
             output_catalog_name="object_to_source",
             tmp_dir=tmp_path,
-            left_catalog_dir=small_sky_dir, # valid path, but not a catalog
+            left_catalog_dir=small_sky_dir,  # valid path, but not a catalog
             left_ra_column="ra",
             left_dec_column="dec",
             left_id_column="id",
@@ -147,12 +132,8 @@ def test_macauff_args_invalid_catalog(
             metadata_file_path=formats_yaml,
         )
 
-def test_macauff_args_right_invalid_catalog(
-        small_sky_object_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path
-):
+
+def test_macauff_args_right_invalid_catalog(small_sky_object_catalog, small_sky_dir, formats_yaml, tmp_path):
     with pytest.raises(ValueError, match="right_catalog_dir"):
         MacauffArguments(
             output_path=tmp_path,
@@ -162,7 +143,7 @@ def test_macauff_args_right_invalid_catalog(
             left_ra_column="ra",
             left_dec_column="dec",
             left_id_column="id",
-            right_catalog_dir=small_sky_dir, # valid directory with files, not a catalog
+            right_catalog_dir=small_sky_dir,  # valid directory with files, not a catalog
             right_ra_column="source_ra",
             right_dec_column="source_dec",
             right_id_column="source_id",
@@ -171,11 +152,9 @@ def test_macauff_args_right_invalid_catalog(
             metadata_file_path=formats_yaml,
         )
 
+
 def test_macauff_args_invalid_metadata_file(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        small_sky_dir,
-        tmp_path
+    small_sky_object_catalog, small_sky_source_catalog, small_sky_dir, tmp_path
 ):
     with pytest.raises(ValueError, match="column metadata file must"):
         MacauffArguments(
@@ -195,11 +174,9 @@ def test_macauff_args_invalid_metadata_file(
             metadata_file_path="ceci_n_est_pas_un_fichier.xml",
         )
 
+
 def test_macauff_args_invalid_input_directory(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        formats_yaml,
-        tmp_path
+    small_sky_object_catalog, small_sky_source_catalog, formats_yaml, tmp_path
 ):
     with pytest.raises(FileNotFoundError, match="input_path not found"):
         MacauffArguments(
@@ -219,12 +196,9 @@ def test_macauff_args_invalid_input_directory(
             metadata_file_path=formats_yaml,
         )
 
+
 def test_macauff_args_no_files(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path
+    small_sky_object_catalog, small_sky_source_catalog, small_sky_dir, formats_yaml, tmp_path
 ):
     with pytest.raises(FileNotFoundError, match="No input files found"):
         MacauffArguments(
@@ -240,6 +214,6 @@ def test_macauff_args_no_files(
             right_dec_column="source_dec",
             right_id_column="source_id",
             input_path=small_sky_dir,
-            input_format="parquet", # no files of this format will be found
+            input_format="parquet",  # no files of this format will be found
             metadata_file_path=formats_yaml,
         )

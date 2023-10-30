@@ -16,6 +16,7 @@ from hipscat_import.runtime_arguments import RuntimeArguments
 @dataclass
 class MacauffArguments(RuntimeArguments):
     """Data class for holding cross-match association arguments"""
+
     ## Input - Cross-match data
     input_path: FilePointer | None = None
     """path to search for the input data"""
@@ -102,26 +103,26 @@ class MacauffArguments(RuntimeArguments):
         # TODO: Actually read in the metadata file once we get the example file from Tom.
 
         return [
-            'Gaia_designation',
-            'Gaia_RA',
-            'Gaia_Dec',
-            'BP',
-            'G',
-            'RP',
-            'CatWISE_Name',
-            'CatWISE_RA',
-            'CatWISE_Dec',
-            'W1',
-            'W2',
-            'match_p',
-            'Separation',
-            'eta',
-            'xi',
-            'Gaia_avg_cont',
-            'CatWISE_avg_cont',
-            'Gaia_cont_f1',
-            'Gaia_cont_f10',
-            'CatWISE_cont_f1',
-            'CatWISE_cont_f10',
-            'CatWISE_fit_sig',
+            "Gaia_designation",
+            "Gaia_RA",
+            "Gaia_Dec",
+            "BP",
+            "G",
+            "RP",
+            "CatWISE_Name",
+            "CatWISE_RA",
+            "CatWISE_Dec",
+            "W1",
+            "W2",
+            "match_p",
+            "Separation",
+            "eta",
+            "xi",
+            "Gaia_avg_cont",
+            "CatWISE_avg_cont",
+            "Gaia_cont_f1",
+            "Gaia_cont_f10",
+            "CatWISE_cont_f1",
+            "CatWISE_cont_f10",
+            "CatWISE_fit_sig",
         ]

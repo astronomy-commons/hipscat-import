@@ -6,6 +6,8 @@ from hipscat_import.cross_match.macauff_arguments import MacauffArguments
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=duplicate-code
 
+
+@pytest.mark.dask
 def test_bad_args(dask_client):
     """Runner should fail with empty or mis-typed arguments"""
     with pytest.raises(TypeError, match="MacauffArguments"):
@@ -16,13 +18,14 @@ def test_bad_args(dask_client):
         runner.run(args, dask_client)
 
 
+@pytest.mark.dask
 def test_no_implementation(
-        small_sky_object_catalog,
-        small_sky_source_catalog,
-        small_sky_dir,
-        formats_yaml,
-        tmp_path,
-        dask_client,
+    small_sky_object_catalog,
+    small_sky_source_catalog,
+    small_sky_dir,
+    formats_yaml,
+    tmp_path,
+    dask_client,
 ):
     """Test that we can create a MacauffArguments instance with two valid catalogs."""
     args = MacauffArguments(
