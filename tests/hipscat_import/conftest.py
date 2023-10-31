@@ -95,6 +95,11 @@ def empty_data_dir(test_data_dir):
 
 
 @pytest.fixture
+def macauff_data_dir(test_data_dir):
+    return os.path.join(test_data_dir, "macauff")
+
+
+@pytest.fixture
 def formats_dir(test_data_dir):
     return os.path.join(test_data_dir, "test_formats")
 

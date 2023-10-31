@@ -1,0 +1,68 @@
+<columns>
+	<column>
+		<name>
+			Gaia_designation
+		</name>
+		<description>
+			The Gaia DR3 object ID.
+		</description>
+		<units>
+			long
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_RA
+		</name>
+		<description>
+			Right Ascension of the Gaia DR3 source.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			Gaia_Dec
+		</name>
+		<description>
+			The Gaia DR3 declination.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_Name
+		</name>
+		<description>
+			The object identifier from the CatWISE 2020 catalogue.
+		</description>
+		<units>
+			string
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_RA
+		</name>
+		<description>
+			Right Ascension of the object as quoted by the CatWISE 2020 catalogue.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+	<column>
+		<name>
+			CatWISE_Dec
+		</name>
+		<description>
+			CatWISE 2020 Declination.
+		</description>
+		<units>
+			float
+		</units>
+	</column>
+</columns>
