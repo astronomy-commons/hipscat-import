@@ -40,6 +40,8 @@ class ImportArguments(RuntimeArguments):
     """column for right ascension"""
     dec_column: str = "dec"
     """column for declination"""
+    use_hipscat_index: bool = False
+    """use an existing hipscat spatial index as the position, instead of ra/dec"""
     id_column: str = "id"
     """column for survey identifier, or other sortable column"""
     add_hipscat_index: bool = True
@@ -140,6 +142,7 @@ class ImportArguments(RuntimeArguments):
             "input_file_list": self.input_file_list,
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
+            "use_hipscat_index": self.use_hipscat_index,
             "id_column": self.id_column,
             "constant_healpix_order": self.constant_healpix_order,
             "highest_healpix_order": self.highest_healpix_order,

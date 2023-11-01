@@ -4,6 +4,7 @@ import dask.dataframe as dd
 import numpy as np
 from dask.distributed import progress, wait
 from hipscat.io import file_io
+from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 
 def create_index(args):
@@ -31,7 +32,7 @@ def create_index(args):
         data["Npix"] = data["Npix"].astype(np.int32)
     data = data.reset_index()
     if not args.include_hipscat_index:
-        data = data.drop(columns=["_hipscat_index"])
+        data = data.drop(columns=[HIPSCAT_ID_COLUMN])
     data = data.repartition(partition_size=args.compute_partition_size)
     data = data.set_index(args.indexing_column)
     result = data.to_parquet(
