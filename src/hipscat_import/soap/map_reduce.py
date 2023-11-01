@@ -125,3 +125,10 @@ def combine_partial_results(input_path, output_path):
             file_pointer=file_io.append_paths_to_pointer(output_path, "unmatched_sources.csv"),
             index=False,
         )
+
+    primary_only = matched.groupby(["Norder", "Dir", "Npix"])["num_rows"].sum().reset_index()
+    file_io.write_dataframe_to_csv(
+        dataframe=primary_only,
+        file_pointer=file_io.append_paths_to_pointer(output_path, "partition_info.csv"),
+        index=False,
+    )
