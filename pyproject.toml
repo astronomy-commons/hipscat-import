@@ -23,6 +23,7 @@ dependencies = [
     "ipykernel", # Support for Jupyter notebooks
     "pandas < 2.1.0",
     "pyarrow",
+    "pyyaml",
     "tqdm",
     "numpy < 1.25",
     "fsspec <= 2023.9.2", # Remove when pyarrow updates to reflect api changes
