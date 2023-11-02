@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 from os import path
 from typing import List
 
-from hipscat.io import FilePointer, file_io
+from hipscat.io import FilePointer
 from hipscat.io.validation import is_valid_catalog
 
-from hipscat_import.runtime_arguments import RuntimeArguments
+from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=unsupported-binary-operation
@@ -87,14 +87,7 @@ class MacauffArguments(RuntimeArguments):
             raise ValueError("Macauff column metadata file must point to valid file path.")
 
         # Basic checks complete - make more checks and create directories where necessary
-        if self.input_path:
-            if not file_io.does_file_or_directory_exist(self.input_path):
-                raise FileNotFoundError("input_path not found on local storage")
-            self.input_paths = file_io.find_files_matching_path(self.input_path, f"*{self.input_format}")
-        elif self.input_file_list:
-            self.input_paths = self.input_file_list
-        if len(self.input_paths) == 0:
-            raise FileNotFoundError("No input files found")
+        self.input_paths = find_input_paths(self.input_path, f"*{self.input_format}", self.input_file_list)
 
         self.column_names = self.get_column_names()
 

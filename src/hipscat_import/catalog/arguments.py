@@ -6,12 +6,12 @@ from dataclasses import dataclass, field
 from typing import List
 
 from hipscat.catalog.catalog import CatalogInfo
-from hipscat.io import FilePointer, file_io
+from hipscat.io import FilePointer
 from hipscat.pixel_math import hipscat_id
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
 from hipscat_import.catalog.resume_plan import ResumePlan
-from hipscat_import.runtime_arguments import RuntimeArguments
+from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
 
@@ -102,14 +102,7 @@ class ImportArguments(RuntimeArguments):
             self.file_reader = get_file_reader(self.input_format)
 
         # Basic checks complete - make more checks and create directories where necessary
-        if self.input_path:
-            if not file_io.does_file_or_directory_exist(self.input_path):
-                raise FileNotFoundError("input_path not found on local storage")
-            self.input_paths = file_io.find_files_matching_path(self.input_path, f"*{self.input_format}")
-        elif self.input_file_list:
-            self.input_paths = self.input_file_list
-        if len(self.input_paths) == 0:
-            raise FileNotFoundError("No input files found")
+        self.input_paths = find_input_paths(self.input_path, f"*{self.input_format}", self.input_file_list)
         self.resume_plan = ResumePlan(
             resume=self.resume,
             progress_bar=self.progress_bar,

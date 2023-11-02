@@ -1,0 +1,81 @@
+---
+name: macauff_GaiaDR3xCatWISE2020
+description: Match and non-match table for macauff cross-matches of Gaia DR3 and CatWISE 2020.
+tables:
+- name: macauff_GaiaDR3xCatWISE2020_matches
+  "@id": "#macauff_GaiaDR3xCatWISE2020_matches"
+  description: Counterpart associations between Gaia and WISE, as well as derived values from the cross-match process such as match probability and contamination flux.
+  columns:
+  - name: gaia_source_id
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.gaia_source_id"
+    datatype: long
+    description: The Gaia DR3 object ID.
+  - name: gaia_ra
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.gaia_ra"
+    datatype: double
+    description: Right Ascension of the Gaia DR3 source.
+  - name: gaia_dec
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.gaia_dec"
+    datatype: double
+    description: The Gaia DR3 declination.
+  - name: catwise_name
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.catwise_name"
+    datatype: string
+    description: The object identifier from the CatWISE 2020 catalogue.
+  - name: catwise_ra
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.catwise_ra"
+    datatype: double
+    description: Right Ascension of the object as quoted by the CatWISE 2020 catalogue.
+  - name: catwise_dec
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.catwise_dec"
+    datatype: double
+    description: CatWISE 2020 Declination.
+  - name: match_p
+    "@id": "#macauff_GaiaDR3xCatWISE2020_matches.match_p"
+    datatype: double
+    description: Overall probability that the Gaia DR3 and CatWISE sources are detections of the same object, as given by equation 26 of Wilson & Naylor (2018a).
+  primaryKey: "#macauff_GaiaDR3xCatWISE2020_matches.gaia_source_id"
+
+- name: macauff_GaiaDR3xCatWISE2020_gaia_nonmatches
+  "@id": "#macauff_GaiaDR3xCatWISE2020_gaia_nonmatches"
+  description: Objects in Gaia DR3 with no counterpart in the CatWISE2020 catalogue, with derived columns such as match probability and simulated flux contamination.
+  columns:
+  - name: gaia_source_id
+    "@id": "#macauff_GaiaDR3xCatWISE2020_gaia_nonmatches.gaia_source_id"
+    datatype: long
+    description: The Gaia DR3 object ID.
+  - name: gaia_ra
+    "@id": "#macauff_GaiaDR3xCatWISE2020_gaia_nonmatches.gaia_ra"
+    datatype: double
+    description: Right Ascension of the Gaia DR3 source.
+  - name: gaia_dec
+    "@id": "#macauff_GaiaDR3xCatWISE2020_gaia_nonmatches.gaia_dec"
+    datatype: double
+    description: The Gaia DR3 declination.
+  - name: match_p
+    "@id": "#macauff_GaiaDR3xCatWISE2020_gaia_nonmatches.match_p"
+    datatype: double
+    description: Overall probability that the Gaia DR3 source does not have a corresponding CatWISE detection, as given by equation 26 of Wilson & Naylor (2018a).
+  primaryKey: "#macauff_GaiaDR3xCatWISE2020_gaia_nonmatches.gaia_source_id"
+
+- name: macauff_GaiaDR3xCatWISE2020_catwise_nonmatches
+  "@id": "#macauff_GaiaDR3xCatWISE2020_catwise_nonmatches"
+  description: Objects in CatWISE2020 with no counterpart in the Gaia DR3 catalogue, with derived columns such as match probability and simulated flux contamination.
+  columns:
+  - name: catwise_name
+    "@id": "#macauff_GaiaDR3xCatWISE2020_catwise_nonmatches.catwise_name"
+    datatype: string
+    description: The object identifier from the CatWISE 2020 catalogue.
+  - name: catwise_ra
+    "@id": "#macauff_GaiaDR3xCatWISE2020_catwise_nonmatches.catwise_ra"
+    datatype: double
+    description: Right Ascension of the object as quoted by the CatWISE 2020 catalogue.
+  - name: catwise_dec
+    "@id": "#macauff_GaiaDR3xCatWISE2020_catwise_nonmatches.catwise_dec"
+    datatype: double
+    description: CatWISE 2020 Declination.
+  - name: match_p
+    "@id": "#macauff_GaiaDR3xCatWISE2020_catwise_nonmatches.match_p"
+    datatype: double
+    description: Overall probability that the CatWISE source does not have a corresponding Gaia DR3 detection, as given by equation 26 of Wilson & Naylor (2018a).
+  primaryKey: "#macauff_GaiaDR3xCatWISE2020_catwise_nonmatches.catwise_name"

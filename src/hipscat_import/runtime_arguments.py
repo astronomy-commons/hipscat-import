@@ -124,3 +124,27 @@ class RuntimeArguments:
     def additional_runtime_provenance_info(self):
         """Any additional runtime args to be included in provenance info from subclasses"""
         return {}
+
+
+def find_input_paths(input_path="", file_matcher="", input_file_list=None):
+    """Helper method to find input paths, given either a prefix and format, or an
+    explicit list of paths.
+
+    Args:
+        input_path (str): prefix to search for
+        file_matcher (str): matcher to use when searching for files
+        input_file_list (List[str]): list of input paths
+    Returns:
+        matching files, if input_path is provided, otherwise, input_file_list
+    Raises:
+        FileNotFoundError if no files are found at the input_path and the provided list is empty.
+    """
+    if input_path:
+        if not file_io.does_file_or_directory_exist(input_path):
+            raise FileNotFoundError("input_path not found on local storage")
+        input_paths = file_io.find_files_matching_path(input_path, file_matcher)
+    elif input_file_list:
+        input_paths = input_file_list
+    if len(input_paths) == 0:
+        raise FileNotFoundError("No input files found")
+    return input_paths
