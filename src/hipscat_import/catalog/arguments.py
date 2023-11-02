@@ -73,6 +73,10 @@ class ImportArguments(RuntimeArguments):
     from your input files"""
     resume_plan: ResumePlan | None = None
     """container that handles read/write of log files for this pipeline"""
+    manual_dtypes: dict | None = None
+    """dictionary of {columnname : dtype} ->df = df.astype(manual_dtypes) to explicitly
+    cast specific columns uniformly."""
+
 
     def __post_init__(self):
         self._check_arguments()
