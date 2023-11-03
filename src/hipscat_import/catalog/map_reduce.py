@@ -110,6 +110,7 @@ def map_to_pixels(
         input_file, file_reader, highest_order, ra_column, dec_column
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
+        mapped_pixel = mapped_pixel.astype(np.int64)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
     ResumePlan.write_partial_histogram(tmp_path=resume_path, mapping_key=mapping_key, histogram=histo)
 

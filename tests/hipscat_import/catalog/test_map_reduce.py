@@ -134,6 +134,34 @@ def test_map_headers(tmp_path, formats_headers_csv):
     assert (result == expected).all()
 
 
+def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parquet):
+    """Test loading the a file when using a parquet schema file for dtypes"""
+    os.makedirs(os.path.join(tmp_path, "histograms"))
+    input_file = os.path.join(mixed_schema_csv_dir, "input_01.csv")
+    mr.map_to_pixels(
+        input_file=input_file,
+        file_reader=get_file_reader(
+            "csv",
+            schema_file=mixed_schema_csv_parquet,
+            dtype_backend="numpy_nullable",
+        ),
+        highest_order=0,
+        ra_column="ra",
+        dec_column="dec",
+        resume_path=tmp_path,
+        mapping_key="map_0",
+    )
+
+    result = read_partial_histogram(tmp_path, "map_0")
+
+    assert len(result) == 12
+
+    expected = hist.empty_histogram(0)
+    expected[11] = 4
+    npt.assert_array_equal(result, expected)
+    assert (result == expected).all()
+
+
 def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
     os.makedirs(os.path.join(tmp_path, "histograms"))
