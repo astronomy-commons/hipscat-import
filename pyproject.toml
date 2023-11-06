@@ -54,6 +54,10 @@ dev = [
     "types-PyYAML", # type stubs for pyyaml
 ]
 
+[metadata]
+long_description = { file = "README.md" }
+url = "https://github.com/astronomy-commons/hipscat-import"
+
 [build-system]
 requires = [
     "setuptools>=62", # Used to build and package the Python project
