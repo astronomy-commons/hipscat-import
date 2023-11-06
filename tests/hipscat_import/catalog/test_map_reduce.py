@@ -166,6 +166,7 @@ def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
             mapping_key="map_0",
         )
 
+
 def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parquet):
     """Test loading the a file when using a parquet schema file for dtypes"""
     os.makedirs(os.path.join(tmp_path, "histograms"))
@@ -192,6 +193,7 @@ def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parque
     expected[11] = 4
     npt.assert_array_equal(result, expected)
     assert (result == expected).all()
+
 
 def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
