@@ -4,9 +4,11 @@
 
 [![Template](https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen)](https://lincc-ppt.readthedocs.io/en/latest/)
 
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/astronomy-commons/hipscat-import)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/testing-and-coverage.yml)
-![Read the Docs](https://img.shields.io/readthedocs/hipscat-import)
+[![PyPI](https://img.shields.io/pypi/v/hipscat-import?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/hipscat-import/)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/smoke-test.yml)](https://github.com/astronomy-commons/hipscat-import/actions/workflows/smoke-test.yml)
+[![codecov](https://codecov.io/gh/astronomy-commons/hipscat-import/branch/main/graph/badge.svg)](https://codecov.io/gh/astronomy-commons/hipscat-import)
+[![Read the Docs](https://img.shields.io/readthedocs/hipscat-import)](https://hipscat-import.readthedocs.io/)
+[![benchmarks](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/asv-main.yml?label=benchmarks)](https://astronomy-commons.github.io/hipscat-import/)
 
 ## HiPSCat import - Utility for ingesting large survey data into HiPSCat structure.
 
