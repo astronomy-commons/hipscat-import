@@ -6,6 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
+from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healpix
 
 from hipscat_import.catalog.file_readers import InputReader
 from hipscat_import.catalog.resume_plan import ResumePlan
@@ -53,6 +54,7 @@ def _iterate_input_file(
     highest_order,
     ra_column,
     dec_column,
+    use_hipscat_index = False,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
     if not file_reader:
@@ -61,18 +63,28 @@ def _iterate_input_file(
     required_columns = [ra_column, dec_column]
 
     for chunk_number, data in enumerate(file_reader.read(input_file)):
-        if not all(x in data.columns for x in required_columns):
-            raise ValueError(
-                f"Invalid column names in input file: {ra_column}, {dec_column} not in {input_file}"
+        if use_hipscat_index:
+            if data.index.name == HIPSCAT_ID_COLUMN:
+                mapped_pixels = hipscat_id_to_healpix(data.index, target_order=highest_order)
+            elif HIPSCAT_ID_COLUMN in data.columns:
+                mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
+            else:
+                raise ValueError(
+                    f"Invalid column names in input file: {HIPSCAT_ID_COLUMN} not in {input_file}"
+                )
+        else:
+            if not all(x in data.columns for x in required_columns):
+                raise ValueError(
+                    f"Invalid column names in input file: {', '.join(required_columns)} not in {input_file}"
+                )
+            # Set up the pixel data
+            mapped_pixels = hp.ang2pix(
+                2**highest_order,
+                data[ra_column].values,
+                data[dec_column].values,
+                lonlat=True,
+                nest=True,
             )
-        # Set up the pixel data
-        mapped_pixels = hp.ang2pix(
-            2**highest_order,
-            data[ra_column].values,
-            data[dec_column].values,
-            lonlat=True,
-            nest=True,
-        )
         yield chunk_number, data, mapped_pixels
 
 
@@ -84,6 +96,7 @@ def map_to_pixels(
     highest_order,
     ra_column,
     dec_column,
+    use_hipscat_index = False
 ):
     """Map a file of input objects to their healpix pixels.
 
@@ -107,7 +120,7 @@ def map_to_pixels(
     """
     histo = pixel_math.empty_histogram(highest_order)
     for _, _, mapped_pixels in _iterate_input_file(
-        input_file, file_reader, highest_order, ra_column, dec_column
+        input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         mapped_pixel = mapped_pixel.astype(np.int64)
@@ -125,6 +138,7 @@ def split_pixels(
     cache_shard_path: FilePointer,
     resume_path: FilePointer,
     alignment=None,
+    use_hipscat_index = False,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
 
@@ -145,7 +159,7 @@ def split_pixels(
         FileNotFoundError: if the file does not exist, or is a directory
     """
     for chunk_number, data, mapped_pixels in _iterate_input_file(
-        input_file, file_reader, highest_order, ra_column, dec_column
+        input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index
     ):
         aligned_pixels = alignment[mapped_pixels]
         unique_pixels, unique_inverse = np.unique(aligned_pixels, return_inverse=True)
@@ -181,6 +195,7 @@ def reduce_pixel_shards(
     ra_column,
     dec_column,
     id_column,
+    use_hipscat_index = False,
     add_hipscat_index=True,
     delete_input_files=True,
     use_schema_file="",
@@ -260,8 +275,8 @@ def reduce_pixel_shards(
     dataframe = merged_table.to_pandas()
     if id_column:
         dataframe = dataframe.sort_values(id_column)
-    if add_hipscat_index:
-        dataframe["_hipscat_index"] = pixel_math.compute_hipscat_id(
+    if add_hipscat_index and not use_hipscat_index:
+        dataframe[HIPSCAT_ID_COLUMN] = pixel_math.compute_hipscat_id(
             dataframe[ra_column].values,
             dataframe[dec_column].values,
         )
@@ -278,7 +293,7 @@ def reduce_pixel_shards(
         ## If we had a meaningful index before, preserve it as a column.
         if _has_named_index(dataframe):
             dataframe = dataframe.reset_index()
-        dataframe = dataframe.set_index("_hipscat_index").sort_index()
+        dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN).sort_index()
     dataframe.to_parquet(destination_file)
 
     del dataframe, merged_table, tables
