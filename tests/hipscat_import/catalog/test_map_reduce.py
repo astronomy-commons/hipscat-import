@@ -134,6 +134,39 @@ def test_map_headers(tmp_path, formats_headers_csv):
     assert (result == expected).all()
 
 
+def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
+    os.makedirs(os.path.join(tmp_path, "histograms"))
+    input_file = os.path.join(formats_dir, "hipscat_index.csv")
+    mr.map_to_pixels(
+        input_file=input_file,
+        file_reader=get_file_reader("csv"),
+        highest_order=0,
+        ra_column="NOPE",
+        dec_column="NOPE",
+        use_hipscat_index=True,  # radec don't matter. just use existing index
+        resume_path=tmp_path,
+        mapping_key="map_0",
+    )
+
+    expected = hist.empty_histogram(0)
+    expected[11] = 131
+
+    result = read_partial_histogram(tmp_path, "map_0")
+    npt.assert_array_equal(result, expected)
+
+    with pytest.raises(ValueError, match="_hipscat_index not in"):
+        mr.map_to_pixels(
+            input_file=small_sky_single_file,
+            file_reader=get_file_reader("csv"),
+            highest_order=0,
+            ra_column="NOPE",
+            dec_column="NOPE",
+            use_hipscat_index=True,  # no pre-existing index! expect failure.
+            resume_path=tmp_path,
+            mapping_key="map_0",
+        )
+
+
 def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
     os.makedirs(os.path.join(tmp_path, "histograms"))

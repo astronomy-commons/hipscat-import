@@ -35,6 +35,7 @@ def _map_pixels(args, client):
                 highest_order=args.mapping_healpix_order,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
+                use_hipscat_index=args.use_hipscat_index,
             )
         )
     args.resume_plan.wait_for_mapping(futures)
@@ -62,6 +63,7 @@ def _split_pixels(args, alignment_future, client):
                 cache_shard_path=args.tmp_path,
                 resume_path=args.resume_plan.tmp_path,
                 alignment=alignment_future,
+                use_hipscat_index=args.use_hipscat_index,
             )
         )
 
@@ -96,6 +98,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 id_column=args.id_column,
                 add_hipscat_index=args.add_hipscat_index,
                 use_schema_file=args.use_schema_file,
+                use_hipscat_index=args.use_hipscat_index,
             )
         )
 
