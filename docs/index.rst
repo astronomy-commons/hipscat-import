@@ -39,15 +39,25 @@ See dataset-specific notes on arguments:
 * :doc:`guide/index_table`
 
 Once you have created your arguments object, you pass it into the pipeline control,
-and then wait:
+and then wait. Running within a main guard will potentially avoid some python
+threading issues with dask:
 
 .. code-block:: python
 
-    import hipscat_import.pipeline as runner
+    from dask.distributed import Client
+    from hipscat_import.pipeline import pipeline_with_client
 
-    args = ...
-    runner.pipeline(args)
+    def main():
+        args = ...
+        with Client(
+            n_workers=10,
+            threads_per_worker=1,
+            ... 
+        ) as client:
+            pipeline_with_client(args, client)
 
+    if __name__ == '__main__':
+        main()
 
 .. toctree::
    :hidden:

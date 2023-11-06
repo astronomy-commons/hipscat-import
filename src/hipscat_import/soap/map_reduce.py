@@ -55,7 +55,7 @@ def count_joins(
     If any un-joined source pixels remain, stretch out to neighboring object pixels.
 
     Args:
-        soap_args(SoapArguments): set of arguments for pipeline execution
+        soap_args(`hipscat_import.soap.SoapArguments`): set of arguments for pipeline execution
         source_pixel(HealpixPixel): order and pixel for the source catalog single pixel.
         object_pixels(List[HealpixPixel]): set of tuples of order and pixel for the partitions
             of the object catalog to be joined.

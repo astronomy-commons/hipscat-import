@@ -54,7 +54,7 @@ def _iterate_input_file(
     highest_order,
     ra_column,
     dec_column,
-    use_hipscat_index = False,
+    use_hipscat_index=False,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
     if not file_reader:
@@ -96,7 +96,7 @@ def map_to_pixels(
     highest_order,
     ra_column,
     dec_column,
-    use_hipscat_index = False
+    use_hipscat_index=False,
 ):
     """Map a file of input objects to their healpix pixels.
 
@@ -123,6 +123,7 @@ def map_to_pixels(
         input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
+        mapped_pixel = mapped_pixel.astype(np.int64)
         histo[mapped_pixel] += count_at_pixel.astype(np.int64)
     ResumePlan.write_partial_histogram(tmp_path=resume_path, mapping_key=mapping_key, histogram=histo)
 
@@ -137,7 +138,7 @@ def split_pixels(
     cache_shard_path: FilePointer,
     resume_path: FilePointer,
     alignment=None,
-    use_hipscat_index = False,
+    use_hipscat_index=False,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
 
@@ -194,7 +195,7 @@ def reduce_pixel_shards(
     ra_column,
     dec_column,
     id_column,
-    use_hipscat_index = False,
+    use_hipscat_index=False,
     add_hipscat_index=True,
     delete_input_files=True,
     use_schema_file="",

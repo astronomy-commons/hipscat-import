@@ -56,7 +56,7 @@ def test_import_source_table(
     assert len(catalog.get_healpix_pixels()) == 14
 
 
-@pytest.mark.dask
+@pytest.mark.dask(timeout=10)
 def test_import_mixed_schema_csv(
     dask_client,
     mixed_schema_csv_dir,
@@ -65,24 +65,27 @@ def test_import_mixed_schema_csv(
     tmp_path,
 ):
     """Test basic execution, with a mixed schema.
-    - the two input file in `mixed_schema_csv_dir` have different *implied* schemas
+    - the two input files in `mixed_schema_csv_dir` have different *implied* schemas
         when parsed by pandas. this verifies that they end up with the same schema
         and can be combined into a single parquet file.
     """
-
-    schema_parquet = pd.read_parquet(mixed_schema_csv_parquet)
     args = ImportArguments(
-        output_catalog_name="mixed_csv",
+        output_catalog_name="mixed_csv_bad",
         input_path=mixed_schema_csv_dir,
         input_format="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         highest_healpix_order=1,
-        file_reader=get_file_reader("csv", chunksize=1, type_map=schema_parquet.dtypes.to_dict()),
+        file_reader=get_file_reader("csv", chunksize=1, schema_file=mixed_schema_csv_parquet),
         progress_bar=False,
-        use_schema_file=mixed_schema_csv_parquet,
     )
 
+    with pytest.raises(RuntimeError, match="Some reducing stages failed"):
+        runner.run(args, dask_client)
+
+    ## Try again, but with the schema specified.
+    args.use_schema_file = mixed_schema_csv_parquet
+    args.output_catalog_name = "mixed_csv_good"
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
