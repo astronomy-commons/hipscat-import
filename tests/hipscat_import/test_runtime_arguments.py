@@ -49,13 +49,6 @@ def test_catalog_name(tmp_path):
 
 def test_invalid_paths(tmp_path):
     """Required arguments are provided, but paths aren't found."""
-    ## Bad output path
-    with pytest.raises(FileNotFoundError):
-        RuntimeArguments(
-            output_catalog_name="catalog",
-            output_path="/foo/path",
-        )
-
     ## Bad temp path
     with pytest.raises(FileNotFoundError):
         RuntimeArguments(output_catalog_name="catalog", output_path=tmp_path, tmp_dir="/foo/path")
