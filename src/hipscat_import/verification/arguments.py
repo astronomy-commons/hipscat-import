@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from hipscat.catalog import Catalog
+from hipscat.io.validation import is_valid_catalog
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -32,6 +33,8 @@ class VerificationArguments(RuntimeArguments):
         if not self.input_catalog_path and not self.input_catalog:
             raise ValueError("input catalog is required (either input_catalog_path or input_catalog)")
         if not self.input_catalog:
+            if not is_valid_catalog(self.input_catalog_path):
+                raise ValueError("input_catalog_path not a valid catalog")
             self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
         if not self.input_catalog_path:
             self.input_catalog_path = self.input_catalog.catalog_path

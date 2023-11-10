@@ -1,6 +1,5 @@
 """Tests of argument validation"""
 
-
 import pytest
 from hipscat.catalog import Catalog
 
@@ -32,11 +31,11 @@ def test_invalid_paths(tmp_path, small_sky_object_catalog):
         output_catalog_name="small_sky_object_verification_report",
     )
 
-    ## Bad input path
-    with pytest.raises(FileNotFoundError):
+    ## Input path is invalid catalog
+    with pytest.raises(ValueError, match="input_catalog_path not a valid catalog"):
         VerificationArguments(
             input_catalog_path="path",
-            output_path="path",
+            output_path=f"{tmp_path}/path",
             output_catalog_name="small_sky_object_verification_report",
         )
 

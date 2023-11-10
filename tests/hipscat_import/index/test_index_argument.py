@@ -52,22 +52,12 @@ def test_invalid_paths(tmp_path, small_sky_object_catalog):
         output_path=tmp_path,
         output_catalog_name="small_sky_object_index",
     )
-
-    ## Bad input path
-    with pytest.raises(FileNotFoundError):
+    ## Input path is invalid catalog
+    with pytest.raises(ValueError, match="input_catalog_path not a valid catalog"):
         IndexArguments(
             input_catalog_path="path",
             indexing_column="id",
-            output_path="path",
-            output_catalog_name="small_sky_object_index",
-        )
-
-    ## Input path has no files
-    with pytest.raises(FileNotFoundError):
-        IndexArguments(
-            input_catalog_path="path",
-            indexing_column="id",
-            output_path="path",
+            output_path=f"{tmp_path}/path",
             output_catalog_name="small_sky_object_index",
         )
 

@@ -65,9 +65,6 @@ class RuntimeArguments:
         if self.dask_threads_per_worker <= 0:
             raise ValueError("dask_threads_per_worker should be greater than 0")
 
-        if not file_io.does_file_or_directory_exist(self.output_path):
-            raise FileNotFoundError(f"output_path ({self.output_path}) not found on local storage")
-
         self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_catalog_name)
         if not self.overwrite:
             if file_io.directory_has_contents(self.catalog_path):
