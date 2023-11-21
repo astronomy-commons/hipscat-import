@@ -198,7 +198,7 @@ def basic_data_shard_df():
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
-        2**3,
+        2 ** 3,
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
@@ -230,7 +230,7 @@ def polar_data_shard_df():
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
-        2**3,
+        2 ** 3,
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
@@ -279,7 +279,7 @@ def assert_text_file_matches():
 
 @pytest.fixture
 def assert_parquet_file_ids():
-    def assert_parquet_file_ids(file_name, id_column, expected_ids):
+    def assert_parquet_file_ids(file_name, id_column, expected_ids, resort_ids=True):
         """
         Convenience method to read a parquet file and compare the object IDs to
         a list of expected objects.
@@ -294,8 +294,9 @@ def assert_parquet_file_ids():
         data_frame = pd.read_parquet(file_name, engine="pyarrow")
         assert id_column in data_frame.columns
         ids = data_frame[id_column].tolist()
-        ids.sort()
-        expected_ids.sort()
+        if resort_ids:
+            ids.sort()
+            expected_ids.sort()
 
         assert len(ids) == len(
             expected_ids
