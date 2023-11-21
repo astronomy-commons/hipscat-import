@@ -3,6 +3,7 @@
 import os
 from io import StringIO
 
+import healpy as hp
 import hipscat.pixel_math as hist
 import numpy as np
 import numpy.testing as npt
@@ -380,6 +381,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
     os.makedirs(os.path.join(tmp_path, "reducing"))
     shard_dir = os.path.join(tmp_path, "reduce_shards", "order_0", "dir_0", "pixel_11")
     os.makedirs(shard_dir)
+    output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     file1_string = """source_id,object_id,time,ra,dec
 1200,700,3000,282.5,-58.5
@@ -399,7 +401,18 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
     file2_data = pd.read_csv(StringIO(file2_string))
     file2_data.to_parquet(os.path.join(shard_dir, "file_2_shard_1.parquet"))
 
-    ## Sort option 1: by source_id
+    combined_data = pd.concat([file1_data, file2_data])
+    combined_data["norder19_healpix"] = hp.ang2pix(
+        2 ** 19,
+        combined_data["ra"].values,
+        combined_data["dec"].values,
+        lonlat=True,
+        nest=True,
+    )
+    ## Use this to prune generated columns like Norder, Npix, and _hipscat_index
+    comparison_columns = ["source_id", "object_id", "time", "ra", "dec"]
+
+    ######################## Sort option 1: by source_id
     ## This will sort WITHIN an order 19 healpix pixel. In that ordering, the objects are
     ## (703, 700, 701, 702)
     mr.reduce_pixel_shards(
@@ -416,7 +429,13 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         delete_input_files=False,
     )
 
-    output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    ## sort order is effectively (norder19 healpix, source_id)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    expected_dataframe = combined_data.sort_values(["norder19_healpix", "source_id"])
+    pd.testing.assert_frame_equal(
+        expected_dataframe[comparison_columns].reset_index(drop=True),
+        data_frame[comparison_columns].reset_index(drop=True),
+    )
     assert_parquet_file_ids(
         output_file,
         "source_id",
@@ -431,7 +450,8 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         resort_ids=False,
     )
 
-    ## Sort option 2: by object id and time
+    ######################## Sort option 2: by object id and time
+    ## sort order is effectively (norder19 healpix, object id, time)
     mr.reduce_pixel_shards(
         cache_shard_path=os.path.join(tmp_path, "reduce_shards"),
         resume_path=tmp_path,
@@ -446,7 +466,12 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         delete_input_files=False,
     )
 
-    output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    expected_dataframe = combined_data.sort_values(["norder19_healpix", "object_id", "time"])
+    pd.testing.assert_frame_equal(
+        expected_dataframe[comparison_columns].reset_index(drop=True),
+        data_frame[comparison_columns].reset_index(drop=True),
+    )
     assert_parquet_file_ids(
         output_file,
         "source_id",
@@ -460,9 +485,10 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         resort_ids=False,
     )
 
-    ## Sort option 3: by object id and time WITHOUT hipscat index.
+    ######################## Sort option 3: by object id and time WITHOUT hipscat index.
     ## The 1500 block of ids goes back to the end, because we're not using
     ## spatial properties for sorting, only numeric.
+    ## sort order is effectively (object id, time)
     mr.reduce_pixel_shards(
         cache_shard_path=os.path.join(tmp_path, "reduce_shards"),
         resume_path=tmp_path,
@@ -478,7 +504,12 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         delete_input_files=False,
     )
 
-    output_file = os.path.join(tmp_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    expected_dataframe = combined_data.sort_values(["object_id", "time"])
+    pd.testing.assert_frame_equal(
+        expected_dataframe[comparison_columns].reset_index(drop=True),
+        data_frame[comparison_columns].reset_index(drop=True),
+    )
     assert_parquet_file_ids(
         output_file,
         "source_id",
