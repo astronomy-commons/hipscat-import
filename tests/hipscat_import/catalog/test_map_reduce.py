@@ -461,7 +461,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
     )
 
     ## Sort option 3: by object id and time WITHOUT hipscat index.
-    ## The 1500 block of ids goes back to the end, because we're not using 
+    ## The 1500 block of ids goes back to the end, because we're not using
     ## spatial properties for sorting, only numeric.
     mr.reduce_pixel_shards(
         cache_shard_path=os.path.join(tmp_path, "reduce_shards"),
@@ -485,4 +485,3 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         [1206, 1200, 1201, 1309, 1308, 1307, 1402, 1403, 1404, 1505],
         resort_ids=False,
     )
-    
