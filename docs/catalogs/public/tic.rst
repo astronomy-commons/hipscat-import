@@ -38,7 +38,7 @@ Example import
     type_map = dict(zip(type_frame["name"], type_frame["type"]))
     
     args = ImportArguments(
-        output_catalog_name="tic_1",
+        output_artifact_name="tic_1",
         input_path="/path/to/tic/",
         input_format="csv.gz",
         file_reader=CsvReader(
@@ -49,7 +49,7 @@ Example import
         ).read,
         ra_column="ra",
         dec_column="dec",
-        id_column="ID",
+        sort_columns="ID",
         output_path="/path/to/catalogs/",
         use_schema_file="tic_schema.parquet",
     )

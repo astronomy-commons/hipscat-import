@@ -41,7 +41,7 @@ Example import
     type_map = dict(zip(type_frame["name"], type_frame["type"]))
 
     args = ImportArguments(
-        output_catalog_name="neowise_1",
+        output_artifact_name="neowise_1",
         input_path="/path/to/neowiser_year8/",
         input_format="csv.bz2",
         file_reader=CsvReader(
@@ -56,7 +56,7 @@ Example import
         pixel_threshold=2_000_000,
         highest_healpix_order=9,
         use_schema_file="neowise_schema.parquet",
-        id_column="SOURCE_ID",
+        sort_columns="SOURCE_ID",
         output_path="/path/to/catalogs/",
     )
     runner.run(args)

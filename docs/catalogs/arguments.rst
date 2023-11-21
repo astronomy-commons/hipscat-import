@@ -10,12 +10,12 @@ will look something like:
 .. code-block:: python
 
     args = ImportArguments(
-        id_column="ObjectID",
+        sort_columns="ObjectID",
         ra_column="ObjectRA",
         dec_column="ObjectDec",
         input_path="./my_data",
         input_format="csv",
-        output_catalog_name="test_cat",
+        output_artifact_name="test_cat",
         output_path="./output",
     )
 
@@ -164,11 +164,11 @@ for either pipeline success or failure.
 Output
 -------------------------------------------------------------------------------
 
-You must specify a name for the catalog, using ``output_catalog_name``.
+You must specify a name for the catalog, using ``output_artifact_name``.
 
 You must specify where you want your catalog data to be written, using
 ``output_path``. This path should be the base directory for your catalogs, as 
-the full path for the catalog will take the form of ``output_path/output_catalog_name``.
+the full path for the catalog will take the form of ``output_path/output_artifact_name``.
 
 If there is already catalog data in the indicated directory, you can force a 
 new catalog to be written in the directory with the ``overwrite`` flag. 

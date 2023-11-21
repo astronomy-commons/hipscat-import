@@ -40,7 +40,7 @@ Example import of objects (otmo)
     in_file_paths = glob.glob("/path/to/otmo/OTMO_**.csv")
     in_file_paths.sort()
     args = ImportArguments(
-        output_catalog_name="ps1_otmo",
+        output_artifact_name="ps1_otmo",
         input_file_list=in_file_paths,
         input_format="csv",
         file_reader=CsvReader(
@@ -53,7 +53,7 @@ Example import of objects (otmo)
         ),
         ra_column="raMean",
         dec_column="decMean",
-        id_column="objID",
+        sort_columns="objID",
     )
     runner.pipeline(args)
 
@@ -71,7 +71,7 @@ Example import of detections
     in_file_paths = glob.glob("/path/to/detection/detection**.csv")
     in_file_paths.sort()
     args = ImportArguments(
-        output_catalog_name="ps1_detection",
+        output_artifact_name="ps1_detection",
         input_file_list=in_file_paths,
         input_format="csv",
         file_reader=CsvReader(
@@ -84,6 +84,6 @@ Example import of detections
         ),
         ra_column="ra",
         dec_column="dec",
-        id_column="objID",
+        sort_columns="objID",
     )
     runner.pipeline(args)

@@ -13,7 +13,7 @@ def test_bad_args(dask_client):
     with pytest.raises(TypeError, match="MacauffArguments"):
         runner.run(None, dask_client)
 
-    args = {"output_catalog_name": "bad_arg_type"}
+    args = {"output_artifact_name": "bad_arg_type"}
     with pytest.raises(TypeError, match="MacauffArguments"):
         runner.run(args, dask_client)
 
@@ -30,7 +30,7 @@ def test_no_implementation(
     """Test that we can create a MacauffArguments instance with two valid catalogs."""
     args = MacauffArguments(
         output_path=tmp_path,
-        output_catalog_name="object_to_source",
+        output_artifact_name="object_to_source",
         tmp_dir=tmp_path,
         left_catalog_dir=small_sky_object_catalog,
         left_ra_column="ra",

@@ -42,8 +42,10 @@ class ImportArguments(RuntimeArguments):
     """column for declination"""
     use_hipscat_index: bool = False
     """use an existing hipscat spatial index as the position, instead of ra/dec"""
-    id_column: str = "id"
-    """column for survey identifier, or other sortable column"""
+    sort_columns: str | None = None
+    """column for survey identifier, or other sortable column. if sorting by multiple columns,
+    they should be comma-separated. if `add_hipscat_index=True`, this sorting will be used to
+    resolve the counter within the same higher-order pixel space"""
     add_hipscat_index: bool = True
     """add the hipscat spatial index field alongside the data"""
     use_schema_file: str | None = None
@@ -115,7 +117,7 @@ class ImportArguments(RuntimeArguments):
     def to_catalog_info(self, total_rows) -> CatalogInfo:
         """Catalog-type-specific dataset info."""
         info = {
-            "catalog_name": self.output_catalog_name,
+            "catalog_name": self.output_artifact_name,
             "catalog_type": self.catalog_type,
             "total_rows": total_rows,
             "epoch": self.epoch,
@@ -126,7 +128,7 @@ class ImportArguments(RuntimeArguments):
 
     def additional_runtime_provenance_info(self) -> dict:
         return {
-            "catalog_name": self.output_catalog_name,
+            "catalog_name": self.output_artifact_name,
             "epoch": self.epoch,
             "catalog_type": self.catalog_type,
             "input_path": str(self.input_path),
@@ -136,7 +138,7 @@ class ImportArguments(RuntimeArguments):
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
             "use_hipscat_index": self.use_hipscat_index,
-            "id_column": self.id_column,
+            "sort_columns": self.sort_columns,
             "constant_healpix_order": self.constant_healpix_order,
             "highest_healpix_order": self.highest_healpix_order,
             "pixel_threshold": self.pixel_threshold,

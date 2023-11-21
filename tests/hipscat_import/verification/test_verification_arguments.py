@@ -18,7 +18,7 @@ def test_empty_required(tmp_path):
     with pytest.raises(ValueError, match="input_catalog_path"):
         VerificationArguments(
             output_path=tmp_path,
-            output_catalog_name="small_sky_object_verification_report",
+            output_artifact_name="small_sky_object_verification_report",
         )
 
 
@@ -28,7 +28,7 @@ def test_invalid_paths(tmp_path, small_sky_object_catalog):
     VerificationArguments(
         input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_verification_report",
+        output_artifact_name="small_sky_object_verification_report",
     )
 
     ## Input path is invalid catalog
@@ -36,7 +36,7 @@ def test_invalid_paths(tmp_path, small_sky_object_catalog):
         VerificationArguments(
             input_catalog_path="path",
             output_path=f"{tmp_path}/path",
-            output_catalog_name="small_sky_object_verification_report",
+            output_artifact_name="small_sky_object_verification_report",
         )
 
 
@@ -46,7 +46,7 @@ def test_good_paths(tmp_path, small_sky_object_catalog):
     args = VerificationArguments(
         input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_verification_report",
+        output_artifact_name="small_sky_object_verification_report",
     )
     assert args.input_catalog_path == small_sky_object_catalog
     assert str(args.output_path) == tmp_path_str
@@ -60,7 +60,7 @@ def test_catalog_object(tmp_path, small_sky_object_catalog):
     args = VerificationArguments(
         input_catalog=small_sky_catalog_object,
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_verification_report",
+        output_artifact_name="small_sky_object_verification_report",
     )
     assert args.input_catalog_path == small_sky_object_catalog
     assert str(args.output_path) == tmp_path_str
@@ -72,7 +72,7 @@ def test_provenance_info(small_sky_object_catalog, tmp_path):
     args = VerificationArguments(
         input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_verification_report",
+        output_artifact_name="small_sky_object_verification_report",
     )
 
     runtime_args = args.provenance_info()["runtime_args"]

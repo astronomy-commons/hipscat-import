@@ -19,7 +19,7 @@ def test_empty_required(small_sky_parts_dir, tmp_path):
     ## Input format is missing
     with pytest.raises(ValueError, match="input_format"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_format=None,
             input_path=small_sky_parts_dir,
             output_path=tmp_path,
@@ -28,7 +28,7 @@ def test_empty_required(small_sky_parts_dir, tmp_path):
     ## Input path is missing
     with pytest.raises(ValueError, match="input_file"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_path="",
             input_format="csv",
             output_path=tmp_path,
@@ -40,7 +40,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
     """Required arguments are provided, but paths aren't found."""
     ## Prove that it works with required args
     ImportArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         input_path=blank_data_dir,
         output_path=tmp_path,
         input_format="csv",
@@ -49,7 +49,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
     ## Bad input path
     with pytest.raises(FileNotFoundError):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_path="path",
             output_path=tmp_path,
             overwrite=True,
@@ -59,7 +59,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
     ## Input path has no files
     with pytest.raises(FileNotFoundError):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_path=blank_data_dir,
             output_path=tmp_path,
             overwrite=True,
@@ -71,7 +71,7 @@ def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     """Required arguments are provided, and paths are found."""
     tmp_path_str = str(tmp_path)
     args = ImportArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
         output_path=tmp_path_str,
@@ -85,7 +85,7 @@ def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
 def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
     """Required arguments are provided, and paths are found."""
     args = ImportArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -97,7 +97,7 @@ def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
 def test_single_debug_file(formats_headers_csv, tmp_path):
     """Required arguments are provided, and paths are found."""
     args = ImportArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         input_file_list=[formats_headers_csv],
         input_format="csv",
         output_path=tmp_path,
@@ -110,7 +110,7 @@ def test_healpix_args(blank_data_dir, tmp_path):
     """Test errors for healpix partitioning arguments"""
     with pytest.raises(ValueError, match="highest_healpix_order"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
@@ -119,7 +119,7 @@ def test_healpix_args(blank_data_dir, tmp_path):
         )
     with pytest.raises(ValueError, match="pixel_threshold"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
@@ -128,7 +128,7 @@ def test_healpix_args(blank_data_dir, tmp_path):
         )
     with pytest.raises(ValueError, match="constant_healpix_order"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             input_path=blank_data_dir,
             input_format="csv",
             output_path=tmp_path,
@@ -141,7 +141,7 @@ def test_catalog_type(blank_data_dir, tmp_path):
     """Test errors for catalog types."""
     with pytest.raises(ValueError, match="catalog_type"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             catalog_type=None,
             input_path=blank_data_dir,
             input_format="csv",
@@ -150,7 +150,7 @@ def test_catalog_type(blank_data_dir, tmp_path):
 
     with pytest.raises(ValueError, match="catalog_type"):
         ImportArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             catalog_type="association",
             input_path=blank_data_dir,
             input_format="csv",
@@ -161,7 +161,7 @@ def test_catalog_type(blank_data_dir, tmp_path):
 def test_to_catalog_info(blank_data_dir, tmp_path):
     """Verify creation of catalog parameters for catalog to be created."""
     args = ImportArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -175,7 +175,7 @@ def test_to_catalog_info(blank_data_dir, tmp_path):
 def test_provenance_info(blank_data_dir, tmp_path):
     """Verify that provenance info includes catalog-specific fields."""
     args = ImportArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         input_path=blank_data_dir,
         input_format="csv",
         output_path=tmp_path,

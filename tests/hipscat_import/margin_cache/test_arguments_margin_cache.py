@@ -15,7 +15,7 @@ def test_empty_required(tmp_path):
         MarginCacheArguments(
             margin_threshold=5.0,
             output_path=tmp_path,
-            output_catalog_name="catalog_cache",
+            output_artifact_name="catalog_cache",
         )
 
     ## Input catalog path is bad
@@ -24,7 +24,7 @@ def test_empty_required(tmp_path):
             input_catalog_path="/foo",
             margin_threshold=5.0,
             output_path=tmp_path,
-            output_catalog_name="catalog_cache",
+            output_artifact_name="catalog_cache",
             overwrite=True,
         )
 
@@ -35,7 +35,7 @@ def test_margin_order_dynamic(small_sky_source_catalog, tmp_path):
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
     )
 
     assert args.margin_order == 3
@@ -47,7 +47,7 @@ def test_margin_order_static(small_sky_source_catalog, tmp_path):
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
         margin_order=4,
     )
 
@@ -61,7 +61,7 @@ def test_margin_order_invalid(small_sky_source_catalog, tmp_path):
             margin_threshold=5.0,
             input_catalog_path=small_sky_source_catalog,
             output_path=tmp_path,
-            output_catalog_name="catalog_cache",
+            output_artifact_name="catalog_cache",
             margin_order=2,
         )
 
@@ -74,7 +74,7 @@ def test_margin_threshold_warns(small_sky_source_catalog, tmp_path):
             margin_threshold=360.0,
             input_catalog_path=small_sky_source_catalog,
             output_path=tmp_path,
-            output_catalog_name="catalog_cache",
+            output_artifact_name="catalog_cache",
             margin_order=16,
         )
 
@@ -85,11 +85,11 @@ def test_to_catalog_info(small_sky_source_catalog, tmp_path):
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
         margin_order=4,
     )
     catalog_info = args.to_catalog_info(total_rows=10)
-    assert catalog_info.catalog_name == args.output_catalog_name
+    assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
 
 
@@ -99,7 +99,7 @@ def test_provenance_info(small_sky_source_catalog, tmp_path):
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
         margin_order=4,
     )
 

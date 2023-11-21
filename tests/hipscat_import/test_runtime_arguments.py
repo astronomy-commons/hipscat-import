@@ -21,14 +21,14 @@ def test_empty_required(tmp_path):
     ## Output path is missing
     with pytest.raises(ValueError, match="output_path"):
         RuntimeArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             output_path="",
         )
 
     ## Output catalog name is missing
-    with pytest.raises(ValueError, match="output_catalog_name"):
+    with pytest.raises(ValueError, match="output_artifact_name"):
         RuntimeArguments(
-            output_catalog_name="",
+            output_artifact_name="",
             output_path=tmp_path,
         )
 
@@ -36,13 +36,13 @@ def test_empty_required(tmp_path):
 def test_catalog_name(tmp_path):
     """Check for safe catalog names."""
     RuntimeArguments(
-        output_catalog_name="good_name",
+        output_artifact_name="good_name",
         output_path=tmp_path,
     )
 
     with pytest.raises(ValueError, match="invalid character"):
         RuntimeArguments(
-            output_catalog_name="bad_a$$_name",
+            output_artifact_name="bad_a$$_name",
             output_path=tmp_path,
         )
 
@@ -51,30 +51,30 @@ def test_invalid_paths(tmp_path):
     """Required arguments are provided, but paths aren't found."""
     ## Bad temp path
     with pytest.raises(FileNotFoundError):
-        RuntimeArguments(output_catalog_name="catalog", output_path=tmp_path, tmp_dir="/foo/path")
+        RuntimeArguments(output_artifact_name="catalog", output_path=tmp_path, tmp_dir="/foo/path")
 
     ## Bad dask temp path
     with pytest.raises(FileNotFoundError):
-        RuntimeArguments(output_catalog_name="catalog", output_path=tmp_path, dask_tmp="/foo/path")
+        RuntimeArguments(output_artifact_name="catalog", output_path=tmp_path, dask_tmp="/foo/path")
 
 
 def test_output_overwrite(tmp_path):
     """Test that we can write to existing directory, but not one with contents"""
     ## Create the directory first
     RuntimeArguments(
-        output_catalog_name="blank",
+        output_artifact_name="blank",
         output_path=tmp_path,
     )
 
     with pytest.raises(ValueError, match="use --overwrite flag"):
         RuntimeArguments(
-            output_catalog_name="blank",
+            output_artifact_name="blank",
             output_path=tmp_path,
         )
 
     ## No error with overwrite flag
     RuntimeArguments(
-        output_catalog_name="blank",
+        output_artifact_name="blank",
         output_path=tmp_path,
         overwrite=True,
     )
@@ -83,7 +83,7 @@ def test_output_overwrite(tmp_path):
 def test_good_paths(tmp_path):
     """Required arguments are provided, and paths are found."""
     _ = RuntimeArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         output_path=tmp_path,
         tmp_dir=tmp_path,
         dask_tmp=tmp_path,
@@ -101,7 +101,7 @@ def test_tmp_path_creation(tmp_path):
 
     ## If no tmp paths are given, use the output directory
     args = RuntimeArguments(
-        output_catalog_name="special_catalog",
+        output_artifact_name="special_catalog",
         output_path=output_path,
     )
     assert "special_catalog" in str(args.tmp_path)
@@ -109,7 +109,7 @@ def test_tmp_path_creation(tmp_path):
 
     ## Use the tmp path if provided
     args = RuntimeArguments(
-        output_catalog_name="special_catalog",
+        output_artifact_name="special_catalog",
         output_path=output_path,
         tmp_dir=temp_path,
         overwrite=True,
@@ -119,7 +119,7 @@ def test_tmp_path_creation(tmp_path):
 
     ## Use the dask tmp for temp, if all else fails
     args = RuntimeArguments(
-        output_catalog_name="special_catalog",
+        output_artifact_name="special_catalog",
         output_path=output_path,
         dask_tmp=dask_tmp_path,
         overwrite=True,
@@ -132,7 +132,7 @@ def test_dask_args(tmp_path):
     """Test errors for dask arguments"""
     with pytest.raises(ValueError, match="dask_n_workers"):
         RuntimeArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             output_path=tmp_path,
             dask_n_workers=-10,
             dask_threads_per_worker=1,
@@ -140,7 +140,7 @@ def test_dask_args(tmp_path):
 
     with pytest.raises(ValueError, match="dask_threads_per_worker"):
         RuntimeArguments(
-            output_catalog_name="catalog",
+            output_artifact_name="catalog",
             output_path=tmp_path,
             dask_n_workers=1,
             dask_threads_per_worker=-10,
@@ -150,7 +150,7 @@ def test_dask_args(tmp_path):
 def test_provenance_info(tmp_path):
     """Verify that provenance info ONLY includes general runtime fields."""
     args = RuntimeArguments(
-        output_catalog_name="catalog",
+        output_artifact_name="catalog",
         output_path=tmp_path,
         tmp_dir=tmp_path,
         dask_tmp=tmp_path,

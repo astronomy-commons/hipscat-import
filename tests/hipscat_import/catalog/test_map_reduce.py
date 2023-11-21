@@ -286,7 +286,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
         add_hipscat_index=True,
         ra_column="ra",
         dec_column="dec",
-        id_column="id",
+        sort_columns="id",
         delete_input_files=False,
     )
 
@@ -309,7 +309,7 @@ def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_p
         output_path=tmp_path,
         ra_column="ra",
         dec_column="dec",
-        id_column="id",
+        sort_columns="id",
         delete_input_files=False,
     )
 
@@ -335,7 +335,7 @@ def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_p
         add_hipscat_index=False,  ## different from above
         ra_column="ra",
         dec_column="dec",
-        id_column="id",
+        sort_columns="id",
         delete_input_files=False,
     )
 
@@ -363,7 +363,7 @@ def test_reduce_bad_expectation(parquet_shards_dir, tmp_path):
             output_path=tmp_path,
             ra_column="ra",
             dec_column="dec",
-            id_column="id",
+            sort_columns="id",
             delete_input_files=False,
         )
 
@@ -425,7 +425,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         output_path=tmp_path,
         ra_column="ra",
         dec_column="dec",
-        id_column="source_id",
+        sort_columns="source_id",
         delete_input_files=False,
     )
 
@@ -462,7 +462,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         output_path=tmp_path,
         ra_column="ra",
         dec_column="dec",
-        id_column=["object_id", "time"],
+        sort_columns="object_id,time",
         delete_input_files=False,
     )
 
@@ -499,7 +499,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         output_path=tmp_path,
         ra_column="ra",
         dec_column="dec",
-        id_column=["object_id", "time"],
+        sort_columns="object_id,time",
         add_hipscat_index=False,
         delete_input_files=False,
     )

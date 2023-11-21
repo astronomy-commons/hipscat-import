@@ -95,7 +95,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 output_path=args.catalog_path,
                 ra_column=args.ra_column,
                 dec_column=args.dec_column,
-                id_column=args.id_column,
+                sort_columns=args.sort_columns,
                 add_hipscat_index=args.add_hipscat_index,
                 use_schema_file=args.use_schema_file,
                 use_hipscat_index=args.use_hipscat_index,

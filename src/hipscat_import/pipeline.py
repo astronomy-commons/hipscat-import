@@ -68,7 +68,7 @@ def _send_failure_email(args: RuntimeArguments, exception: Exception):
     message["Subject"] = "hipscat-import failure."
     message["To"] = args.completion_email_address
     message.set_content(
-        f"output_catalog_name: {args.output_catalog_name}"
+        f"output_artifact_name: {args.output_artifact_name}"
         "\n\nSee logs for more details"
         f"\n\nFailed with message:\n\n{exception}"
     )
@@ -82,7 +82,7 @@ def _send_success_email(args):
     message = EmailMessage()
     message["Subject"] = "hipscat-import success."
     message["To"] = args.completion_email_address
-    message.set_content(f"output_catalog_name: {args.output_catalog_name}")
+    message.set_content(f"output_artifact_name: {args.output_artifact_name}")
 
     _send_email(message)
 

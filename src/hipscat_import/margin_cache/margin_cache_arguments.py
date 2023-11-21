@@ -64,7 +64,7 @@ class MarginCacheArguments(RuntimeArguments):
     def to_catalog_info(self, total_rows) -> MarginCacheCatalogInfo:
         """Catalog-type-specific dataset info."""
         info = {
-            "catalog_name": self.output_catalog_name,
+            "catalog_name": self.output_artifact_name,
             "total_rows": total_rows,
             "catalog_type": "margin",
             "primary_catalog": self.input_catalog_path,

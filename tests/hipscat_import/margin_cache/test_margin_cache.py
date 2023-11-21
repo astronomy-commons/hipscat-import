@@ -18,7 +18,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
         margin_threshold=180.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
         margin_order=8,
     )
 
@@ -43,7 +43,7 @@ def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, da
         margin_threshold=36000.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
         margin_order=4,
     )
 
@@ -67,7 +67,7 @@ def test_partition_margin_pixel_pairs(small_sky_source_catalog, tmp_path):
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
     )
 
     margin_pairs = mc._find_partition_margin_pixel_pairs(
@@ -86,7 +86,7 @@ def test_partition_margin_pixel_pairs_negative(small_sky_source_catalog, tmp_pat
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
     )
 
     partition_stats = args.catalog.partition_info.get_healpix_pixels()
@@ -111,7 +111,7 @@ def test_create_margin_directory(small_sky_source_catalog, tmp_path):
         margin_threshold=5.0,
         input_catalog_path=small_sky_source_catalog,
         output_path=tmp_path,
-        output_catalog_name="catalog_cache",
+        output_artifact_name="catalog_cache",
     )
 
     mc._create_margin_directory(

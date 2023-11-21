@@ -30,13 +30,13 @@ def test_import_source_table(
     - will have larger partition info than the corresponding object catalog
     """
     args = ImportArguments(
-        output_catalog_name="small_sky_source_catalog",
+        output_artifact_name="small_sky_source_catalog",
         input_path=small_sky_source_dir,
         input_format="csv",
         catalog_type="source",
         ra_column="source_ra",
         dec_column="source_dec",
-        id_column="source_id",
+        sort_columns="source_id",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         highest_healpix_order=2,
@@ -70,7 +70,7 @@ def test_import_mixed_schema_csv(
         and can be combined into a single parquet file.
     """
     args = ImportArguments(
-        output_catalog_name="mixed_csv_bad",
+        output_artifact_name="mixed_csv_bad",
         input_path=mixed_schema_csv_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -85,7 +85,7 @@ def test_import_mixed_schema_csv(
 
     ## Try again, but with the schema specified.
     args.use_schema_file = mixed_schema_csv_parquet
-    args.output_catalog_name = "mixed_csv_good"
+    args.output_artifact_name = "mixed_csv_good"
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
@@ -129,10 +129,10 @@ def test_import_preserve_index(
 
     ## Don't generate a hipscat index. Verify that the original index remains.
     args = ImportArguments(
-        output_catalog_name="pandasindex",
+        output_artifact_name="pandasindex",
         input_file_list=[formats_pandasindex],
         input_format="parquet",
-        id_column="obs_id",
+        sort_columns="obs_id",
         add_hipscat_index=False,
         output_path=tmp_path,
         dask_tmp=tmp_path,
@@ -155,10 +155,10 @@ def test_import_preserve_index(
 
     ## DO generate a hipscat index. Verify that the original index is preserved in a column.
     args = ImportArguments(
-        output_catalog_name="pandasindex_preserve",
+        output_artifact_name="pandasindex_preserve",
         input_file_list=[formats_pandasindex],
         input_format="parquet",
-        id_column="obs_id",
+        sort_columns="obs_id",
         add_hipscat_index=True,
         output_path=tmp_path,
         dask_tmp=tmp_path,
@@ -220,10 +220,10 @@ def test_import_multiindex(
 
     ## Don't generate a hipscat index. Verify that the original index remains.
     args = ImportArguments(
-        output_catalog_name="multiindex",
+        output_artifact_name="multiindex",
         input_file_list=[formats_multiindex],
         input_format="parquet",
-        id_column=["obj_id", "band"],
+        sort_columns="obj_id,band",
         add_hipscat_index=False,
         output_path=tmp_path,
         dask_tmp=tmp_path,
@@ -246,10 +246,10 @@ def test_import_multiindex(
 
     ## DO generate a hipscat index. Verify that the original index is preserved in a column.
     args = ImportArguments(
-        output_catalog_name="multiindex_preserve",
+        output_artifact_name="multiindex_preserve",
         input_file_list=[formats_multiindex],
         input_format="parquet",
-        id_column=["obj_id", "band"],
+        sort_columns="obj_id,band",
         add_hipscat_index=True,
         output_path=tmp_path,
         dask_tmp=tmp_path,
@@ -282,7 +282,7 @@ def test_import_constant_healpix_order(
         and that we don't create tiles where there is no data.
     """
     args = ImportArguments(
-        output_catalog_name="small_sky_object_catalog",
+        output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -331,7 +331,7 @@ def test_import_starr_file(
                 return super().read(file)
 
     args = ImportArguments(
-        output_catalog_name="starr",
+        output_artifact_name="starr",
         input_file_list=[formats_dir],
         input_format="starr",
         file_reader=StarrReader(),
@@ -379,7 +379,7 @@ def test_import_hipscat_index(
     npt.assert_array_equal(data_frame.columns, ["id"])
 
     args = ImportArguments(
-        output_catalog_name="using_hipscat_index",
+        output_artifact_name="using_hipscat_index",
         input_file_list=[input_file],
         input_format="parquet",
         output_path=tmp_path,
@@ -389,7 +389,7 @@ def test_import_hipscat_index(
         highest_healpix_order=2,
         pixel_threshold=3_000,
         progress_bar=False,
-        id_column="_hipscat_index",
+        sort_columns="_hipscat_index",
     )
 
     runner.run(args, dask_client)
