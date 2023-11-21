@@ -20,7 +20,7 @@ def test_empty_required(tmp_path, small_sky_object_catalog, small_sky_source_cat
         ["object_id_column", "id"],
         ["source_catalog_dir", small_sky_source_catalog],
         ["source_object_id_column", "object_id"],
-        ["output_catalog_name", "small_sky_association"],
+        ["output_artifact_name", "small_sky_association"],
         ["output_path", tmp_path],
     ]
 
@@ -38,7 +38,7 @@ def test_empty_required(tmp_path, small_sky_object_catalog, small_sky_source_cat
                 object_id_column=test_args[1],
                 source_catalog_dir=test_args[2],
                 source_object_id_column=test_args[3],
-                output_catalog_name=test_args[4],
+                output_artifact_name=test_args[4],
                 output_path=test_args[5],
                 ## always set these False
                 progress_bar=False,
@@ -55,7 +55,7 @@ def test_catalog_paths(tmp_path, small_sky_object_catalog, small_sky_source_cata
             object_id_column="id",
             source_catalog_dir=small_sky_source_catalog,
             source_object_id_column="object_id",
-            output_catalog_name="small_sky_association",
+            output_artifact_name="small_sky_association",
             output_path=tmp_path,
             progress_bar=False,
             overwrite=True,
@@ -68,7 +68,7 @@ def test_catalog_paths(tmp_path, small_sky_object_catalog, small_sky_source_cata
             object_id_column="id",
             source_catalog_dir="/foo",
             source_object_id_column="object_id",
-            output_catalog_name="small_sky_association",
+            output_artifact_name="small_sky_association",
             output_path=tmp_path,
             progress_bar=False,
             overwrite=True,
@@ -83,7 +83,7 @@ def test_compute_partition_size(tmp_path, small_sky_object_catalog, small_sky_so
             object_id_column="id",
             source_catalog_dir=small_sky_source_catalog,
             source_object_id_column="object_id",
-            output_catalog_name="small_sky_association",
+            output_artifact_name="small_sky_association",
             output_path=tmp_path,
             progress_bar=False,
             compute_partition_size=10,  ## not a valid option

@@ -13,7 +13,7 @@
         "runtime_args": {
             "catalog_name": "small_sky_object_catalog",
             "output_path": "/home/data",
-            "output_catalog_name": "small_sky_object_catalog",
+            "output_artifact_name": "small_sky_object_catalog",
             "tmp_dir": "",
             "overwrite": true,
             "dask_tmp": "/tmp/pytest-of-delucchi/pytest-1261/test_dask_runner0",
@@ -35,7 +35,7 @@
             "input_file_list": [],
             "ra_column": "ra",
             "dec_column": "dec",
-            "id_column": "id",
+            "sort_columns": "id",
             "highest_healpix_order": 1,
             "pixel_threshold": 1000000,
             "debug_stats_only": false,

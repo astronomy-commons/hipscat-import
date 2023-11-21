@@ -13,7 +13,7 @@ def test_empty_args():
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
-    args = {"output_catalog_name": "bad_arg_type"}
+    args = {"output_artifact_name": "bad_arg_type"}
     with pytest.raises(TypeError):
         runner.run(args, None)
 

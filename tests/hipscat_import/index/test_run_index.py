@@ -19,7 +19,7 @@ def test_empty_args():
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
-    args = {"output_catalog_name": "bad_arg_type"}
+    args = {"output_artifact_name": "bad_arg_type"}
     with pytest.raises(TypeError, match="IndexArguments"):
         runner.run(args)
 
@@ -35,7 +35,7 @@ def test_run_index(
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         progress_bar=False,
     )

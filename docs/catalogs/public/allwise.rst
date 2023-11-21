@@ -41,7 +41,7 @@ Example import
     type_map = dict(zip(type_frame["name"], type_frame["type"]))
 
     args = ImportArguments(
-        output_catalog_name="allwise",
+        output_artifact_name="allwise",
         input_path="/path/to/allwise/",
         input_format="csv.bz2",
         file_reader=CsvReader(
@@ -54,7 +54,7 @@ Example import
         use_schema_file="allwise_schema.parquet",
         ra_column="ra",
         dec_column="dec",
-        id_column="source_id",
+        sort_columns="source_id",
         pixel_threshold=1_000_000,
         highest_healpix_order=7,
         output_path="/path/to/catalogs/",

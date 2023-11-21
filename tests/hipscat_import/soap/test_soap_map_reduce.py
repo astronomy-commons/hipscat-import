@@ -30,7 +30,7 @@ def test_count_joins_missing(small_sky_source_catalog, tmp_path):
         object_id_column="source_id",
         source_catalog_dir=small_sky_source_catalog,
         source_object_id_column="source_id",
-        output_catalog_name="small_sky_association",
+        output_artifact_name="small_sky_association",
         output_path=tmp_path,
         progress_bar=False,
     )

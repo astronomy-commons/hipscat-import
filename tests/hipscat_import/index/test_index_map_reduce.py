@@ -23,7 +23,7 @@ def test_create_index(
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         progress_bar=False,
     )
@@ -51,7 +51,7 @@ def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
         indexing_column="id",
         include_hipscat_index=False,
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         progress_bar=False,
     )
@@ -72,7 +72,7 @@ def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path):
         indexing_column="id",
         include_order_pixel=False,
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         progress_bar=False,
     )
@@ -96,7 +96,7 @@ def test_create_index_source(
         input_catalog_path=small_sky_source_catalog,
         indexing_column="source_id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_source_index",
+        output_artifact_name="small_sky_source_index",
         overwrite=True,
         progress_bar=False,
     )
@@ -128,7 +128,7 @@ def test_create_index_source_by_object(
         input_catalog_path=small_sky_source_catalog,
         indexing_column="object_id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_source_index",
+        output_artifact_name="small_sky_source_index",
         overwrite=True,
         progress_bar=False,
     )
@@ -160,7 +160,7 @@ def test_create_index_extra_columns(
         indexing_column="object_id",
         output_path=tmp_path,
         extra_columns=["source_ra"],
-        output_catalog_name="small_sky_source_index",
+        output_artifact_name="small_sky_source_index",
         overwrite=True,
         progress_bar=False,
     )

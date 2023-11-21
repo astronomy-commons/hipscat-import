@@ -20,7 +20,7 @@ def test_empty_args():
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
-    args = {"output_catalog_name": "bad_arg_type"}
+    args = {"output_artifact_name": "bad_arg_type"}
     with pytest.raises(ValueError, match="ImportArguments"):
         runner.run(args, None)
 
@@ -61,7 +61,7 @@ def test_resume_dask_runner(
     )
 
     args = ImportArguments(
-        output_catalog_name="resume",
+        output_artifact_name="resume",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -102,7 +102,7 @@ def test_resume_dask_runner(
     plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
 
     args = ImportArguments(
-        output_catalog_name="resume",
+        output_artifact_name="resume",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -135,7 +135,7 @@ def test_dask_runner(
 ):
     """Test basic execution."""
     args = ImportArguments(
-        output_catalog_name="small_sky_object_catalog",
+        output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
@@ -166,7 +166,7 @@ def test_dask_runner(
 def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     """Test basic execution, without generating catalog parquet outputs."""
     args = ImportArguments(
-        output_catalog_name="small_sky",
+        output_artifact_name="small_sky",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,

@@ -68,12 +68,12 @@ Example import
     import hipscat_import.pipeline as runner
 
     args = ImportArguments(
-        output_catalog_name="sdss_dr16q",
+        output_artifact_name="sdss_dr16q",
         input_path="/data/sdss/parquet/",
         input_format="parquet",
         ra_column="RA",
         dec_column="DEC",
-        id_column="ID",
+        sort_columns="ID",
         pixel_threshold=1_000_000,
         highest_healpix_order=7,
         output_path="/path/to/catalogs/",

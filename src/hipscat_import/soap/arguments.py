@@ -50,7 +50,7 @@ class SoapArguments(RuntimeArguments):
     def to_catalog_info(self, total_rows) -> AssociationCatalogInfo:
         """Catalog-type-specific dataset info."""
         info = {
-            "catalog_name": self.output_catalog_name,
+            "catalog_name": self.output_artifact_name,
             "catalog_type": CatalogType.ASSOCIATION,
             "total_rows": total_rows,
             "primary_column": self.object_id_column,

@@ -16,7 +16,7 @@ def test_macauff_arguments(
     """Test that we can create a MacauffArguments instance with two valid catalogs."""
     args = MacauffArguments(
         output_path=tmp_path,
-        output_catalog_name="object_to_source",
+        output_artifact_name="object_to_source",
         tmp_dir=tmp_path,
         left_catalog_dir=small_sky_object_catalog,
         left_ra_column="ra",
@@ -44,7 +44,7 @@ def test_empty_required(
     ##  - default value
     required_args = [
         ["output_path", tmp_path],
-        ["output_catalog_name", "object_to_source"],
+        ["output_artifact_name", "object_to_source"],
         ["left_catalog_dir", small_sky_object_catalog],
         ["left_ra_column", "ra"],
         ["left_dec_column", "dec"],
@@ -71,7 +71,7 @@ def test_empty_required(
         with pytest.raises(ValueError, match=args[0]):
             MacauffArguments(
                 output_path=test_args[0],
-                output_catalog_name=test_args[1],
+                output_artifact_name=test_args[1],
                 tmp_dir=tmp_path,
                 left_catalog_dir=test_args[2],
                 left_ra_column=test_args[3],
@@ -95,7 +95,7 @@ def test_macauff_arguments_file_list(
     files = [path.join(small_sky_dir, "catalog.csv")]
     args = MacauffArguments(
         output_path=tmp_path,
-        output_catalog_name="object_to_source",
+        output_artifact_name="object_to_source",
         tmp_dir=tmp_path,
         left_catalog_dir=small_sky_object_catalog,
         left_ra_column="ra",
@@ -117,7 +117,7 @@ def test_macauff_args_invalid_catalog(small_sky_source_catalog, small_sky_dir, f
     with pytest.raises(ValueError, match="left_catalog_dir"):
         MacauffArguments(
             output_path=tmp_path,
-            output_catalog_name="object_to_source",
+            output_artifact_name="object_to_source",
             tmp_dir=tmp_path,
             left_catalog_dir=small_sky_dir,  # valid path, but not a catalog
             left_ra_column="ra",
@@ -137,7 +137,7 @@ def test_macauff_args_right_invalid_catalog(small_sky_object_catalog, small_sky_
     with pytest.raises(ValueError, match="right_catalog_dir"):
         MacauffArguments(
             output_path=tmp_path,
-            output_catalog_name="object_to_source",
+            output_artifact_name="object_to_source",
             tmp_dir=tmp_path,
             left_catalog_dir=small_sky_object_catalog,
             left_ra_column="ra",
@@ -159,7 +159,7 @@ def test_macauff_args_invalid_metadata_file(
     with pytest.raises(ValueError, match="column metadata file must"):
         MacauffArguments(
             output_path=tmp_path,
-            output_catalog_name="object_to_source",
+            output_artifact_name="object_to_source",
             tmp_dir=tmp_path,
             left_catalog_dir=small_sky_object_catalog,
             left_ra_column="ra",
@@ -181,7 +181,7 @@ def test_macauff_args_invalid_input_directory(
     with pytest.raises(FileNotFoundError, match="input_path not found"):
         MacauffArguments(
             output_path=tmp_path,
-            output_catalog_name="object_to_source",
+            output_artifact_name="object_to_source",
             tmp_dir=tmp_path,
             left_catalog_dir=small_sky_object_catalog,
             left_ra_column="ra",
@@ -203,7 +203,7 @@ def test_macauff_args_no_files(
     with pytest.raises(FileNotFoundError, match="No input files found"):
         MacauffArguments(
             output_path=tmp_path,
-            output_catalog_name="object_to_source",
+            output_artifact_name="object_to_source",
             tmp_dir=tmp_path,
             left_catalog_dir=small_sky_object_catalog,
             left_ra_column="ra",

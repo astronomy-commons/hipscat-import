@@ -79,7 +79,7 @@ def _iterate_input_file(
                 )
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
-                2**highest_order,
+                2 ** highest_order,
                 data[ra_column].values,
                 data[dec_column].values,
                 lonlat=True,
@@ -194,7 +194,7 @@ def reduce_pixel_shards(
     output_path,
     ra_column,
     dec_column,
-    id_column,
+    sort_columns: str = "",
     use_hipscat_index=False,
     add_hipscat_index=True,
     delete_input_files=True,
@@ -230,7 +230,7 @@ def reduce_pixel_shards(
         destination_pixel_size (int): expected number of rows to write
             for the catalog's final pixel
         output_path (FilePointer): where to write the final catalog pixel data
-        id_column (str): column for survey identifier, or other sortable column
+        sort_columns (str): column for survey identifier, or other sortable column
         add_hipscat_index (bool): should we add a _hipscat_index column to
             the resulting parquet file?
         delete_input_files (bool): should we delete the intermediate files
@@ -273,8 +273,8 @@ def reduce_pixel_shards(
         )
 
     dataframe = merged_table.to_pandas()
-    if id_column:
-        dataframe = dataframe.sort_values(id_column)
+    if sort_columns:
+        dataframe = dataframe.sort_values(sort_columns.split(","))
     if add_hipscat_index and not use_hipscat_index:
         dataframe[HIPSCAT_ID_COLUMN] = pixel_math.compute_hipscat_id(
             dataframe[ra_column].values,

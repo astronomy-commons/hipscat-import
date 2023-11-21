@@ -76,7 +76,7 @@ Challenges with this data set
     files.sort()
 
     args = ImportArguments(
-        output_catalog_name="zubercal",
+        output_artifact_name="zubercal",
         input_file_list=files,
         ## NB - you need the parens here!
         file_reader=ZubercalParquetReader(),
@@ -84,7 +84,7 @@ Challenges with this data set
         catalog_type="source",
         ra_column="objra",
         dec_column="objdec",
-        id_column="objectid",
+        sort_columns="objectid",
         highest_healpix_order=10,
         pixel_threshold=20_000_000,
         output_path="/path/to/catalogs/",

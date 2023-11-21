@@ -13,7 +13,7 @@
         "runtime_args": {
             "catalog_name": "small_sky_source_catalog",
             "output_path": "/home/data",
-            "output_catalog_name": "small_sky_source_catalog",
+            "output_artifact_name": "small_sky_source_catalog",
             "tmp_dir": "",
             "overwrite": true,
             "dask_tmp": "/tmp/pytest-of-delucchi/pytest-1261/test_dask_runner_source_table0",
@@ -31,7 +31,7 @@
             "input_file_list": [],
             "ra_column": "source_ra",
             "dec_column": "source_dec",
-            "id_column": "source_id",
+            "sort_columns": "source_id",
             "highest_healpix_order": 2,
             "pixel_threshold": 3000,
             "debug_stats_only": false,

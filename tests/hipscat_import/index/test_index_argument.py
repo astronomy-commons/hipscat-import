@@ -19,7 +19,7 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
         IndexArguments(
             indexing_column="id",
             output_path=tmp_path,
-            output_catalog_name="small_sky_object_index",
+            output_artifact_name="small_sky_object_index",
         )
 
     ## Input path is bad
@@ -28,7 +28,7 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             input_catalog_path="/foo",
             indexing_column="id",
             output_path=tmp_path,
-            output_catalog_name="small_sky_object_index",
+            output_artifact_name="small_sky_object_index",
             overwrite=True,
         )
 
@@ -38,7 +38,7 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             input_catalog_path=small_sky_object_catalog,
             indexing_column="",
             output_path=tmp_path,
-            output_catalog_name="small_sky_object_index",
+            output_artifact_name="small_sky_object_index",
             overwrite=True,
         )
 
@@ -50,7 +50,7 @@ def test_invalid_paths(tmp_path, small_sky_object_catalog):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
     )
     ## Input path is invalid catalog
     with pytest.raises(ValueError, match="input_catalog_path not a valid catalog"):
@@ -58,7 +58,7 @@ def test_invalid_paths(tmp_path, small_sky_object_catalog):
             input_catalog_path="path",
             indexing_column="id",
             output_path=f"{tmp_path}/path",
-            output_catalog_name="small_sky_object_index",
+            output_artifact_name="small_sky_object_index",
         )
 
 
@@ -69,7 +69,7 @@ def test_good_paths(tmp_path, small_sky_object_catalog):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
     )
     assert args.input_catalog_path == small_sky_object_catalog
     assert str(args.output_path) == tmp_path_str
@@ -83,7 +83,7 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
             input_catalog_path=small_sky_object_catalog,
             indexing_column="id",
             output_path=tmp_path,
-            output_catalog_name="small_sky_object_index",
+            output_artifact_name="small_sky_object_index",
             include_hipscat_index=False,
             include_order_pixel=False,
         )
@@ -91,7 +91,7 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         include_hipscat_index=True,
         include_order_pixel=True,
@@ -101,7 +101,7 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         include_hipscat_index=True,
         include_order_pixel=False,
@@ -110,7 +110,7 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         overwrite=True,
         include_hipscat_index=False,
         include_order_pixel=True,
@@ -124,7 +124,7 @@ def test_compute_partition_size(tmp_path, small_sky_object_catalog):
             input_catalog_path=small_sky_object_catalog,
             indexing_column="id",
             output_path=tmp_path,
-            output_catalog_name="small_sky_object_index",
+            output_artifact_name="small_sky_object_index",
             compute_partition_size=10,  ## not a valid join option
         )
 
@@ -135,12 +135,12 @@ def test_to_catalog_info(small_sky_object_catalog, tmp_path):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         include_hipscat_index=True,
         include_order_pixel=True,
     )
     catalog_info = args.to_catalog_info(total_rows=10)
-    assert catalog_info.catalog_name == args.output_catalog_name
+    assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
 
 
@@ -150,7 +150,7 @@ def test_provenance_info(small_sky_object_catalog, tmp_path):
         input_catalog_path=small_sky_object_catalog,
         indexing_column="id",
         output_path=tmp_path,
-        output_catalog_name="small_sky_object_index",
+        output_artifact_name="small_sky_object_index",
         include_hipscat_index=True,
         include_order_pixel=True,
     )

@@ -19,7 +19,7 @@ def map_pixel_shards(
     data = file_io.load_parquet_to_pandas(partition_file)
 
     data["margin_pixel"] = hp.ang2pix(
-        2**margin_order,
+        2 ** margin_order,
         data[ra_column].values,
         data[dec_column].values,
         lonlat=True,
