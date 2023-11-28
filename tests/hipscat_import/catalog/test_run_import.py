@@ -4,11 +4,16 @@ import os
 import shutil
 
 import hipscat.pixel_math as hist
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.catalog import Catalog
 
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
+from hipscat_import.catalog.file_readers import CsvReader
 from hipscat_import.catalog.resume_plan import ResumePlan
 
 
@@ -133,11 +138,19 @@ def test_dask_runner(
     assert_parquet_file_ids,
     tmp_path,
 ):
-    """Test basic execution."""
+    """Test basic execution and the types of the written data."""
     args = ImportArguments(
         output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
+        file_reader=CsvReader(
+            type_map={
+                "ra": np.float32,
+                "dec": np.float32,
+                "ra_error": np.float32,
+                "dec_error": np.float32,
+            }
+        ),
         output_path=tmp_path,
         dask_tmp=tmp_path,
         highest_healpix_order=1,
@@ -160,6 +173,41 @@ def test_dask_runner(
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
+
+    # Check that the schema is correct for leaf parquet and _metadata files
+    expected_parquet_schema = pa.schema(
+        [
+            pa.field("id", pa.int64()),
+            pa.field("ra", pa.float32()),
+            pa.field("dec", pa.float32()),
+            pa.field("ra_error", pa.float32()),
+            pa.field("dec_error", pa.float32()),
+            pa.field("Norder", pa.uint8()),
+            pa.field("Dir", pa.uint32()),
+            pa.field("Npix", pa.uint32()),
+            pa.field("_hipscat_index", pa.uint64()),
+        ]
+    )
+    schema = pq.read_metadata(output_file).schema.to_arrow_schema()
+    assert schema.equals(expected_parquet_schema, check_metadata=False)
+    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    assert schema.equals(expected_parquet_schema, check_metadata=False)
+
+    # Check that, when re-loaded as a pandas dataframe, the appropriate numeric types are used.
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    expected_dtypes = pd.Series(
+        {
+            "id": np.int64,
+            "ra": np.float32,
+            "dec": np.float32,
+            "ra_error": np.float32,
+            "dec_error": np.float32,
+            "Norder": np.uint8,
+            "Dir": np.uint32,
+            "Npix": np.uint32,
+        }
+    )
+    assert data_frame.dtypes.equals(expected_dtypes)
 
 
 @pytest.mark.dask
