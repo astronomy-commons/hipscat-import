@@ -27,7 +27,6 @@ def _map_pixels(args, client):
         futures.append(
             client.submit(
                 mr.map_to_pixels,
-                key=key,
                 input_file=file_path,
                 resume_path=args.resume_plan.tmp_path,
                 file_reader=reader_future,
@@ -53,7 +52,6 @@ def _split_pixels(args, alignment_future, client):
         futures.append(
             client.submit(
                 mr.split_pixels,
-                key=key,
                 input_file=file_path,
                 file_reader=reader_future,
                 highest_order=args.mapping_healpix_order,
@@ -85,7 +83,6 @@ def _reduce_pixels(args, destination_pixel_map, client):
         futures.append(
             client.submit(
                 mr.reduce_pixel_shards,
-                key=destination_pixel_key,
                 cache_shard_path=args.tmp_path,
                 resume_path=args.resume_plan.tmp_path,
                 reducing_key=destination_pixel_key,
