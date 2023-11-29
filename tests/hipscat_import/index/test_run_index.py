@@ -50,8 +50,8 @@ def test_run_index(
         [
             pa.field("_hipscat_index", pa.uint64()),
             pa.field("Norder", pa.uint8()),
-            pa.field("Dir", pa.uint32()),
-            pa.field("Npix", pa.uint32()),
+            pa.field("Dir", pa.uint64()),
+            pa.field("Npix", pa.uint64()),
             pa.field("id", pa.int64()),
         ]
     )

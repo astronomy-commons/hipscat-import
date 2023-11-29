@@ -28,8 +28,8 @@ def create_index(args):
     if args.include_order_pixel:
         ## Take out the hive dictionary behavior.
         data["Norder"] = data["Norder"].astype(np.uint8)
-        data["Dir"] = data["Dir"].astype(np.uint32)
-        data["Npix"] = data["Npix"].astype(np.uint32)
+        data["Dir"] = data["Dir"].astype(np.uint64)
+        data["Npix"] = data["Npix"].astype(np.uint64)
     data = data.reset_index()
     if not args.include_hipscat_index:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])

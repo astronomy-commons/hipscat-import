@@ -285,9 +285,9 @@ def reduce_pixel_shards(
     dataframe["Dir"] = np.full(
         rows_written,
         fill_value=int(destination_pixel_number / 10_000) * 10_000,
-        dtype=np.uint32,
+        dtype=np.uint64,
     )
-    dataframe["Npix"] = np.full(rows_written, fill_value=destination_pixel_number, dtype=np.uint32)
+    dataframe["Npix"] = np.full(rows_written, fill_value=destination_pixel_number, dtype=np.uint64)
 
     if add_hipscat_index:
         ## If we had a meaningful index before, preserve it as a column.

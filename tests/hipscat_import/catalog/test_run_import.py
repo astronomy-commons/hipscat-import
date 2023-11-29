@@ -183,8 +183,8 @@ def test_dask_runner(
             pa.field("ra_error", pa.float32()),
             pa.field("dec_error", pa.float32()),
             pa.field("Norder", pa.uint8()),
-            pa.field("Dir", pa.uint32()),
-            pa.field("Npix", pa.uint32()),
+            pa.field("Dir", pa.uint64()),
+            pa.field("Npix", pa.uint64()),
             pa.field("_hipscat_index", pa.uint64()),
         ]
     )
@@ -203,8 +203,8 @@ def test_dask_runner(
             "ra_error": np.float32,
             "dec_error": np.float32,
             "Norder": np.uint8,
-            "Dir": np.uint32,
-            "Npix": np.uint32,
+            "Dir": np.uint64,
+            "Npix": np.uint64,
         }
     )
     assert data_frame.dtypes.equals(expected_dtypes)
