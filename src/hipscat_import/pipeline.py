@@ -55,15 +55,15 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
             macauff_runner.run(args, client)
         else:
             raise ValueError("unknown args type")
-    except Exception as exception:  # pylint: disable=broad-exception-caught
-        _send_failure_email(args, exception)
-    else:
+
         _send_success_email(args)
+    except Exception as exception:  # pylint: disable=broad-exception-caught
+        if args.completion_email_address:
+            _send_failure_email(args, exception)
+        raise exception
 
 
 def _send_failure_email(args: RuntimeArguments, exception: Exception):
-    if not args.completion_email_address:
-        raise exception from None
     message = EmailMessage()
     message["Subject"] = "hipscat-import failure."
     message["To"] = args.completion_email_address
