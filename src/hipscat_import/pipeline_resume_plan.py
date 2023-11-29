@@ -131,6 +131,8 @@ class PipelineResumePlan:
         ):
             if future.status == "error":
                 some_error = True
+                print(f"{stage_name} task {future.key} failed with message:")
+                print(future.exception())
         if some_error:
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")
 
