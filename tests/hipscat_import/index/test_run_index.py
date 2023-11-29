@@ -49,12 +49,17 @@ def test_run_index(
     basic_index_parquet_schema = pa.schema(
         [
             pa.field("_hipscat_index", pa.uint64()),
-            pa.field("Norder", pa.int32()),
-            pa.field("Dir", pa.int32()),
-            pa.field("Npix", pa.int32()),
+            pa.field("Norder", pa.uint8()),
+            pa.field("Dir", pa.uint64()),
+            pa.field("Npix", pa.uint64()),
             pa.field("id", pa.int64()),
         ]
     )
+
+    outfile = os.path.join(args.catalog_path, "index", "part.0.parquet")
+    schema = pq.read_metadata(outfile).schema.to_arrow_schema()
+    assert schema.equals(basic_index_parquet_schema, check_metadata=False)
+
     schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
