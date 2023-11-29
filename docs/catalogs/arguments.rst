@@ -178,3 +178,6 @@ In addition, you can specify a directory to use for intermediate files, using
 ``dask_tmp``. This can be useful if you have additional scratch storage, or want
 to use local storage for intermediate files and remote storage for the final 
 catalog files.
+
+For more information on these parameters, when you would use each, and demonstrations 
+of temporary file use see :doc:`temp_files`

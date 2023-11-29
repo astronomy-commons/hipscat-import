@@ -111,7 +111,7 @@ class ImportArguments(RuntimeArguments):
             resume=self.resume,
             progress_bar=self.progress_bar,
             input_paths=self.input_paths,
-            tmp_path=self.tmp_path,
+            tmp_path=self.resume_tmp,
         )
 
     def to_catalog_info(self, total_rows) -> CatalogInfo:

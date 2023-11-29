@@ -36,37 +36,40 @@ def test_resume_dask_runner(
     """Test execution in the presence of some resume files."""
     ## First, copy over our intermediate files.
     ## This prevents overwriting source-controlled resume files.
-    temp_path = os.path.join(tmp_path, "resume", "intermediate")
+    intermediate_dir = os.path.join(tmp_path, "resume_catalog", "intermediate")
     shutil.copytree(
         os.path.join(resume_dir, "intermediate"),
-        temp_path,
+        intermediate_dir,
     )
-    plan = ResumePlan(tmp_path=temp_path, progress_bar=False)
+    ## Now set up our resume files to match previous work.
+    resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
+    plan = ResumePlan(tmp_path=resume_tmp, progress_bar=False)
     histogram = hist.empty_histogram(0)
     histogram[11] = 131
     empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
-        ResumePlan.touch_key_done_file(temp_path, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
+        ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
         ResumePlan.write_partial_histogram(
-            tmp_path=temp_path,
+            tmp_path=resume_tmp,
             mapping_key=f"map_{file_index}",
             histogram=histogram if file_index == 0 else empty,
         )
 
-    ResumePlan.touch_key_done_file(temp_path, ResumePlan.REDUCING_STAGE, "0_11")
+    ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder=0"),
-        os.path.join(tmp_path, "resume", "Norder=0"),
+        os.path.join(tmp_path, "resume_catalog", "Norder=0"),
     )
 
     args = ImportArguments(
-        output_artifact_name="resume",
+        output_artifact_name="resume_catalog",
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
+        resume_tmp=os.path.join(tmp_path, "tmp"),
         overwrite=True,
         highest_healpix_order=0,
         pixel_threshold=1000,
@@ -94,7 +97,7 @@ def test_resume_dask_runner(
     ## should result in no changes to output files.
     shutil.copytree(
         os.path.join(resume_dir, "intermediate"),
-        temp_path,
+        resume_tmp,
     )
     plan = args.resume_plan
     plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
