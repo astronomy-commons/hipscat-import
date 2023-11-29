@@ -208,6 +208,7 @@ def test_dask_runner(
         }
     )
     assert data_frame.dtypes.equals(expected_dtypes)
+    assert data_frame.index.dtype == np.uint64
 
 
 @pytest.mark.dask
