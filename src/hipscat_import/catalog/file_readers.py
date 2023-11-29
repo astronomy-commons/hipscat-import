@@ -2,7 +2,6 @@
 
 import abc
 
-import pyarrow as pa
 import pyarrow.parquet as pq
 from astropy.table import Table
 from hipscat.io import FilePointer, file_io
@@ -258,9 +257,9 @@ class ParquetReader(InputReader):
 
     def read(self, input_file):
         self.regular_file_exists(input_file)
-        parquet_file = pq.read_table(input_file, **self.kwargs)
-        for smaller_table in parquet_file.to_batches(max_chunksize=self.chunksize):
-            yield pa.Table.from_batches([smaller_table]).to_pandas()
+        parquet_file = pq.ParquetFile(input_file, **self.kwargs)
+        for smaller_table in parquet_file.iter_batches(batch_size=self.chunksize, use_pandas_metadata=True):
+            yield smaller_table.to_pandas()
 
     def provenance_info(self) -> dict:
         provenance_info = {
