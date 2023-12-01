@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, Dict, List, Union
 
 from hipscat.catalog.catalog import CatalogInfo
 from hipscat.io import FilePointer
@@ -35,6 +35,8 @@ class ImportArguments(RuntimeArguments):
     """can be used instead of `input_format` to import only specified files"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
+    input_storage_options: Union[Dict[Any, Any], None] = None
+    """optional dictionary of abstract filesystem credentials for the INPUT."""
 
     ra_column: str = "ra"
     """column for right ascension"""
@@ -106,7 +108,12 @@ class ImportArguments(RuntimeArguments):
             self.file_reader = get_file_reader(self.input_format)
 
         # Basic checks complete - make more checks and create directories where necessary
-        self.input_paths = find_input_paths(self.input_path, f"*{self.input_format}", self.input_file_list)
+        self.input_paths = find_input_paths(
+            self.input_path,
+            f"*{self.input_format}",
+            self.input_file_list,
+            storage_options=self.input_storage_options,
+        )
         self.resume_plan = ResumePlan(
             resume=self.resume,
             progress_bar=self.progress_bar,

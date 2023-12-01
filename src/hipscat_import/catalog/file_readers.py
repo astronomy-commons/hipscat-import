@@ -1,6 +1,7 @@
 """File reading generators for common file types."""
 
 import abc
+from typing import Any, Dict, Union
 
 import pyarrow.parquet as pq
 from astropy.table import Table
@@ -86,15 +87,15 @@ class InputReader(abc.ABC):
             dictionary with all argument_name -> argument_value as key -> value pairs.
         """
 
-    def regular_file_exists(self, input_file):
+    def regular_file_exists(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **_kwargs):
         """Check that the `input_file` points to a single regular file
 
         Raises
             FileNotFoundError: if nothing exists at path, or directory found.
         """
-        if not file_io.does_file_or_directory_exist(input_file):
+        if not file_io.does_file_or_directory_exist(input_file, storage_options=storage_options):
             raise FileNotFoundError(f"File not found at path: {input_file}")
-        if not file_io.is_regular_file(input_file):
+        if not file_io.is_regular_file(input_file, storage_options=storage_options):
             raise FileNotFoundError(f"Directory found at path - requires regular file: {input_file}")
 
 
@@ -136,7 +137,7 @@ class CsvReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
-        self.regular_file_exists(input_file)
+        self.regular_file_exists(input_file, **self.kwargs)
 
         if self.schema_file:
             schema_parquet = file_io.load_parquet_to_pandas(
@@ -218,7 +219,7 @@ class FitsReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
-        self.regular_file_exists(input_file)
+        self.regular_file_exists(input_file, **self.kwargs)
         table = Table.read(input_file, memmap=True, **self.kwargs)
         if self.column_names:
             table.keep_columns(self.column_names)
@@ -256,7 +257,7 @@ class ParquetReader(InputReader):
         self.kwargs = kwargs
 
     def read(self, input_file):
-        self.regular_file_exists(input_file)
+        self.regular_file_exists(input_file, **self.kwargs)
         parquet_file = pq.ParquetFile(input_file, **self.kwargs)
         for smaller_table in parquet_file.iter_batches(batch_size=self.chunksize, use_pandas_metadata=True):
             yield smaller_table.to_pandas()
