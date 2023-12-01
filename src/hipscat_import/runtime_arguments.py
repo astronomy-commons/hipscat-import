@@ -31,12 +31,14 @@ class RuntimeArguments:
     """if true, a tqdm progress bar will be displayed for user
     feedback of map reduce progress"""
     dask_tmp: str = ""
-    """ directory for dask worker space. this should be local to
+    """directory for dask worker space. this should be local to
     the execution of the pipeline, for speed of reads and writes"""
     dask_n_workers: int = 1
     """number of workers for the dask client"""
     dask_threads_per_worker: int = 1
     """number of threads per dask worker"""
+    resume_tmp: str = ""
+    """directory for intermediate resume files, when needed. see RTD for more info."""
 
     completion_email_address: str = ""
     """if provided, send an email to the indicated email address once the 
@@ -89,6 +91,10 @@ class RuntimeArguments:
         else:
             self.tmp_path = file_io.append_paths_to_pointer(self.catalog_path, "intermediate")
         file_io.make_directory(self.tmp_path, exist_ok=True)
+        if self.resume_tmp:
+            self.resume_tmp = file_io.append_paths_to_pointer(self.resume_tmp, self.output_artifact_name)
+        else:
+            self.resume_tmp = self.tmp_path
 
     def provenance_info(self) -> dict:
         """Fill all known information in a dictionary for provenance tracking.

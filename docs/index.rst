@@ -68,6 +68,7 @@ threading issues with dask:
    catalogs/resume
    catalogs/debug
    catalogs/advanced
+   catalogs/temp_files
    catalogs/public/index
 
 .. toctree::
