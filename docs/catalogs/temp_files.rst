@@ -5,7 +5,7 @@ This page aims to characterize intermediate files created by the hipscat-import
 catalog creation process. Most users are going to be ok with setting the ``tmp_dir``
 and not thinking much more about it.
 
-This page will mostfly be useful for more contrained use cases, and when users have some
+This page will mostly be useful for more contrained use cases, and when users have some
 understanding when to use local vs remote object storage. This can also be a guide for
 how to allocate resources for an import process, when the files will be large.
 
