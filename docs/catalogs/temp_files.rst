@@ -96,7 +96,7 @@ surprising, so we try to provide a narrative of what's happening and why.
 Planning stage
 ...............................................................................
 
-At this stage, generally the only file that is written out is ``<resume_tmp>/input_path_log.txt``
+At this stage, generally the only file that is written out is ``<resume_tmp>/input_paths.txt``
 and contains the paths of all the input files. This is to make sure that resumed instances
 of the job are using the same input files.
 
