@@ -23,10 +23,14 @@ class SoapPlan(PipelineResumePlan):
 
     count_keys: List[Tuple[HealpixPixel, List[HealpixPixel], str]] = field(default_factory=list)
     """set of pixels (and job keys) that have yet to be counted"""
+    reduce_keys: List[Tuple[HealpixPixel, str]] = field(default_factory=list)
+    """set of object catalog pixels (and job keys) that have yet to be reduced/combined"""
     source_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
     """Map of object pixels to source pixels, with counting key."""
+    object_catalog: Catalog | None = None
 
     COUNTING_STAGE = "counting"
+    REDUCING_STAGE = "reducing"
     SOURCE_MAP_FILE = "source_object_map.npz"
 
     def __init__(self, args: SoapArguments):
@@ -50,15 +54,20 @@ class SoapPlan(PipelineResumePlan):
                 return
             step_progress.update(1)
 
+            self.object_catalog = Catalog.read_from_hipscat(args.object_catalog_dir)
             source_map_file = file_io.append_paths_to_pointer(self.tmp_path, self.SOURCE_MAP_FILE)
             if file_io.does_file_or_directory_exist(source_map_file):
                 source_pixel_map = np.load(source_map_file, allow_pickle=True)["arr_0"].item()
             else:
-                object_catalog = Catalog.read_from_hipscat(args.object_catalog_dir)
                 source_catalog = Catalog.read_from_hipscat(args.source_catalog_dir)
-                source_pixel_map = source_to_object_map(object_catalog, source_catalog)
+                source_pixel_map = source_to_object_map(self.object_catalog, source_catalog)
                 np.savez_compressed(source_map_file, source_pixel_map)
             self.count_keys = self.get_sources_to_count(source_pixel_map=source_pixel_map)
+            self.reduce_keys = self.get_objects_to_reduce()
+            file_io.make_directory(
+                file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
+                exist_ok=True,
+            )
             step_progress.update(1)
 
     def wait_for_counting(self, futures):
@@ -97,6 +106,40 @@ class SoapPlan(PipelineResumePlan):
             for hp_pixel, object_pixels in source_pixel_map.items()
             if f"{hp_pixel.order}_{hp_pixel.pixel}" not in counted_keys
         ]
+
+    @classmethod
+    def reducing_key_done(cls, tmp_path, reducing_key: str):
+        """Mark a single reducing task as done
+
+        Args:
+            tmp_path (str): where to write intermediate resume files.
+            reducing_key (str): unique string for each reducing task (e.g. "3_57")
+        """
+        cls.touch_key_done_file(tmp_path, cls.REDUCING_STAGE, reducing_key)
+
+    def get_objects_to_reduce(self):
+        """Fetch a tuple for each object catalog pixel to reduce."""
+        reduced_keys = set(self.read_done_keys(self.REDUCING_STAGE))
+        reduce_items = [
+            (hp_pixel, f"{hp_pixel.order}_{hp_pixel.pixel}")
+            for hp_pixel in self.object_catalog.get_healpix_pixels()
+            if f"{hp_pixel.order}_{hp_pixel.pixel}" not in reduced_keys
+        ]
+        return reduce_items
+
+    def is_reducing_done(self) -> bool:
+        """Are there partitions left to reduce?"""
+        return self.done_file_exists(self.REDUCING_STAGE)
+
+    def wait_for_reducing(self, futures):
+        """Wait for reducing stage futures to complete."""
+        self.wait_for_futures(futures, self.REDUCING_STAGE)
+        remaining_sources_to_reduce = self.get_objects_to_reduce()
+        if len(remaining_sources_to_reduce) > 0:
+            raise RuntimeError(
+                f"{len(remaining_sources_to_reduce)} reducing stages did not complete successfully."
+            )
+        self.touch_stage_done_file(self.REDUCING_STAGE)
 
 
 def source_to_object_map(object_catalog, source_catalog):

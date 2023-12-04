@@ -147,8 +147,8 @@ def never_fails():
 
 
 @pytest.mark.dask
-def test_some_reduce_task_failures(small_sky_soap_args, dask_client):
-    """Test that we only consider reduce stage successful if all done files are written"""
+def test_some_counting_task_failures(small_sky_soap_args, dask_client):
+    """Test that we only consider counting stage successful if all done files are written"""
     plan = SoapPlan(small_sky_soap_args)
 
     ## Method doesn't FAIL, but it doesn't write out the intermediate results file either.
@@ -168,3 +168,21 @@ def test_some_reduce_task_failures(small_sky_soap_args, dask_client):
     ## Method succeeds, and done file is present.
     futures = [dask_client.submit(never_fails)]
     plan.wait_for_counting(futures)
+
+
+@pytest.mark.dask
+def test_some_reducing_task_failures(small_sky_soap_args, dask_client):
+    """Test that we only consider reducing stage successful if all done files are written"""
+    plan = SoapPlan(small_sky_soap_args)
+
+    ## Method doesn't FAIL, but it doesn't write out the intermediate results file either.
+    futures = [dask_client.submit(never_fails)]
+    with pytest.raises(RuntimeError, match="1 reducing stages"):
+        plan.wait_for_reducing(futures)
+
+    ## Write ALL the intermediate results files. Waiting for results will succeed.
+    Path(small_sky_soap_args.tmp_path, "reducing", "0_11_done").touch()
+
+    ## Method succeeds, and done file is present.
+    futures = [dask_client.submit(never_fails)]
+    plan.wait_for_reducing(futures)
