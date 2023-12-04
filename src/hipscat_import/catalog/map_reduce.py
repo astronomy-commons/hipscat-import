@@ -173,7 +173,7 @@ def split_pixels(
             pixel_dir = _get_pixel_directory(cache_shard_path, order, pixel)
             file_io.make_directory(pixel_dir, exist_ok=True)
             output_file = file_io.append_paths_to_pointer(
-                pixel_dir, f"shard_{splitting_key}_{chunk_number}.parquet"
+                pixel_dir, f"shard_{splitting_key}_{chunk_number}_{unique_index}.parquet"
             )
             if _has_named_index(filtered_data):
                 filtered_data.to_parquet(output_file, index=True)

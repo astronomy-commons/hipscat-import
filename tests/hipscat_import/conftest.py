@@ -98,6 +98,10 @@ def empty_data_dir(test_data_dir):
 def macauff_data_dir(test_data_dir):
     return os.path.join(test_data_dir, "macauff")
 
+@pytest.fixture
+def same_destination_csv(test_data_dir):
+    return os.path.join(test_data_dir, "macauff", "same_destination.csv")
+
 
 @pytest.fixture
 def formats_dir(test_data_dir):

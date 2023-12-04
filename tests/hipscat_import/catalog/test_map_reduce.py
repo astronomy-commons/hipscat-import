@@ -264,13 +264,40 @@ def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_
         alignment=alignment,
     )
 
-    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0_0.parquet")
     expected_ids = [*range(700, 708)]
     assert_parquet_file_ids(file_name, "object_id", expected_ids)
 
-    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_1", "shard_0_0.parquet")
+    file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_1", "shard_0_0_0.parquet")
     assert not os.path.exists(file_name)
 
+def test_split_pixels_same_destination(same_destination_csv, tmp_path):
+    """Test splitting a file where data points fall in different high order pixels
+    but have the same destination pixel."""
+    os.makedirs(os.path.join(tmp_path, "splitting"))
+    alignment = np.full(hp.nside2npix(2**10), None)
+    alignment[1306154] = (4, 318, 1)
+    alignment[1305941] = (4, 318, 2)
+    mr.split_pixels(
+        input_file=same_destination_csv,
+        file_reader=get_file_reader("csv"),
+        highest_order=10,
+        ra_column="CatWISE_RA",
+        dec_column="CatWISE_Dec",
+        splitting_key="0",
+        cache_shard_path=tmp_path,
+        resume_path=tmp_path,
+        alignment=alignment
+    )
+
+    file_name1 = os.path.join(tmp_path, "order_4", "dir_0", "pixel_318", "shard_0_0_0.parquet")
+    assert os.path.exists(file_name1)
+
+    file_name2 = os.path.join(tmp_path, "order_4", "dir_0", "pixel_318", "shard_0_0_1.parquet")
+    assert os.path.exists(file_name2)
+
+    merged_df = pa.parquet.read_table(os.path.join(tmp_path, "order_4", "dir_0", "pixel_318"))
+    assert len(merged_df) == 3
 
 def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     """Test reducing into one large pixel"""
