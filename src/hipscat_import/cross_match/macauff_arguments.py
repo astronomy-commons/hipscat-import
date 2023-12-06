@@ -6,8 +6,10 @@ from typing import List
 
 from hipscat.io import FilePointer
 from hipscat.io.validation import is_valid_catalog
+from hipscat_import.catalog.file_readers import InputReader, get_file_reader
 
 from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
+from hipscat_import.catalog import ResumePlan
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=unsupported-binary-operation
@@ -47,6 +49,16 @@ class MacauffArguments(RuntimeArguments):
     metadata_file_path: str = ""
     match_probability_columns: List[str] = field(default_factory=list)
     column_names: List[str] = field(default_factory=list)
+
+    resume_plan : ResumePlan | None = None
+
+    file_reader: InputReader | None = None
+    """instance of input reader that specifies arguments necessary for reading
+    from your input files"""
+
+    constant_healpix_order: int = 10
+    highest_healpix_order: int = 10
+    mapping_healpix_order: int = 10
 
     def __post_init__(self):
         self._check_arguments()
@@ -90,6 +102,18 @@ class MacauffArguments(RuntimeArguments):
         self.input_paths = find_input_paths(self.input_path, f"*{self.input_format}", self.input_file_list)
 
         self.column_names = self.get_column_names()
+
+        self.resume_plan = ResumePlan(
+            input_paths=self.input_paths,
+            tmp_path=self.tmp_path,
+            progress_bar=True,
+        )
+
+        if not self.file_reader:
+            self.file_reader = get_file_reader(
+                file_format = self.input_format,
+                column_names = self.column_names
+            )
 
     def get_column_names(self):
         """Grab the macauff column names."""
