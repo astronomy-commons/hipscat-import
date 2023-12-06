@@ -25,8 +25,7 @@ def split(args, left_catalog, right_catalog):
             pixel.pixel * explosion_factor,
             (pixel.pixel + 1) * explosion_factor,
         )
-        for explody in exploded_pixels:
-            regenerated_left_alignment[explody] = pixel
+        regenerated_left_alignment[exploded_pixels] = pixel
 
     regenerated_right_alignment = np.full(hp.order2npix(highest_right_order), None)
     for pixel in right_pixels:
@@ -35,8 +34,7 @@ def split(args, left_catalog, right_catalog):
             pixel.pixel * explosion_factor,
             (pixel.pixel + 1) * explosion_factor,
         )
-        for explody in exploded_pixels:
-            regenerated_right_alignment[explody] = pixel
+        regenerated_right_alignment[exploded_pixels] = pixel
 
     for i, file in enumerate(args.input_paths):
         split_associations(

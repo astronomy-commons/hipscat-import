@@ -22,17 +22,6 @@ def split_associations(
 ):
     """Map a file of links to their healpix pixels and split into shards.
 
-    Args:
-        input_file (FilePointer): file to read for catalog data.
-        file_reader (hipscat_import.catalog.file_readers.InputReader): instance
-            of input reader that specifies arguments necessary for reading from the input file.
-        splitting_key (str): unique counter for this input file, used
-            when creating intermediate files
-        highest_order (int): healpix order to use when mapping
-        ra_column (str): where to find right ascension data in the dataframe
-        dec_column (str): where to find declation in the dataframe
-        cache_shard_path (FilePointer): where to write intermediate parquet files.
-        resume_path (FilePointer): where to write resume files.
 
     Raises:
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
@@ -83,6 +72,9 @@ def reduce_associations(args, left_pixel):
     and aggregate into a single parquet file."""
     inputs = _get_pixel_directory(args.tmp_path, left_pixel.order, left_pixel.pixel)
 
+    if not file_io.directory_has_contents(inputs):
+        print(f"Warning: no input data for pixel {left_pixel}")
+        return
     destination_dir = paths.pixel_directory(args.catalog_path, left_pixel.order, left_pixel.pixel)
     file_io.make_directory(destination_dir, exist_ok=True)
 
