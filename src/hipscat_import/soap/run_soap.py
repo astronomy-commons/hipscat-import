@@ -22,11 +22,10 @@ def run(args, client):
     resume_plan = SoapPlan(args)
     if not resume_plan.is_counting_done():
         futures = []
-        for source_pixel, object_pixels, source_key in resume_plan.count_keys:
+        for source_pixel, object_pixels, _ in resume_plan.count_keys:
             futures.append(
                 client.submit(
                     count_joins,
-                    key=source_key,
                     soap_args=args,
                     source_pixel=source_pixel,
                     object_pixels=object_pixels,
@@ -40,7 +39,6 @@ def run(args, client):
             futures.append(
                 client.submit(
                     reduce_joins,
-                    key=object_key,
                     soap_args=args,
                     object_pixel=object_pixel,
                     object_key=object_key,
