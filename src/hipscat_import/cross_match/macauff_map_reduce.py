@@ -2,30 +2,83 @@ import healpy as hp
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-from hipscat.io import FilePointer, file_io, paths
+from hipscat.io import file_io, paths
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from hipscat.pixel_math.healpix_pixel_function import get_pixel_argsort
+
+from hipscat_import.catalog.map_reduce import _get_pixel_directory, _iterate_input_file
+from hipscat_import.catalog.resume_plan import ResumePlan
 
 
-def _get_pixel_directory(cache_path: FilePointer, order: np.int64, pixel: np.int64):
-    """Create a path for intermediate pixel data.
+def split_associations(
+    input_file,
+    file_reader,
+    splitting_key,
+    args,
+    highest_left_order,
+    highest_right_order,
+    left_alignment,
+    right_alignment,
+):
+    """Map a file of links to their healpix pixels and split into shards.
 
-    This will take the form:
+    Args:
+        input_file (FilePointer): file to read for catalog data.
+        file_reader (hipscat_import.catalog.file_readers.InputReader): instance
+            of input reader that specifies arguments necessary for reading from the input file.
+        splitting_key (str): unique counter for this input file, used
+            when creating intermediate files
+        highest_order (int): healpix order to use when mapping
+        ra_column (str): where to find right ascension data in the dataframe
+        dec_column (str): where to find declation in the dataframe
+        cache_shard_path (FilePointer): where to write intermediate parquet files.
+        resume_path (FilePointer): where to write resume files.
 
-        <cache_path>/dir_<directory separator>/pixel_<pixel>
-
-    where the directory separator is calculated using integer division:
-
-        (pixel/10000)*10000
-
-    and exists to mitigate problems on file systems that don't support
-    more than 10_000 children nodes.
+    Raises:
+        ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
+        FileNotFoundError: if the file does not exist, or is a directory
     """
-    dir_number = int(pixel / 10_000) * 10_000
-    return file_io.append_paths_to_pointer(
-        cache_path, f"order_{order}", f"dir_{dir_number}", f"pixel_{pixel}"
-    )
+    for chunk_number, data, mapped_left_pixels in _iterate_input_file(
+        input_file, file_reader, highest_left_order, args.left_ra_column, args.left_dec_column, False
+    ):
+        aligned_left_pixels = left_alignment[mapped_left_pixels]
+        unique_pixels, unique_inverse = np.unique(aligned_left_pixels, return_inverse=True)
+
+        mapped_right_pixels = hp.ang2pix(
+            2**highest_right_order,
+            data[args.right_ra_column].values,
+            data[args.right_dec_column].values,
+            lonlat=True,
+            nest=True,
+        )
+        aligned_right_pixels = right_alignment[mapped_right_pixels]
+
+        data["Norder"] = [pix.order for pix in aligned_left_pixels]
+        data["Dir"] = [pix.dir for pix in aligned_left_pixels]
+        data["Npix"] = [pix.pixel for pix in aligned_left_pixels]
+
+        data["join_Norder"] = [pix.order for pix in aligned_right_pixels]
+        data["join_Dir"] = [pix.dir for pix in aligned_right_pixels]
+        data["join_Npix"] = [pix.pixel for pix in aligned_right_pixels]
+
+        for unique_index, pixel in enumerate(unique_pixels):
+            mapped_indexes = np.where(unique_inverse == unique_index)
+            data_indexes = data.index[mapped_indexes[0].tolist()]
+
+            filtered_data = data.filter(items=data_indexes, axis=0)
+
+            pixel_dir = _get_pixel_directory(args.tmp_path, pixel.order, pixel.pixel)
+            file_io.make_directory(pixel_dir, exist_ok=True)
+            output_file = file_io.append_paths_to_pointer(
+                pixel_dir, f"shard_{splitting_key}_{chunk_number}.parquet"
+            )
+            filtered_data.to_parquet(output_file, index=False)
+        del filtered_data, data_indexes
+
+    ResumePlan.splitting_key_done(tmp_path=args.tmp_path, splitting_key=splitting_key)
 
 
-def reduce_associations(args, left_pixel, highest_right_order, regenerated_right_alignment):
+def reduce_associations(args, left_pixel):
     """For all points determined to be in the target left_pixel, map them to the appropriate right_pixel
     and aggregate into a single parquet file."""
     inputs = _get_pixel_directory(args.tmp_path, left_pixel.order, left_pixel.pixel)
@@ -35,29 +88,16 @@ def reduce_associations(args, left_pixel, highest_right_order, regenerated_right
 
     destination_file = paths.pixel_catalog_file(args.catalog_path, left_pixel.order, left_pixel.pixel)
 
-    tables = []
-    tables.append(pq.read_table(inputs))
+    merged_table = pq.read_table(inputs)
+    dataframe = merged_table.to_pandas().reset_index()
 
-    merged_table = pa.concat_tables(tables)
-    dataframe = merged_table.to_pandas()
-    rows_written = len(dataframe)
+    ## One row group per join_Norder/join_Npix
 
-    dataframe["Norder"] = np.full(rows_written, fill_value=left_pixel.order, dtype=np.uint8)
-    dataframe["Dir"] = np.full(rows_written, fill_value=left_pixel.dir, dtype=np.uint32)
-    dataframe["Npix"] = np.full(rows_written, fill_value=left_pixel.pixel, dtype=np.uint32)
-
-    mapped_pixels = hp.ang2pix(
-        2**highest_right_order,
-        dataframe[args.right_ra_column].values,
-        dataframe[args.right_dec_column].values,
-        lonlat=True,
-        nest=True,
-    )
-    aligned_pixels = regenerated_right_alignment[mapped_pixels]
-
-    dataframe["join_Norder"] = [pixel[0] for pixel in aligned_pixels]
-    dataframe["join_Dir"] = [int(pixel[1] / 10_000) * 10_000 for pixel in aligned_pixels]
-    dataframe["join_Npix"] = [pixel[1] for pixel in aligned_pixels]
-
-    ## TODO - row groups per join_Norder/join_Npix
-    dataframe.to_parquet(destination_file)
+    join_pixel_frames = dataframe.groupby(["join_Norder", "join_Npix"], group_keys=True)
+    join_pixels = [HealpixPixel(pixel[0], pixel[1]) for pixel, _ in join_pixel_frames]
+    pixel_argsort = get_pixel_argsort(join_pixels)
+    with pq.ParquetWriter(destination_file, merged_table.schema) as writer:
+        for pixel_index in pixel_argsort:
+            join_pixel = join_pixels[pixel_index]
+            join_pixel_frame = join_pixel_frames.get_group((join_pixel.order, join_pixel.pixel)).reset_index()
+            writer.write_table(pa.Table.from_pandas(join_pixel_frame, schema=merged_table.schema))
