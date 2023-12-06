@@ -34,7 +34,7 @@ class RuntimeArguments:
     """if true, a tqdm progress bar will be displayed for user
     feedback of map reduce progress"""
     dask_tmp: str = ""
-    """ directory for dask worker space. this should be local to
+    """directory for dask worker space. this should be local to
     the execution of the pipeline, for speed of reads and writes"""
     dask_n_workers: int = 1
     """number of workers for the dask client"""
