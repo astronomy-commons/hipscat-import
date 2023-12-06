@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from importlib.metadata import version
+from typing import Any, Dict, Union
 
 from hipscat.io import FilePointer, file_io
 
@@ -20,6 +21,8 @@ class RuntimeArguments:
     """base path where new catalog should be output"""
     output_artifact_name: str = ""
     """short, convenient name for the catalog"""
+    output_storage_options: Union[Dict[Any, Any], None] = None
+    """optional dictionary of abstract filesystem credentials for the OUTPUT."""
 
     ## Execution
     tmp_dir: str = ""
@@ -69,12 +72,12 @@ class RuntimeArguments:
 
         self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_artifact_name)
         if not self.overwrite:
-            if file_io.directory_has_contents(self.catalog_path):
+            if file_io.directory_has_contents(self.catalog_path, storage_options=self.output_storage_options):
                 raise ValueError(
                     f"output_path ({self.catalog_path}) contains files."
                     " choose a different directory or use --overwrite flag"
                 )
-        file_io.make_directory(self.catalog_path, exist_ok=True)
+        file_io.make_directory(self.catalog_path, exist_ok=True, storage_options=self.output_storage_options)
 
         if self.tmp_dir:
             if not file_io.does_file_or_directory_exist(self.tmp_dir):
@@ -90,7 +93,7 @@ class RuntimeArguments:
             )
         else:
             self.tmp_path = file_io.append_paths_to_pointer(self.catalog_path, "intermediate")
-        file_io.make_directory(self.tmp_path, exist_ok=True)
+        file_io.make_directory(self.tmp_path, exist_ok=True, storage_options=self.output_storage_options)
         if self.resume_tmp:
             self.resume_tmp = file_io.append_paths_to_pointer(self.resume_tmp, self.output_artifact_name)
         else:
@@ -129,7 +132,9 @@ class RuntimeArguments:
         return {}
 
 
-def find_input_paths(input_path="", file_matcher="", input_file_list=None):
+def find_input_paths(
+    input_path="", file_matcher="", input_file_list=None, storage_options: Union[Dict[Any, Any], None] = None
+):
     """Helper method to find input paths, given either a prefix and format, or an
     explicit list of paths.
 
@@ -143,9 +148,11 @@ def find_input_paths(input_path="", file_matcher="", input_file_list=None):
         FileNotFoundError if no files are found at the input_path and the provided list is empty.
     """
     if input_path:
-        if not file_io.does_file_or_directory_exist(input_path):
+        if not file_io.does_file_or_directory_exist(input_path, storage_options=storage_options):
             raise FileNotFoundError("input_path not found on local storage")
-        input_paths = file_io.find_files_matching_path(input_path, file_matcher)
+        input_paths = file_io.find_files_matching_path(
+            input_path, file_matcher, include_protocol=True, storage_options=storage_options
+        )
     elif input_file_list:
         input_paths = input_file_list
     if len(input_paths) == 0:

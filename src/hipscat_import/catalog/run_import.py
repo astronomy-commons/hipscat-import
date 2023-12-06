@@ -96,6 +96,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 add_hipscat_index=args.add_hipscat_index,
                 use_schema_file=args.use_schema_file,
                 use_hipscat_index=args.use_hipscat_index,
+                storage_options=args.output_storage_options,
             )
         )
 
@@ -155,19 +156,25 @@ def run(args, client):
             catalog_base_dir=args.catalog_path,
             dataset_info=catalog_info,
             tool_args=args.provenance_info(),
+            storage_options=args.output_storage_options,
         )
         step_progress.update(1)
 
-        io.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=catalog_info)
+        io.write_catalog_info(
+            catalog_base_dir=args.catalog_path,
+            dataset_info=catalog_info,
+            storage_options=args.output_storage_options,
+        )
         step_progress.update(1)
         if not args.debug_stats_only:
-            io.write_parquet_metadata(args.catalog_path)
+            io.write_parquet_metadata(args.catalog_path, storage_options=args.output_storage_options)
         step_progress.update(1)
-        io.write_fits_map(args.catalog_path, raw_histogram)
+        io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
         step_progress.update(1)
         io.write_partition_info(
             catalog_base_dir=args.catalog_path,
             destination_healpix_pixel_map=destination_pixel_map,
+            storage_options=args.output_storage_options,
         )
         step_progress.update(1)
         args.resume_plan.clean_resume_files()
