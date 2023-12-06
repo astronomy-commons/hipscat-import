@@ -18,10 +18,14 @@ class SoapArguments(RuntimeArguments):
     ## Input - Source catalog
     source_catalog_dir: str = ""
     source_object_id_column: str = ""
+    source_id_column: str = ""
 
     resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run the pipeline where we left off"""
+    write_leaf_files: bool = False
+    """Should we also write out leaf parquet files (e.g. Norder/Dir/Npix.parquet)
+    that represent the full association table"""
 
     compute_partition_size: int = 1_000_000_000
 
@@ -66,5 +70,7 @@ class SoapArguments(RuntimeArguments):
             "object_id_column": self.object_id_column,
             "source_catalog_dir": self.source_catalog_dir,
             "source_object_id_column": self.source_object_id_column,
+            "source_id_column": self.source_id_column,
             "compute_partition_size": self.compute_partition_size,
+            "write_leaf_files": self.write_leaf_files,
         }
