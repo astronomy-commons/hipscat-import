@@ -94,7 +94,7 @@ def from_yaml(input_file, output_directory):
             table_name = table.get("name", f"metadata_table_{index}")
             for col_index, column in enumerate(table.get("columns", [])):
                 name = column.get("name", f"column_{col_index}")
-                units = column.get("units", "string")
+                units = column.get("datatype", "string")
                 fields.append(_construct_field(name, units, metadata_dict=column))
 
             schema = pa.schema(fields)
