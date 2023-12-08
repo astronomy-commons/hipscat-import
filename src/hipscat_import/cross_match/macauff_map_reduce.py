@@ -14,11 +14,15 @@ def split_associations(
     input_file,
     file_reader,
     splitting_key,
-    args,
     highest_left_order,
     highest_right_order,
     left_alignment,
     right_alignment,
+    left_ra_column,
+    left_dec_column,
+    right_ra_column,
+    right_dec_column,
+    tmp_path,
 ):
     """Map a file of links to their healpix pixels and split into shards.
 
@@ -28,15 +32,15 @@ def split_associations(
         FileNotFoundError: if the file does not exist, or is a directory
     """
     for chunk_number, data, mapped_left_pixels in _iterate_input_file(
-        input_file, file_reader, highest_left_order, args.left_ra_column, args.left_dec_column, False
+        input_file, file_reader, highest_left_order, left_ra_column, left_dec_column, False
     ):
         aligned_left_pixels = left_alignment[mapped_left_pixels]
         unique_pixels, unique_inverse = np.unique(aligned_left_pixels, return_inverse=True)
 
         mapped_right_pixels = hp.ang2pix(
             2**highest_right_order,
-            data[args.right_ra_column].values,
-            data[args.right_dec_column].values,
+            data[right_ra_column].values,
+            data[right_dec_column].values,
             lonlat=True,
             nest=True,
         )
@@ -56,7 +60,7 @@ def split_associations(
 
             filtered_data = data.filter(items=data_indexes, axis=0)
 
-            pixel_dir = _get_pixel_directory(args.tmp_path, pixel.order, pixel.pixel)
+            pixel_dir = _get_pixel_directory(tmp_path, pixel.order, pixel.pixel)
             file_io.make_directory(pixel_dir, exist_ok=True)
             output_file = file_io.append_paths_to_pointer(
                 pixel_dir, f"shard_{splitting_key}_{chunk_number}.parquet"
@@ -64,21 +68,22 @@ def split_associations(
             filtered_data.to_parquet(output_file, index=False)
         del filtered_data, data_indexes
 
-    ResumePlan.splitting_key_done(tmp_path=args.tmp_path, splitting_key=splitting_key)
+    ResumePlan.splitting_key_done(tmp_path=tmp_path, splitting_key=splitting_key)
 
 
-def reduce_associations(args, left_pixel):
+def reduce_associations(left_pixel, tmp_path, catalog_path):
     """For all points determined to be in the target left_pixel, map them to the appropriate right_pixel
     and aggregate into a single parquet file."""
-    inputs = _get_pixel_directory(args.tmp_path, left_pixel.order, left_pixel.pixel)
+    inputs = _get_pixel_directory(tmp_path, left_pixel.order, left_pixel.pixel)
 
     if not file_io.directory_has_contents(inputs):
+        ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key=f"{left_pixel.order}_{left_pixel.pixel}")
         print(f"Warning: no input data for pixel {left_pixel}")
         return
-    destination_dir = paths.pixel_directory(args.catalog_path, left_pixel.order, left_pixel.pixel)
+    destination_dir = paths.pixel_directory(catalog_path, left_pixel.order, left_pixel.pixel)
     file_io.make_directory(destination_dir, exist_ok=True)
 
-    destination_file = paths.pixel_catalog_file(args.catalog_path, left_pixel.order, left_pixel.pixel)
+    destination_file = paths.pixel_catalog_file(catalog_path, left_pixel.order, left_pixel.pixel)
 
     merged_table = pq.read_table(inputs)
     dataframe = merged_table.to_pandas().reset_index()
@@ -93,3 +98,5 @@ def reduce_associations(args, left_pixel):
             join_pixel = join_pixels[pixel_index]
             join_pixel_frame = join_pixel_frames.get_group((join_pixel.order, join_pixel.pixel)).reset_index()
             writer.write_table(pa.Table.from_pandas(join_pixel_frame, schema=merged_table.schema))
+
+    ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key=f"{left_pixel.order}_{left_pixel.pixel}")

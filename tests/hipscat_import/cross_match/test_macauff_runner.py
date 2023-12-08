@@ -58,7 +58,7 @@ def test_object_to_object(
         overwrite=True,
         file_reader=CsvReader(schema_file=matches_schema_file, header=None),
         metadata_file_path=matches_schema_file,
-        progress_bar=False,
+        # progress_bar=False,
     )
     os.makedirs(os.path.join(args.tmp_path, "splitting"))
 
@@ -70,7 +70,6 @@ def test_object_to_object(
     assert catalog.catalog_path == args.catalog_path
     assert len(catalog.get_join_pixels()) == 1
     assert catalog.catalog_info.total_rows == 131
-
 
 
 @pytest.mark.dask

@@ -46,6 +46,9 @@ class MacauffArguments(RuntimeArguments):
 
     ## `macauff` specific attributes
     metadata_file_path: str = ""
+    resume: bool = True
+    """if there are existing intermediate resume files, should we
+    read those and continue to create a new catalog where we left off"""
 
     file_reader: InputReader | None = None
 
