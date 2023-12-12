@@ -1,6 +1,6 @@
 """Create columnar index of hipscat table using dask for parallelization"""
 
-from hipscat.io import file_io, write_metadata
+from hipscat.io import file_io, parquet_metadata, write_metadata
 from tqdm import tqdm
 
 import hipscat_import.index.map_reduce as mr
@@ -32,5 +32,5 @@ def run(args):
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)
-        write_metadata.write_parquet_metadata(args.catalog_path)
+        parquet_metadata.write_parquet_metadata(args.catalog_path, order_by_healpix=False)
         step_progress.update(1)
