@@ -1,7 +1,7 @@
 import pandas as pd
 from dask.distributed import as_completed
 from hipscat import pixel_math
-from hipscat.io import file_io, paths
+from hipscat.io import file_io, parquet_metadata, paths, write_metadata
 from tqdm import tqdm
 
 import hipscat_import.margin_cache.margin_cache_map_reduce as mcmr
@@ -70,6 +70,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
         as_completed(futures),
         desc="Mapping  ",
         total=len(futures),
+        disable=not args.progress_bar,
     ):
         ...
 
@@ -92,6 +93,7 @@ def _reduce_margin_shards(client, args, partition_pixels):
         as_completed(futures),
         desc="Reducing ",
         total=len(futures),
+        disable=not args.progress_bar,
     ):
         ...
 
@@ -124,3 +126,23 @@ def generate_margin_cache(args, client):
     )
 
     _reduce_margin_shards(client=client, args=args, partition_pixels=combined_pixels)
+
+    with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
+        # pylint: disable=duplicate-code
+        parquet_metadata.write_parquet_metadata(args.catalog_path)
+        total_rows = 0
+        metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
+        for row_group in parquet_metadata.read_row_group_fragments(metadata_path):
+            total_rows += row_group.num_rows
+        step_progress.update(1)
+        catalog_info = args.to_catalog_info(int(total_rows))
+        write_metadata.write_provenance_info(
+            catalog_base_dir=args.catalog_path,
+            dataset_info=catalog_info,
+            tool_args=args.provenance_info(),
+        )
+        step_progress.update(1)
+        write_metadata.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=catalog_info)
+        step_progress.update(1)
+        file_io.remove_directory(args.tmp_path, ignore_errors=True)
+        step_progress.update(1)

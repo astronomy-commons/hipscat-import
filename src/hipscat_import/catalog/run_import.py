@@ -8,6 +8,8 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 import hipscat.io.write_metadata as io
 import numpy as np
 from hipscat import pixel_math
+from hipscat.catalog import PartitionInfo
+from hipscat.io.parquet_metadata import write_parquet_metadata
 from tqdm import tqdm
 
 import hipscat_import.catalog.map_reduce as mr
@@ -149,7 +151,7 @@ def run(args, client):
 
     # All done - write out the metadata
     with tqdm(
-        total=6, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
+        total=5, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
     ) as step_progress:
         catalog_info = args.to_catalog_info(int(raw_histogram.sum()))
         io.write_provenance_info(
@@ -167,15 +169,14 @@ def run(args, client):
         )
         step_progress.update(1)
         if not args.debug_stats_only:
-            io.write_parquet_metadata(args.catalog_path, storage_options=args.output_storage_options)
+            write_parquet_metadata(args.catalog_path, storage_options=args.output_storage_options)
+        else:
+            partition_info = PartitionInfo.from_healpix(destination_pixel_map.keys())
+            partition_info.write_to_metadata_files(
+                args.catalog_path, storage_options=args.output_storage_options
+            )
         step_progress.update(1)
         io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
-        step_progress.update(1)
-        io.write_partition_info(
-            catalog_base_dir=args.catalog_path,
-            destination_healpix_pixel_map=destination_pixel_map,
-            storage_options=args.output_storage_options,
-        )
         step_progress.update(1)
         args.resume_plan.clean_resume_files()
         step_progress.update(1)

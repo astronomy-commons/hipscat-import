@@ -44,6 +44,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
         input_path=blank_data_dir,
         output_path=tmp_path,
         input_format="csv",
+        progress_bar=False,
     )
 
     ## Bad input path
@@ -76,6 +77,7 @@ def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
         input_format="csv",
         output_path=tmp_path_str,
         tmp_dir=tmp_path_str,
+        progress_bar=False,
     )
     assert args.input_path == blank_data_dir
     assert len(args.input_paths) == 1
@@ -89,6 +91,7 @@ def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
         input_path=small_sky_parts_dir,
         input_format="csv",
         output_path=tmp_path,
+        progress_bar=False,
     )
     assert args.input_path == small_sky_parts_dir
     assert len(args.input_paths) == 5
@@ -101,6 +104,7 @@ def test_single_debug_file(formats_headers_csv, tmp_path):
         input_file_list=[formats_headers_csv],
         input_format="csv",
         output_path=tmp_path,
+        progress_bar=False,
     )
     assert len(args.input_paths) == 1
     assert args.input_paths[0] == formats_headers_csv
@@ -166,6 +170,7 @@ def test_to_catalog_info(blank_data_dir, tmp_path):
         input_format="csv",
         output_path=tmp_path,
         tmp_dir=tmp_path,
+        progress_bar=False,
     )
     catalog_info = args.to_catalog_info(total_rows=10)
     assert catalog_info.catalog_name == "catalog"
@@ -180,6 +185,7 @@ def test_provenance_info(blank_data_dir, tmp_path):
         input_format="csv",
         output_path=tmp_path,
         tmp_dir=tmp_path,
+        progress_bar=False,
     )
 
     runtime_args = args.provenance_info()["runtime_args"]

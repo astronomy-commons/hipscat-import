@@ -237,3 +237,10 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert not os.path.exists(output_file)
+
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.ra_column == "ra"
+    assert catalog.catalog_info.dec_column == "dec"
+    assert len(catalog.get_healpix_pixels()) == 1
