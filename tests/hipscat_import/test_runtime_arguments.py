@@ -87,6 +87,7 @@ def test_good_paths(tmp_path):
         output_path=tmp_path,
         tmp_dir=tmp_path,
         dask_tmp=tmp_path,
+        progress_bar=False,
     )
 
 
@@ -103,6 +104,7 @@ def test_tmp_path_creation(tmp_path):
     args = RuntimeArguments(
         output_artifact_name="special_catalog",
         output_path=output_path,
+        progress_bar=False,
     )
     assert "special_catalog" in str(args.tmp_path)
     assert "unique_output_directory" in str(args.tmp_path)
@@ -113,6 +115,7 @@ def test_tmp_path_creation(tmp_path):
         output_path=output_path,
         tmp_dir=temp_path,
         overwrite=True,
+        progress_bar=False,
     )
     assert "special_catalog" in str(args.tmp_path)
     assert "unique_tmp_directory" in str(args.tmp_path)
@@ -154,6 +157,7 @@ def test_provenance_info(tmp_path):
         output_path=tmp_path,
         tmp_dir=tmp_path,
         dask_tmp=tmp_path,
+        progress_bar=False,
     )
 
     runtime_args = args.provenance_info()["runtime_args"]

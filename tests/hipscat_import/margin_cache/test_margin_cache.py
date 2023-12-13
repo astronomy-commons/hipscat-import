@@ -3,6 +3,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
+from hipscat.catalog.dataset.dataset import Dataset
 from hipscat.io import file_io, paths
 
 import hipscat_import.margin_cache.margin_cache as mc
@@ -20,6 +21,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
         output_path=tmp_path,
         output_artifact_name="catalog_cache",
         margin_order=8,
+        progress_bar=False,
     )
 
     assert args.catalog.catalog_info.ra_column == "source_ra"
@@ -35,6 +37,10 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
 
     assert len(data) == 13
 
+    catalog = Dataset.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+
 
 @pytest.mark.dask(timeout=150)
 def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, dask_client):
@@ -45,6 +51,7 @@ def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, da
         output_path=tmp_path,
         output_artifact_name="catalog_cache",
         margin_order=4,
+        progress_bar=False,
     )
 
     assert args.catalog.catalog_info.ra_column == "source_ra"
