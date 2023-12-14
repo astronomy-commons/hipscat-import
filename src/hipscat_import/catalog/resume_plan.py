@@ -32,8 +32,6 @@ class ResumePlan(PipelineResumePlan):
     SPLITTING_STAGE = "splitting"
     REDUCING_STAGE = "reducing"
 
-    ORIGINAL_INPUT_PATHS = "input_paths.txt"
-
     HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
     HISTOGRAMS_DIR = "histograms"
 
@@ -63,15 +61,7 @@ class ResumePlan(PipelineResumePlan):
             step_progress.update(1)
 
             ## Validate that we're operating on the same file set as the previous instance.
-            unique_file_paths = set(self.input_paths)
-            self.input_paths = list(unique_file_paths)
-            self.input_paths.sort()
-            original_input_paths = self.get_original_paths()
-            if not original_input_paths:
-                self.save_original_paths()
-            else:
-                if original_input_paths != unique_file_paths:
-                    raise ValueError("Different file set from resumed pipeline execution.")
+            self.input_paths = self.check_original_input_paths(self.input_paths)
             step_progress.update(1)
 
             ## Gather keys for execution.
@@ -96,25 +86,6 @@ class ResumePlan(PipelineResumePlan):
                 exist_ok=True,
             )
             step_progress.update(1)
-
-    def get_original_paths(self):
-        """Get all input file paths from the first pipeline attempt."""
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
-        try:
-            with open(file_path, "r", encoding="utf-8") as file_handle:
-                contents = file_handle.readlines()
-            contents = [path.strip() for path in contents]
-            original_input_paths = set(contents)
-            return original_input_paths
-        except FileNotFoundError:
-            return []
-
-    def save_original_paths(self):
-        """Save input file paths from the first pipeline attempt."""
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
-        with open(file_path, "w", encoding="utf-8") as file_handle:
-            for path in self.input_paths:
-                file_handle.write(f"{path}\n")
 
     def get_remaining_map_keys(self):
         """Gather remaining keys, dropping successful mapping tasks from histogram names.

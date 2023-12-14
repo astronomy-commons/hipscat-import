@@ -13,6 +13,7 @@ from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
 # pylint: disable=duplicate-code
 
+
 @dataclass
 class MacauffResumePlan(PipelineResumePlan):
     """Container class for holding the state of each file in the pipeline plan."""
@@ -26,8 +27,6 @@ class MacauffResumePlan(PipelineResumePlan):
 
     SPLITTING_STAGE = "splitting"
     REDUCING_STAGE = "reducing"
-
-    ORIGINAL_INPUT_PATHS = "input_paths.txt"
 
     def __init__(self, args: MacauffArguments, left_pixels):
         if not args.tmp_path:  # pragma: no cover (not reachable, but required for mypy)
@@ -50,15 +49,7 @@ class MacauffResumePlan(PipelineResumePlan):
             raise ValueError("splitting must be complete before reducing")
 
         ## Validate that we're operating on the same file set as the previous instance.
-        unique_file_paths = set(self.input_paths)
-        self.input_paths = list(unique_file_paths)
-        self.input_paths.sort()
-        original_input_paths = self.get_original_paths()
-        if not original_input_paths:
-            self.save_original_paths()
-        else:
-            if original_input_paths != unique_file_paths:
-                raise ValueError("Different file set from resumed pipeline execution.")
+        self.input_paths = self.check_original_input_paths(self.input_paths)
 
         ## Gather keys for execution.
         if not splitting_done:
@@ -74,25 +65,6 @@ class MacauffResumePlan(PipelineResumePlan):
             file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
             exist_ok=True,
         )
-
-    def get_original_paths(self):
-        """Get all input file paths from the first pipeline attempt."""
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
-        try:
-            with open(file_path, "r", encoding="utf-8") as file_handle:
-                contents = file_handle.readlines()
-            contents = [path.strip() for path in contents]
-            original_input_paths = set(contents)
-            return original_input_paths
-        except FileNotFoundError:
-            return []
-
-    def save_original_paths(self):
-        """Save input file paths from the first pipeline attempt."""
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
-        with open(file_path, "w", encoding="utf-8") as file_handle:
-            for path in self.input_paths:
-                file_handle.write(f"{path}\n")
 
     def get_remaining_split_keys(self):
         """Gather remaining keys, dropping successful split tasks from done file names.

@@ -7,9 +7,10 @@ from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.healpix_pixel_function import get_pixel_argsort
 
 from hipscat_import.catalog.map_reduce import _get_pixel_directory, _iterate_input_file
-from hipscat_import.catalog.resume_plan import ResumePlan
+from hipscat_import.cross_match.macauff_resume_plan import MacauffResumePlan
 
 # pylint: disable=too-many-arguments,too-many-locals
+
 
 def split_associations(
     input_file,
@@ -69,7 +70,7 @@ def split_associations(
             filtered_data.to_parquet(output_file, index=False)
         del data, filtered_data, data_indexes
 
-    ResumePlan.splitting_key_done(tmp_path=tmp_path, splitting_key=splitting_key)
+    MacauffResumePlan.splitting_key_done(tmp_path=tmp_path, splitting_key=splitting_key)
 
 
 def reduce_associations(left_pixel, tmp_path, catalog_path, reduce_key):
@@ -78,7 +79,9 @@ def reduce_associations(left_pixel, tmp_path, catalog_path, reduce_key):
     inputs = _get_pixel_directory(tmp_path, left_pixel.order, left_pixel.pixel)
 
     if not file_io.directory_has_contents(inputs):
-        ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key=f"{left_pixel.order}_{left_pixel.pixel}")
+        MacauffResumePlan.reducing_key_done(
+            tmp_path=tmp_path, reducing_key=f"{left_pixel.order}_{left_pixel.pixel}"
+        )
         print(f"Warning: no input data for pixel {left_pixel}")
         return
     destination_dir = paths.pixel_directory(catalog_path, left_pixel.order, left_pixel.pixel)
@@ -100,4 +103,4 @@ def reduce_associations(left_pixel, tmp_path, catalog_path, reduce_key):
             join_pixel_frame = join_pixel_frames.get_group((join_pixel.order, join_pixel.pixel)).reset_index()
             writer.write_table(pa.Table.from_pandas(join_pixel_frame, schema=merged_table.schema))
 
-    ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key=reduce_key)
+    MacauffResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key=reduce_key)
