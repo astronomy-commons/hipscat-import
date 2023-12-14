@@ -65,9 +65,6 @@ threading issues with dask:
    :caption: Catalogs
 
    catalogs/arguments
-   catalogs/resume
-   catalogs/debug
-   catalogs/advanced
    catalogs/temp_files
    catalogs/public/index
 
