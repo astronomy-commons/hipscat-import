@@ -3,21 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
-import healpy as hp
-import numpy as np
-from hipscat import pixel_math
-from hipscat.catalog import Catalog
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from hipscat.pixel_tree import PixelAlignment, align_trees
-from numpy import frombuffer
-from tqdm import tqdm
 
 from hipscat_import.cross_match.macauff_arguments import MacauffArguments
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
+# pylint: disable=duplicate-code
 
 @dataclass
 class MacauffResumePlan(PipelineResumePlan):
@@ -40,9 +34,9 @@ class MacauffResumePlan(PipelineResumePlan):
             raise ValueError("tmp_path is required")
         super().__init__(resume=args.resume, progress_bar=args.progress_bar, tmp_path=args.tmp_path)
         self.input_paths = args.input_paths
-        self.gather_plan(args, left_pixels)
+        self.gather_plan(left_pixels)
 
-    def gather_plan(self, args, left_pixels):
+    def gather_plan(self, left_pixels):
         """Initialize the plan."""
         ## Make sure it's safe to use existing resume state.
         super().safe_to_resume()

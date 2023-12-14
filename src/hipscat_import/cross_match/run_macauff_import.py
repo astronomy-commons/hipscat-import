@@ -67,6 +67,7 @@ def reduce(args, left_pixels, resume_plan, client):
                 left_pixel=left_pixel,
                 tmp_path=args.tmp_path,
                 catalog_path=args.catalog_path,
+                reduce_key=pixel_key,
             )
         )
 
