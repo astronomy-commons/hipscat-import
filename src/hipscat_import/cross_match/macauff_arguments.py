@@ -4,9 +4,12 @@ from dataclasses import dataclass, field
 from os import path
 from typing import List
 
+from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
+from hipscat.catalog.catalog_type import CatalogType
 from hipscat.io import FilePointer
 from hipscat.io.validation import is_valid_catalog
 
+from hipscat_import.catalog.file_readers import InputReader, get_file_reader
 from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
 
 # pylint: disable=too-many-instance-attributes
@@ -28,8 +31,6 @@ class MacauffArguments(RuntimeArguments):
     """can be used instead of `input_format` to import only specified files"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
-    add_hipscat_index: bool = True
-    """add the hipscat spatial index field alongside the data"""
 
     ## Input - Left catalog
     left_catalog_dir: str = ""
@@ -45,8 +46,11 @@ class MacauffArguments(RuntimeArguments):
 
     ## `macauff` specific attributes
     metadata_file_path: str = ""
-    match_probability_columns: List[str] = field(default_factory=list)
-    column_names: List[str] = field(default_factory=list)
+    resume: bool = True
+    """if there are existing intermediate resume files, should we
+    read those and continue to create a new catalog where we left off"""
+
+    file_reader: InputReader | None = None
 
     def __post_init__(self):
         self._check_arguments()
@@ -89,33 +93,33 @@ class MacauffArguments(RuntimeArguments):
         # Basic checks complete - make more checks and create directories where necessary
         self.input_paths = find_input_paths(self.input_path, f"*{self.input_format}", self.input_file_list)
 
-        self.column_names = self.get_column_names()
+        if not self.file_reader:
+            self.file_reader = get_file_reader(file_format=self.input_format)
 
-    def get_column_names(self):
-        """Grab the macauff column names."""
-        # TODO: Actually read in the metadata file once we get the example file from Tom.
+    def to_catalog_info(self, total_rows) -> AssociationCatalogInfo:
+        """Catalog-type-specific dataset info."""
+        info = {
+            "catalog_name": self.output_artifact_name,
+            "catalog_type": CatalogType.ASSOCIATION,
+            "total_rows": total_rows,
+            "primary_column": self.left_id_column,
+            "primary_catalog": str(self.left_catalog_dir),
+            "join_column": self.right_id_column,
+            "join_catalog": str(self.right_catalog_dir),
+        }
+        return AssociationCatalogInfo(**info)
 
-        return [
-            "Gaia_designation",
-            "Gaia_RA",
-            "Gaia_Dec",
-            "BP",
-            "G",
-            "RP",
-            "CatWISE_Name",
-            "CatWISE_RA",
-            "CatWISE_Dec",
-            "W1",
-            "W2",
-            "match_p",
-            "Separation",
-            "eta",
-            "xi",
-            "Gaia_avg_cont",
-            "CatWISE_avg_cont",
-            "Gaia_cont_f1",
-            "Gaia_cont_f10",
-            "CatWISE_cont_f1",
-            "CatWISE_cont_f10",
-            "CatWISE_fit_sig",
-        ]
+    def additional_runtime_provenance_info(self) -> dict:
+        return {
+            "input_path": self.input_path,
+            "input_format": self.input_format,
+            "left_catalog_dir": self.left_catalog_dir,
+            "left_id_column": self.left_id_column,
+            "left_ra_column": self.left_ra_column,
+            "left_dec_column": self.left_dec_column,
+            "right_catalog_dir": self.right_catalog_dir,
+            "right_id_column": self.right_id_column,
+            "right_ra_column": self.right_ra_column,
+            "right_dec_column": self.right_dec_column,
+            "metadata_file_path": self.metadata_file_path,
+        }

@@ -24,6 +24,8 @@ class PipelineResumePlan:
     """if true, a tqdm progress bar will be displayed for user
     feedback of planning progress"""
 
+    ORIGINAL_INPUT_PATHS = "input_paths.txt"
+
     def safe_to_resume(self):
         """Check that we are ok to resume an in-progress pipeline, if one exists.
 
@@ -148,3 +150,39 @@ class PipelineResumePlan:
             stage_name = "progress"
 
         return f"{stage_name.capitalize(): <10}"
+
+    def check_original_input_paths(self, input_paths):
+        """Validate that we're operating on the same file set as the original pipeline,
+        or save the inputs as the originals if not found.
+
+        Args:
+            input_paths (list[str]): input paths that will be processed by a pipeline.
+
+        Raises:
+            ValueError if the retrieved file set differs from `input_paths`.
+        """
+        unique_file_paths = set(input_paths)
+
+        original_input_paths = []
+
+        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
+        try:
+            with open(file_path, "r", encoding="utf-8") as file_handle:
+                contents = file_handle.readlines()
+            contents = [path.strip() for path in contents]
+            original_input_paths = set(contents)
+        except FileNotFoundError:
+            pass
+
+        if len(original_input_paths) == 0:
+            file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
+            with open(file_path, "w", encoding="utf-8") as file_handle:
+                for path in input_paths:
+                    file_handle.write(f"{path}\n")
+        else:
+            if original_input_paths != unique_file_paths:
+                raise ValueError("Different file set from resumed pipeline execution.")
+
+        input_paths = list(unique_file_paths)
+        input_paths.sort()
+        return input_paths
