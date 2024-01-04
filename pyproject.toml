@@ -49,14 +49,9 @@ dev = [
     "nbsphinx", # Used to integrate Python notebooks into Sphinx documentation
     "ipykernel", # Also used in building notebooks into Sphinx
     "ipython", # Also used in building notebooks into Sphinx
-    "matplotlib", # Used in sample notebook intro_notebook.ipynb
     "ray", # Used for dask-on-ray testing.
     "types-PyYAML", # type stubs for pyyaml
 ]
-
-[metadata]
-long_description = { file = "README.md" }
-url = "https://github.com/astronomy-commons/hipscat-import"
 
 [build-system]
 requires = [

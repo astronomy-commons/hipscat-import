@@ -5,5 +5,3 @@ nbsphinx
 ipython
 jupytext
 jupyter
-matplotlib
-numpy
