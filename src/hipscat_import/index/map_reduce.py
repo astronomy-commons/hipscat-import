@@ -3,7 +3,8 @@
 import dask.dataframe as dd
 import numpy as np
 from dask.distributed import progress, wait
-from hipscat.io import file_io
+from hipscat.io import paths
+from hipscat.io.file_io import file_io
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 
@@ -16,13 +17,17 @@ def create_index(args):
     if args.include_order_pixel:
         include_columns.extend(["Norder", "Dir", "Npix"])
 
-    index_dir = file_io.append_paths_to_pointer(args.catalog_path, "index")
+    index_dir = paths.append_paths_to_pointer(args.catalog_path, "index")
 
+    metadata_file = paths.get_parquet_metadata_pointer(args.input_catalog_path)
+
+    metadata = file_io.read_parquet_metadata(metadata_file)
     data = dd.read_parquet(
         path=args.input_catalog_path,
         columns=include_columns,
         engine="pyarrow",
-        dataset={"partitioning": "hive"},
+        dataset={"partitioning": {"flavor": "hive", "schema": metadata.schema.to_arrow_schema()}},
+        filesystem="arrow",
     )
 
     if args.include_order_pixel:
@@ -33,6 +38,7 @@ def create_index(args):
     data = data.reset_index()
     if not args.include_hipscat_index:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])
+    data = data.drop_duplicates()
     data = data.repartition(partition_size=args.compute_partition_size)
     data = data.set_index(args.indexing_column)
     result = data.to_parquet(

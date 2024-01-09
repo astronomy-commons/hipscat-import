@@ -16,7 +16,7 @@ from hipscat_import.catalog.resume_plan import ResumePlan
 # pylint: disable=too-many-locals,too-many-arguments
 
 
-def _get_pixel_directory(cache_path: FilePointer, order: np.int64, pixel: np.int64):
+def _get_pixel_directory(cache_path: FilePointer, order: np.int64, pixel: np.uint64):
     """Create a path for intermediate pixel data.
 
     This will take the form:
@@ -81,7 +81,7 @@ def _iterate_input_file(
                 )
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
-                2 ** highest_order,
+                2**highest_order,
                 data[ra_column].values,
                 data[dec_column].values,
                 lonlat=True,
