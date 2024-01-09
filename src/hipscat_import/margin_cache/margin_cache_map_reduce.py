@@ -5,7 +5,6 @@ from hipscat import pixel_math
 from hipscat.catalog.partition_info import PartitionInfo
 from hipscat.io import file_io, paths
 
-
 # pylint: disable=too-many-locals,too-many-arguments
 
 
