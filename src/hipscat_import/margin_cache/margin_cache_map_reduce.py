@@ -1,6 +1,8 @@
 import healpy as hp
+import numpy as np
 import pyarrow.dataset as ds
 from hipscat import pixel_math
+from hipscat.catalog.partition_info import PartitionInfo
 from hipscat.io import file_io, paths
 
 # pylint: disable=too-many-locals,too-many-arguments
@@ -63,12 +65,22 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
         final_df = margin_data.drop(
             columns=[
-                "partition_order",
-                "partition_pixel",
                 "margin_check",
                 "margin_pixel",
             ]
+        ).rename(
+            columns={
+                PartitionInfo.METADATA_ORDER_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_ORDER_COLUMN_NAME}",
+                PartitionInfo.METADATA_DIR_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_DIR_COLUMN_NAME}",
+                PartitionInfo.METADATA_PIXEL_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_PIXEL_COLUMN_NAME}",
+                "partition_order": PartitionInfo.METADATA_ORDER_COLUMN_NAME,
+                "partition_pixel": PartitionInfo.METADATA_PIXEL_COLUMN_NAME
+            }
         )
+
+        dir_column = np.floor_divide(final_df[PartitionInfo.METADATA_PIXEL_COLUMN_NAME].values, 10000) * 10000
+
+        final_df[PartitionInfo.METADATA_DIR_COLUMN_NAME] = dir_column
 
         final_df.to_parquet(shard_path)
 
