@@ -46,12 +46,12 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
     joined_data = joined_data.reset_index()
 
     joined_data["Norder"] = np.full(rows_written, fill_value=object_pixel.order, dtype=np.uint8)
-    joined_data["Dir"] = np.full(rows_written, fill_value=object_pixel.dir, dtype=np.uint32)
-    joined_data["Npix"] = np.full(rows_written, fill_value=object_pixel.pixel, dtype=np.uint32)
+    joined_data["Dir"] = np.full(rows_written, fill_value=object_pixel.dir, dtype=np.uint64)
+    joined_data["Npix"] = np.full(rows_written, fill_value=object_pixel.pixel, dtype=np.uint64)
 
     joined_data["join_Norder"] = np.full(rows_written, fill_value=source_pixel.order, dtype=np.uint8)
-    joined_data["join_Dir"] = np.full(rows_written, fill_value=source_pixel.dir, dtype=np.uint32)
-    joined_data["join_Npix"] = np.full(rows_written, fill_value=source_pixel.pixel, dtype=np.uint32)
+    joined_data["join_Dir"] = np.full(rows_written, fill_value=source_pixel.dir, dtype=np.uint64)
+    joined_data["join_Npix"] = np.full(rows_written, fill_value=source_pixel.pixel, dtype=np.uint64)
 
     joined_data.to_parquet(output_file, index=True)
 
@@ -64,9 +64,9 @@ def _write_count_results(cache_path, source_healpix, results):
     dataframe = pd.DataFrame(results, columns=["Norder", "Npix", "num_rows"])
 
     dataframe["Dir"] = [int(order / 10_000) * 10_000 if order >= 0 else -1 for order, _, _ in results]
-    dataframe["join_Norder"] = np.full(num_results, fill_value=source_healpix.order, dtype=np.int32)
-    dataframe["join_Dir"] = [int(order / 10_000) * 10_000 for order in dataframe["join_Norder"]]
-    dataframe["join_Npix"] = np.full(num_results, fill_value=source_healpix.pixel, dtype=np.int32)
+    dataframe["join_Norder"] = np.full(num_results, fill_value=source_healpix.order, dtype=np.uint8)
+    dataframe["join_Dir"] = np.full(num_results, fill_value=source_healpix.dir, dtype=np.uint64)
+    dataframe["join_Npix"] = np.full(num_results, fill_value=source_healpix.pixel, dtype=np.uint64)
 
     ## Reorder columns.
     dataframe = dataframe[["Norder", "Dir", "Npix", "join_Norder", "join_Dir", "join_Npix", "num_rows"]]
