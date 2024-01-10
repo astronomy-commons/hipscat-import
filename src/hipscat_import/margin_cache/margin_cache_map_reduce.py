@@ -84,6 +84,12 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
         final_df[PartitionInfo.METADATA_DIR_COLUMN_NAME] = dir_column
 
+        final_df = final_df.astype({
+            PartitionInfo.METADATA_ORDER_COLUMN_NAME: np.uint8,
+            PartitionInfo.METADATA_DIR_COLUMN_NAME: np.uint64,
+            PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
+        })
+
         final_df.to_parquet(shard_path)
 
         del data, margin_data, final_df

@@ -4,7 +4,7 @@ import numpy.testing as npt
 import pandas as pd
 import pytest
 from hipscat.catalog import PartitionInfo
-from hipscat.catalog.dataset.dataset import Dataset
+from hipscat.catalog.healpix_dataset.healpix_dataset import HealpixDataset
 from hipscat.io import file_io, paths
 
 import hipscat_import.margin_cache.margin_cache as mc
@@ -42,7 +42,11 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     assert all(data[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] == npix)
     assert all(data[PartitionInfo.METADATA_DIR_COLUMN_NAME] == int(npix / 10000) * 10000)
 
-    catalog = Dataset.read_from_hipscat(args.catalog_path)
+    assert data.dtypes[PartitionInfo.METADATA_ORDER_COLUMN_NAME] == np.uint8
+    assert data.dtypes[PartitionInfo.METADATA_DIR_COLUMN_NAME] == np.uint64
+    assert data.dtypes[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] == np.uint64
+
+    catalog = HealpixDataset.read_from_hipscat(args.catalog_path)
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
 
