@@ -1,4 +1,4 @@
-<img src="https://www.lsstcorporation.org/lincc/sites/default/files/PastedGraphic-8.png" width="300" height="100">
+<img src="https://github.com/lincc-frameworks/tape/blob/main/docs/DARK_Combo_sm.png?raw=true" width="300" height="100">
 
 # hipscat-import
 
@@ -8,7 +8,6 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/smoke-test.yml)](https://github.com/astronomy-commons/hipscat-import/actions/workflows/smoke-test.yml)
 [![codecov](https://codecov.io/gh/astronomy-commons/hipscat-import/branch/main/graph/badge.svg)](https://codecov.io/gh/astronomy-commons/hipscat-import)
 [![Read the Docs](https://img.shields.io/readthedocs/hipscat-import)](https://hipscat-import.readthedocs.io/)
-[![benchmarks](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/asv-main.yml?label=benchmarks)](https://astronomy-commons.github.io/hipscat-import/)
 
 ## HiPSCat import - Utility for ingesting large survey data into HiPSCat structure.
 
