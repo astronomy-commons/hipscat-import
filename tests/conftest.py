@@ -15,7 +15,7 @@ def use_ray(request):
     return request.config.getoption("--use_ray")
 
 
-@pytest.fixture(scope="session", name="dask_client")
+@pytest.fixture(scope="session", name="dask_client", autouse=True)
 def dask_client(use_ray):
     """Create a single client for use by all unit test cases."""
     if use_ray:

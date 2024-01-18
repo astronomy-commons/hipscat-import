@@ -38,9 +38,11 @@ def create_index(args):
     data = data.reset_index()
     if not args.include_hipscat_index:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])
-    data = data.drop_duplicates()
-    data = data.repartition(partition_size=args.compute_partition_size)
-    data = data.set_index(args.indexing_column)
+    if args.divisions is not None and len(args.divisions) > 2:
+        data = data.set_index(args.indexing_column, drop=False, divisions=args.divisions)
+    else:
+        data = data.set_index(args.indexing_column, drop=False)
+    data = data.drop_duplicates().drop(columns=[args.indexing_column])
     result = data.to_parquet(
         path=index_dir,
         engine="pyarrow",

@@ -25,6 +25,8 @@ class IndexArguments(RuntimeArguments):
     include_order_pixel: bool = True
 
     compute_partition_size: int = 1_000_000_000
+    divisions: Optional[List] = None
+
 
     def __post_init__(self):
         self._check_arguments()
