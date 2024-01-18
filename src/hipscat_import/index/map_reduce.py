@@ -42,7 +42,7 @@ def create_index(args):
         data = data.set_index(args.indexing_column, drop=False, divisions=args.divisions)
     else:
         data = data.set_index(args.indexing_column, drop=False)
-    data = data.drop_duplicates().drop(columns=[args.indexing_column])
+    data = data.reset_index().drop_duplicates()
     result = data.to_parquet(
         path=index_dir,
         engine="pyarrow",
