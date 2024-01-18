@@ -114,7 +114,6 @@ def test_run_index_on_source(
 @pytest.mark.dask
 def test_run_index_on_source_object_id(
     small_sky_source_catalog,
-    dask_client, # pylint: disable=unused-argument
     tmp_path,
     assert_parquet_file_index,
 ):
