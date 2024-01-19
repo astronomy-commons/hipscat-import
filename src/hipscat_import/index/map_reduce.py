@@ -48,6 +48,8 @@ def create_index(args):
     if args.divisions is not None and len(args.divisions) > 2:
         data = data.set_index(args.indexing_column, divisions=args.divisions)
     else:
+        # Try to avoid this! It's expensive! See:
+        # https://docs.dask.org/en/latest/generated/dask.dataframe.DataFrame.set_index.html
         data = data.set_index(args.indexing_column)
 
     if args.drop_duplicates:
