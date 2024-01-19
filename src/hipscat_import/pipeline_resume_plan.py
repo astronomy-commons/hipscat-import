@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dask.distributed import as_completed
 from hipscat.io import FilePointer, file_io
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from tqdm import tqdm
 
 
@@ -186,3 +187,10 @@ class PipelineResumePlan:
         input_paths = list(unique_file_paths)
         input_paths.sort()
         return input_paths
+
+
+def get_pixel_cache_directory(cache_path, pixel: HealpixPixel):
+    """Create a path for intermediate pixel data."""
+    return file_io.append_paths_to_pointer(
+        cache_path, f"order_{pixel.order}", f"dir_{pixel.dir}", f"pixel_{pixel.pixel}"
+    )

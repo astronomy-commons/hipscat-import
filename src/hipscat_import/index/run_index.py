@@ -20,7 +20,6 @@ def run(args):
     with tqdm(
         total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
     ) as step_progress:
-        # pylint: disable=duplicate-code
         catalog_info = args.to_catalog_info(int(rows_written))
         write_metadata.write_provenance_info(
             catalog_base_dir=args.catalog_path,

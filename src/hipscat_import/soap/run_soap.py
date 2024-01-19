@@ -59,8 +59,6 @@ def run(args, client):
                 total_rows += row_group.num_rows
         else:
             total_rows = combine_partial_results(args.tmp_path, args.catalog_path)
-        # pylint: disable=duplicate-code
-        # Very similar to /index/run_index.py
         step_progress.update(1)
         total_rows = int(total_rows)
         catalog_info = args.to_catalog_info(total_rows)

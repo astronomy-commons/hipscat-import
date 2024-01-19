@@ -128,7 +128,6 @@ def generate_margin_cache(args, client):
     _reduce_margin_shards(client=client, args=args, partition_pixels=combined_pixels)
 
     with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
-        # pylint: disable=duplicate-code
         parquet_metadata.write_parquet_metadata(args.catalog_path)
         total_rows = 0
         metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
