@@ -122,7 +122,7 @@ class PipelineResumePlan:
             futures(List[future]): collected futures
             stage_name(str): name of the stage (e.g. mapping, reducing)
         Raises:
-            RuntimeError if any future returns an error status.
+            RuntimeError: if any future returns an error status.
         """
         some_error = False
         formatted_stage_name = self.get_formatted_stage_name(stage_name)
@@ -160,7 +160,7 @@ class PipelineResumePlan:
             input_paths (list[str]): input paths that will be processed by a pipeline.
 
         Raises:
-            ValueError if the retrieved file set differs from `input_paths`.
+            ValueError: if the retrieved file set differs from `input_paths`.
         """
         unique_file_paths = set(input_paths)
 
@@ -190,7 +190,18 @@ class PipelineResumePlan:
 
 
 def get_pixel_cache_directory(cache_path, pixel: HealpixPixel):
-    """Create a path for intermediate pixel data."""
+    """Create a path for intermediate pixel data.
+
+    You can use this over the paths.get_pixel_directory method, as it will include the pixel
+    number in the path. Further, it will just *look* different from a real hipscat
+    path, so it's clearer that it's a temporary directory::
+
+        {cache_path}/order_{order}/dir_{dir}/pixel_{pixel}/
+    
+    Args:
+        cache_path (str): root path to cache
+        pixel (HealpixPixel): pixel partition data
+    """
     return file_io.append_paths_to_pointer(
         cache_path, f"order_{pixel.order}", f"dir_{pixel.dir}", f"pixel_{pixel.pixel}"
     )
