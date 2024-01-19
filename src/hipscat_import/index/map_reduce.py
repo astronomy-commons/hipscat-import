@@ -31,18 +31,38 @@ def create_index(args):
     )
 
     if args.include_order_pixel:
-        ## Take out the hive dictionary behavior.
+        ## Take out the hive dictionary behavior that turns these into int32.
         data["Norder"] = data["Norder"].astype(np.uint8)
         data["Dir"] = data["Dir"].astype(np.uint64)
         data["Npix"] = data["Npix"].astype(np.uint64)
+
+    # There are some silly dask things happening here:
+    # - Turn the existing index column into a regular column
+    # - If that had been the _hipscat_index, and we don't want it anymore, drop it
+    # - Create a new index, using our target indexing_column.
+    #   Use division hints if provided.
+    # - Then re-partition the whole thing according to compute size,
+    #   because the following de-duplication step requires smaller chunks.
+    # - Drop duplicate rows (but reset the index so it can be included in
+    #   duplicate-finding)
     data = data.reset_index()
     if not args.include_hipscat_index:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])
+
     if args.divisions is not None and len(args.divisions) > 2:
-        data = data.set_index(args.indexing_column, drop=False, divisions=args.divisions)
+        data = data.set_index(args.indexing_column, divisions=args.divisions)
     else:
-        data = data.set_index(args.indexing_column, drop=False)
-    data = data.reset_index().drop_duplicates()
+        data = data.set_index(args.indexing_column)
+
+    if args.drop_duplicates:
+        data = (
+            data.repartition(partition_size=1_000_000_000)
+            .reset_index()
+            .drop_duplicates()
+            .set_index(args.indexing_column, sorted=True)
+        )
+
+    # Now just write it out to leaf parquet files!
     result = data.to_parquet(
         path=index_dir,
         engine="pyarrow",
