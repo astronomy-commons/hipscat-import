@@ -41,10 +41,6 @@ def create_index(args):
     # - If that had been the _hipscat_index, and we don't want it anymore, drop it
     # - Create a new index, using our target indexing_column.
     #   Use division hints if provided.
-    # - Then re-partition the whole thing according to compute size,
-    #   because the following de-duplication step requires smaller chunks.
-    # - Drop duplicate rows (but reset the index so it can be included in
-    #   duplicate-finding)
     data = data.reset_index()
     if not args.include_hipscat_index:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])
@@ -55,6 +51,15 @@ def create_index(args):
         data = data.set_index(args.indexing_column)
 
     if args.drop_duplicates:
+        # More dask things:
+        # - Repartition the whole dataset to account for limited memory in
+        #   pyarrow in the drop_duplicates implementation (
+        #   "array cannot contain more than 2147483646 bytes")
+        # - Reset the index, so the indexing_column values can be considered
+        #   when de-duping.
+        # - Drop duplicate rows
+        # - Set the index back to our indexing_column, but this time, the
+        #   values are still sorted so it's cheaper.
         data = (
             data.repartition(partition_size=1_000_000_000)
             .reset_index()
@@ -63,6 +68,7 @@ def create_index(args):
         )
 
     # Now just write it out to leaf parquet files!
+    data = data.repartition(partition_size=args.compute_partition_size)
     result = data.to_parquet(
         path=index_dir,
         engine="pyarrow",
