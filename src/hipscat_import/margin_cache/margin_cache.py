@@ -134,14 +134,16 @@ def generate_margin_cache(args, client):
         for row_group in parquet_metadata.read_row_group_fragments(metadata_path):
             total_rows += row_group.num_rows
         step_progress.update(1)
-        catalog_info = args.to_catalog_info(int(total_rows))
+        margin_catalog_info = args.to_catalog_info(int(total_rows))
         write_metadata.write_provenance_info(
             catalog_base_dir=args.catalog_path,
-            dataset_info=catalog_info,
+            dataset_info=margin_catalog_info,
             tool_args=args.provenance_info(),
         )
         step_progress.update(1)
-        write_metadata.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=catalog_info)
+        write_metadata.write_catalog_info(
+            catalog_base_dir=args.catalog_path, dataset_info=margin_catalog_info
+        )
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)

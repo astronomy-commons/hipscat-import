@@ -20,14 +20,14 @@ def run(args):
     with tqdm(
         total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
     ) as step_progress:
-        catalog_info = args.to_catalog_info(int(rows_written))
+        index_catalog_info = args.to_catalog_info(int(rows_written))
         write_metadata.write_provenance_info(
             catalog_base_dir=args.catalog_path,
-            dataset_info=catalog_info,
+            dataset_info=index_catalog_info,
             tool_args=args.provenance_info(),
         )
         step_progress.update(1)
-        write_metadata.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=catalog_info)
+        write_metadata.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=index_catalog_info)
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)

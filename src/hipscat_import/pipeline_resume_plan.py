@@ -197,7 +197,7 @@ def get_pixel_cache_directory(cache_path, pixel: HealpixPixel):
     path, so it's clearer that it's a temporary directory::
 
         {cache_path}/order_{order}/dir_{dir}/pixel_{pixel}/
-    
+
     Args:
         cache_path (str): root path to cache
         pixel (HealpixPixel): pixel partition data

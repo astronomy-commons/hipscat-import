@@ -3,7 +3,7 @@ Methods in this file set up a dask pipeline using futures.
 The actual logic of the map reduce is in the `map_reduce.py` file.
 """
 
-from hipscat.io import file_io, parquet_metadata, paths, write_metadata
+from hipscat.io import parquet_metadata, paths, write_metadata
 from tqdm import tqdm
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -70,5 +70,5 @@ def run(args, client):
         step_progress.update(1)
         write_metadata.write_catalog_info(dataset_info=catalog_info, catalog_base_dir=args.catalog_path)
         step_progress.update(1)
-        file_io.remove_directory(args.tmp_path, ignore_errors=True)
+        resume_plan.clean_resume_files()
         step_progress.update(1)
