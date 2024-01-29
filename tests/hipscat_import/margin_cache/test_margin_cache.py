@@ -40,7 +40,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
 
     assert all(data[PartitionInfo.METADATA_ORDER_COLUMN_NAME] == norder)
     assert all(data[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] == npix)
-    assert all(data[PartitionInfo.METADATA_DIR_COLUMN_NAME] == int(npix / 10000) * 10000)
+    assert all(data[PartitionInfo.METADATA_DIR_COLUMN_NAME] == 0)
 
     assert data.dtypes[PartitionInfo.METADATA_ORDER_COLUMN_NAME] == np.uint8
     assert data.dtypes[PartitionInfo.METADATA_DIR_COLUMN_NAME] == np.uint64

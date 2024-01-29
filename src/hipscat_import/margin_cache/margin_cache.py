@@ -106,17 +106,23 @@ def generate_margin_cache(args, client):
         args (MarginCacheArguments): A valid `MarginCacheArguments` object.
         client (dask.distributed.Client): A dask distributed client object.
     """
+    with tqdm(total=5, desc="Planning ", disable=not args.progress_bar) as step_progress:
     # determine which order to generate margin pixels for
-    partition_stats = args.catalog.partition_info.get_healpix_pixels()
+        partition_stats = args.catalog.partition_info.get_healpix_pixels()
+        step_progress.update(1)
 
-    # get the negative tree pixels
-    negative_pixels = args.catalog.generate_negative_tree_pixels()
+        # get the negative tree pixels
+        negative_pixels = args.catalog.generate_negative_tree_pixels()
+        step_progress.update(1)
 
-    combined_pixels = partition_stats + negative_pixels
+        combined_pixels = partition_stats + negative_pixels
+        step_progress.update(1)
 
-    margin_pairs = _find_partition_margin_pixel_pairs(combined_pixels, args.margin_order)
+        margin_pairs = _find_partition_margin_pixel_pairs(combined_pixels, args.margin_order)
+        step_progress.update(1)
 
-    _create_margin_directory(combined_pixels, args.catalog_path)
+        _create_margin_directory(combined_pixels, args.catalog_path)
+        step_progress.update(1)
 
     _map_to_margin_shards(
         client=client,
