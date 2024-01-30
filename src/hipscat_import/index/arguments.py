@@ -34,10 +34,12 @@ class IndexArguments(RuntimeArguments):
     ## Compute parameters
     compute_partition_size: int = 1_000_000_000
     """partition size used when creating leaf parquet files."""
-    divisions: Optional[List] = None
+    division_hints: Optional[List] = None
     """Hints used when splitting up the rows by the new index. If you have
     some prior knowledge about the distribution of your indexing_column, 
-    providing it here can speed up calculations dramatically."""
+    providing it here can speed up calculations dramatically. Note that
+    these will NOT necessarily be the divisions that the data is partitioned
+    along."""
 
     def __post_init__(self):
         self._check_arguments()

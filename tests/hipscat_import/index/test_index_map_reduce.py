@@ -135,7 +135,7 @@ def test_create_index_with_divisions(
         output_path=tmp_path,
         output_artifact_name="small_sky_source_index",
         overwrite=True,
-        divisions=divisions,
+        division_hints=divisions,
         drop_duplicates=False,
         progress_bar=False,
     )

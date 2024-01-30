@@ -45,8 +45,8 @@ def create_index(args):
     if not args.include_hipscat_index:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])
 
-    if args.divisions is not None and len(args.divisions) > 2:
-        data = data.set_index(args.indexing_column, divisions=args.divisions)
+    if args.division_hints is not None and len(args.division_hints) > 2:
+        data = data.set_index(args.indexing_column, divisions=args.division_hints)
     else:
         # Try to avoid this! It's expensive! See:
         # https://docs.dask.org/en/latest/generated/dask.dataframe.DataFrame.set_index.html
@@ -66,11 +66,12 @@ def create_index(args):
             data.repartition(partition_size=1_000_000_000)
             .reset_index()
             .drop_duplicates()
-            .set_index(args.indexing_column, sorted=True)
+            .set_index(args.indexing_column, sorted=True, partition_size=args.compute_partition_size)
         )
+    else:
+        data = data.repartition(partition_size=args.compute_partition_size)
 
     # Now just write it out to leaf parquet files!
-    data = data.repartition(partition_size=args.compute_partition_size)
     result = data.to_parquet(
         path=index_dir,
         engine="pyarrow",
