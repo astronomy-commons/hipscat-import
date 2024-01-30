@@ -55,7 +55,8 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
     if len(margin_data):
         # generate a file name for our margin shard, that uses both sets of Norder/Npix
-        partition_dir = get_pixel_cache_directory(output_path, HealpixPixel(order, pix))
+        cache_path = get_cache_directory(output_path)
+        partition_dir = get_pixel_cache_directory(cache_path, HealpixPixel(order, pix))
         shard_dir = paths.pixel_directory(partition_dir, source_order, source_pix)
 
         file_io.make_directory(shard_dir, exist_ok=True)
@@ -96,9 +97,14 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
         del data, margin_data, final_df
 
 
+def get_cache_directory(output_path):
+    return file_io.append_paths_to_pointer(output_path, "cache")
+
+
 def reduce_margin_shards(output_path, partition_order, partition_pixel):
     """Reduce all partition pixel directories into a single file"""
-    shard_dir = get_pixel_cache_directory(output_path, HealpixPixel(partition_order, partition_pixel))
+    cache_path = get_cache_directory(output_path)
+    shard_dir = get_pixel_cache_directory(cache_path, HealpixPixel(partition_order, partition_pixel))
 
     if file_io.does_file_or_directory_exist(shard_dir):
         data = ds.dataset(shard_dir, format="parquet")

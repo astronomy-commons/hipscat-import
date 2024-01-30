@@ -145,5 +145,7 @@ def generate_margin_cache(args, client):
             catalog_base_dir=args.catalog_path, dataset_info=margin_catalog_info
         )
         step_progress.update(1)
+        cache_path = mcmr.get_cache_directory(args.catalog_path)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
+        file_io.remove_directory(cache_path, ignore_errors=True)
         step_progress.update(1)
