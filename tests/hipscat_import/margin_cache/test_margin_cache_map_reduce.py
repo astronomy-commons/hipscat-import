@@ -69,7 +69,8 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
 
 @pytest.mark.dask
 def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
-    partition_dir = get_pixel_cache_directory(tmp_path, HealpixPixel(1, 21))
+    intermediate_dir = os.path.join(tmp_path, "intermediate")
+    partition_dir = get_pixel_cache_directory(intermediate_dir, HealpixPixel(1, 21))
     shard_dir = paths.pixel_directory(partition_dir, 1, 21)
 
     os.makedirs(shard_dir)
@@ -82,7 +83,7 @@ def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
     shard_df.to_parquet(first_shard_path)
     shard_df.to_parquet(second_shard_path)
 
-    margin_cache_map_reduce.reduce_margin_shards(tmp_path, 1, 21)
+    margin_cache_map_reduce.reduce_margin_shards(intermediate_dir, tmp_path, 1, 21)
 
     result_path = paths.pixel_catalog_file(tmp_path, 1, 21)
 
