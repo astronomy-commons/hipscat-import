@@ -43,23 +43,20 @@ class MarginCacheArguments(RuntimeArguments):
         margin_pixel_k = highest_order + 1
         if self.margin_order > -1:
             if self.margin_order < margin_pixel_k:
-                # pylint: disable=line-too-long
                 raise ValueError(
                     "margin_order must be of a higher order "
                     "than the highest order catalog partition pixel."
                 )
-                # pylint: enable=line-too-long
         else:
             self.margin_order = margin_pixel_k
 
         margin_pixel_nside = hp.order2nside(self.margin_order)
 
         if hp.nside2resol(margin_pixel_nside, arcmin=True) * 60.0 < self.margin_threshold:
-            # pylint: disable=line-too-long
             warnings.warn(
-                "Warning: margin pixels have a smaller resolution than margin_threshold; this may lead to data loss in the margin cache."
+                "Warning: margin pixels have a smaller resolution than margin_threshold; "
+                "this may lead to data loss in the margin cache."
             )
-            # pylint: enable=line-too-long
 
     def to_catalog_info(self, total_rows) -> MarginCacheCatalogInfo:
         """Catalog-type-specific dataset info."""

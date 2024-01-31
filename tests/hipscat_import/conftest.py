@@ -95,11 +95,6 @@ def empty_data_dir(test_data_dir):
 
 
 @pytest.fixture
-def macauff_data_dir(test_data_dir):
-    return os.path.join(test_data_dir, "macauff")
-
-
-@pytest.fixture
 def formats_dir(test_data_dir):
     return os.path.join(test_data_dir, "test_formats")
 
@@ -127,11 +122,6 @@ def formats_pandasindex(test_data_dir):
 @pytest.fixture
 def formats_multiindex(test_data_dir):
     return os.path.join(test_data_dir, "test_formats", "multiindex.parquet")
-
-
-@pytest.fixture
-def formats_yaml(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats", "macauff_metadata.yaml")
 
 
 @pytest.fixture
@@ -203,7 +193,7 @@ def basic_data_shard_df():
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
-        2 ** 3,
+        2**3,
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,
@@ -235,7 +225,7 @@ def polar_data_shard_df():
     )
 
     test_df["margin_pixel"] = hp.ang2pix(
-        2 ** 3,
+        2**3,
         test_df["weird_ra"].values,
         test_df["weird_dec"].values,
         lonlat=True,

@@ -11,15 +11,9 @@ from hipscat.io.parquet_metadata import get_healpix_pixel_from_metadata
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.healpix_pixel_function import get_pixel_argsort
 
+from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 from hipscat_import.soap.arguments import SoapArguments
 from hipscat_import.soap.resume_plan import SoapPlan
-
-
-def _get_pixel_directory(cache_path, pixel: HealpixPixel):
-    """Create a path for intermediate pixel data."""
-    return file_io.append_paths_to_pointer(
-        cache_path, f"order_{pixel.order}", f"dir_{pixel.dir}", f"pixel_{pixel.pixel}"
-    )
 
 
 def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
@@ -38,7 +32,7 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
     if not soap_args.write_leaf_files or rows_written == 0:
         return rows_written
 
-    pixel_dir = _get_pixel_directory(soap_args.tmp_path, object_pixel)
+    pixel_dir = get_pixel_cache_directory(soap_args.tmp_path, object_pixel)
     file_io.make_directory(pixel_dir, exist_ok=True)
     output_file = file_io.append_paths_to_pointer(
         pixel_dir, f"source_{source_pixel.order}_{source_pixel.pixel}.parquet"
@@ -180,7 +174,7 @@ def reduce_joins(
 ):
     """Reduce join tables into one parquet file per object-pixel, with one row-group
     inside per source pixel."""
-    pixel_dir = _get_pixel_directory(soap_args.tmp_path, object_pixel)
+    pixel_dir = get_pixel_cache_directory(soap_args.tmp_path, object_pixel)
     # If there's no directory, this implies there were no matches to this object pixel
     # earlier in the pipeline. Move on.
     if not file_io.does_file_or_directory_exist(pixel_dir):

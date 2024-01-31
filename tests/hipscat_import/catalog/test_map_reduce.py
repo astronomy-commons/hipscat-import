@@ -403,7 +403,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
 
     combined_data = pd.concat([file1_data, file2_data])
     combined_data["norder19_healpix"] = hp.ang2pix(
-        2 ** 19,
+        2**19,
         combined_data["ra"].values,
         combined_data["dec"].values,
         lonlat=True,

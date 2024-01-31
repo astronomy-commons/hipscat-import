@@ -4,8 +4,9 @@ import pyarrow.dataset as ds
 from hipscat import pixel_math
 from hipscat.catalog.partition_info import PartitionInfo
 from hipscat.io import file_io, paths
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
-# pylint: disable=too-many-locals,too-many-arguments
+from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 
 
 def map_pixel_shards(
@@ -53,10 +54,8 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
     margin_data = data.loc[data["margin_check"] == True]
 
     if len(margin_data):
-        # TODO: this should be a utility function in `hipscat`
-        # that properly handles the hive formatting
-        # generate a file name for our margin shard
-        partition_dir = _get_partition_directory(output_path, order, pix)
+        # generate a file name for our margin shard, that uses both sets of Norder/Npix
+        partition_dir = get_pixel_cache_directory(output_path, HealpixPixel(order, pix))
         shard_dir = paths.pixel_directory(partition_dir, source_order, source_pix)
 
         file_io.make_directory(shard_dir, exist_ok=True)
@@ -84,34 +83,28 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
         final_df[PartitionInfo.METADATA_DIR_COLUMN_NAME] = dir_column
 
-        final_df = final_df.astype({
-            PartitionInfo.METADATA_ORDER_COLUMN_NAME: np.uint8,
-            PartitionInfo.METADATA_DIR_COLUMN_NAME: np.uint64,
-            PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
-        })
+        final_df = final_df.astype(
+            {
+                PartitionInfo.METADATA_ORDER_COLUMN_NAME: np.uint8,
+                PartitionInfo.METADATA_DIR_COLUMN_NAME: np.uint64,
+                PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
+            }
+        )
 
         final_df.to_parquet(shard_path)
 
         del data, margin_data, final_df
 
 
-def _get_partition_directory(path, order, pix):
-    """Get the directory where a partition pixel's margin shards live"""
-    partition_file = paths.pixel_catalog_file(path, order, pix)
-
-    # removes the '.parquet' and adds a slash
-    partition_dir = f"{partition_file[:-8]}/"
-
-    return partition_dir
-
-
 def reduce_margin_shards(output_path, partition_order, partition_pixel):
     """Reduce all partition pixel directories into a single file"""
-    shard_dir = _get_partition_directory(output_path, partition_order, partition_pixel)
+    shard_dir = get_pixel_cache_directory(output_path, HealpixPixel(partition_order, partition_pixel))
 
     if file_io.does_file_or_directory_exist(shard_dir):
         data = ds.dataset(shard_dir, format="parquet")
         full_df = data.to_table().to_pandas()
+        margin_cache_dir = paths.pixel_directory(output_path, partition_order, partition_pixel)
+        file_io.make_directory(margin_cache_dir, exist_ok=True)
 
         if len(full_df):
             margin_cache_file_path = paths.pixel_catalog_file(output_path, partition_order, partition_pixel)
