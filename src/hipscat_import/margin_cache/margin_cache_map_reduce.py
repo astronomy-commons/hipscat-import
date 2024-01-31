@@ -98,6 +98,7 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
 
 def get_cache_directory(output_path):
+    """Generate the base path to store the pixel shards under"""
     return file_io.append_paths_to_pointer(output_path, "cache")
 
 
