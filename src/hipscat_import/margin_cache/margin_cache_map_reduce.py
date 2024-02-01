@@ -98,8 +98,9 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
 def reduce_margin_shards(intermediate_directory, output_path, partition_order, partition_pixel):
     """Reduce all partition pixel directories into a single file"""
-    shard_dir = get_pixel_cache_directory(intermediate_directory, HealpixPixel(partition_order, partition_pixel))
-
+    shard_dir = get_pixel_cache_directory(
+        intermediate_directory, HealpixPixel(partition_order, partition_pixel)
+    )
     if file_io.does_file_or_directory_exist(shard_dir):
         data = ds.dataset(shard_dir, format="parquet")
         full_df = data.to_table().to_pandas()
