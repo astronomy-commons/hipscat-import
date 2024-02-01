@@ -59,7 +59,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
                 partition_file=partition_file,
                 margin_pairs=mp_future,
                 margin_threshold=args.margin_threshold,
-                output_path=args.catalog_path,
+                output_path=args.tmp_path,
                 margin_order=args.margin_order,
                 ra_column=args.catalog.catalog_info.ra_column,
                 dec_column=args.catalog.catalog_info.dec_column,
@@ -83,6 +83,7 @@ def _reduce_margin_shards(client, args, partition_pixels):
         futures.append(
             client.submit(
                 mcmr.reduce_margin_shards,
+                intermediate_directory=args.tmp_path,
                 output_path=args.catalog_path,
                 partition_order=pix.order,
                 partition_pixel=pix.pixel,
