@@ -67,8 +67,11 @@ def test_catalog_object(tmp_path, small_sky_object_catalog):
     assert str(args.tmp_path).startswith(tmp_path_str)
 
 
+@pytest.mark.timeout(5)
 def test_provenance_info(small_sky_object_catalog, tmp_path):
-    """Verify that provenance info includes verification-specific fields."""
+    """Verify that provenance info includes verification-specific fields.
+    NB: This is currently the last test in alpha-order, and may require additional
+    time to teardown fixtures."""
     args = VerificationArguments(
         input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,

@@ -22,9 +22,24 @@ class IndexArguments(RuntimeArguments):
 
     ## Output
     include_hipscat_index: bool = True
+    """Include the hipscat spatial partition index."""
     include_order_pixel: bool = True
+    """Include partitioning columns, Norder, Dir, and Npix. You probably want to keep these!"""
+    drop_duplicates: bool = True
+    """Should we check for duplicate rows (including new indexing column),
+    and remove duplicates before writing to new index catalog?
+    If you know that your data will not have duplicates (e.g. an index over
+    a unique primary key), set to False to avoid unnecessary work."""
 
+    ## Compute parameters
     compute_partition_size: int = 1_000_000_000
+    """partition size used when creating leaf parquet files."""
+    division_hints: Optional[List] = None
+    """Hints used when splitting up the rows by the new index. If you have
+    some prior knowledge about the distribution of your indexing_column, 
+    providing it here can speed up calculations dramatically. Note that
+    these will NOT necessarily be the divisions that the data is partitioned
+    along."""
 
     def __post_init__(self):
         self._check_arguments()
