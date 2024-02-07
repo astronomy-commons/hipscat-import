@@ -1,6 +1,7 @@
 import pandas as pd
 from dask.distributed import as_completed
 from hipscat import pixel_math
+from hipscat.catalog import PartitionInfo
 from hipscat.io import file_io, parquet_metadata, paths, write_metadata
 from tqdm import tqdm
 
@@ -130,10 +131,19 @@ def generate_margin_cache(args, client):
 
     with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
         parquet_metadata.write_parquet_metadata(args.catalog_path)
+        step_progress.update(1)
         total_rows = 0
         metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
-        for row_group in parquet_metadata.read_row_group_fragments(metadata_path):
+        for row_group in parquet_metadata.read_row_group_fragments(
+            metadata_path, storage_options=args.output_storage_options
+        ):
             total_rows += row_group.num_rows
+        partition_info = PartitionInfo.read_from_file(
+            metadata_path, storage_options=args.output_storage_options
+        )
+        partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
+        partition_info.write_to_file(partition_info_file, storage_options=args.output_storage_options)
+
         step_progress.update(1)
         margin_catalog_info = args.to_catalog_info(int(total_rows))
         write_metadata.write_provenance_info(
@@ -141,7 +151,6 @@ def generate_margin_cache(args, client):
             dataset_info=margin_catalog_info,
             tool_args=args.provenance_info(),
         )
-        step_progress.update(1)
         write_metadata.write_catalog_info(
             catalog_base_dir=args.catalog_path, dataset_info=margin_catalog_info
         )

@@ -9,6 +9,7 @@ import hipscat.io.write_metadata as io
 import numpy as np
 from hipscat import pixel_math
 from hipscat.catalog import PartitionInfo
+from hipscat.io import paths
 from hipscat.io.parquet_metadata import write_parquet_metadata
 from tqdm import tqdm
 
@@ -168,10 +169,12 @@ def run(args, client):
             storage_options=args.output_storage_options,
         )
         step_progress.update(1)
+        partition_info = PartitionInfo.from_healpix(destination_pixel_map.keys())
+        partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
+        partition_info.write_to_file(partition_info_file, storage_options=args.output_storage_options)
         if not args.debug_stats_only:
             write_parquet_metadata(args.catalog_path, storage_options=args.output_storage_options)
         else:
-            partition_info = PartitionInfo.from_healpix(destination_pixel_map.keys())
             partition_info.write_to_metadata_files(
                 args.catalog_path, storage_options=args.output_storage_options
             )

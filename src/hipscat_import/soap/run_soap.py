@@ -3,6 +3,7 @@ Methods in this file set up a dask pipeline using futures.
 The actual logic of the map reduce is in the `map_reduce.py` file.
 """
 
+from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import parquet_metadata, paths, write_metadata
 from tqdm import tqdm
 
@@ -57,6 +58,12 @@ def run(args, client):
             metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
             for row_group in parquet_metadata.read_row_group_fragments(metadata_path):
                 total_rows += row_group.num_rows
+            partition_join_info = PartitionJoinInfo.read_from_file(
+                metadata_path, storage_options=args.output_storage_options
+            )
+            partition_join_info.write_to_csv(
+                catalog_path=args.catalog_path, storage_options=args.output_storage_options
+            )
         else:
             total_rows = combine_partial_results(args.tmp_path, args.catalog_path)
         step_progress.update(1)
