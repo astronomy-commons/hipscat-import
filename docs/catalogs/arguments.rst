@@ -9,6 +9,8 @@ A minimal arguments block will look something like:
 
 .. code-block:: python
 
+    from hipscat_import.pipeline import ImportArguments
+
     args = ImportArguments(
         sort_columns="ObjectID",
         ra_column="ObjectRA",
@@ -52,7 +54,7 @@ to the pipeline, ignoring the above arguments. This would look like:
     from dask.distributed import Client
     from hipscat_import.pipeline import pipeline_with_client
 
-    args = ...
+    args = ...  # ImportArguments()
     with Client('scheduler:port') as client:
         pipeline_with_client(args, client)
 
