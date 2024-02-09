@@ -5,3 +5,4 @@ nbsphinx
 ipython
 jupytext
 jupyter
+sphinx-copybutton
