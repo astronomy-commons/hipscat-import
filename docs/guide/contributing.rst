@@ -33,7 +33,7 @@ virtual environment. LINCC-Frameworks engineers primarily use `conda` to manage 
 environments. If you have conda installed locally, you can run the following to
 create and activate a new environment.
 
-.. code-block:: bash
+.. code-block:: console
 
    >> conda create env -n <env_name> python=3.10
    >> conda activate <env_name>
@@ -42,7 +42,7 @@ create and activate a new environment.
 Once you have created a new environment, you can install this project for local
 development using the following commands:
 
-.. code-block:: bash
+.. code-block:: console
 
    >> pip install -e .'[dev]'
    >> pre-commit install
@@ -70,19 +70,19 @@ Notes:
     `do not yet exist <https://healpy.readthedocs.io/en/latest/install.html#binary-installation-with-pip-recommended-for-most-other-python-users>`_, 
     so it's recommended to install via conda before proceeding to hipscat-import.
 
-    .. code-block:: bash
+    .. code-block:: console
 
-        $ conda config --add channels conda-forge
-        $ conda install healpy
-        $ git clone https://github.com/astronomy-commons/hipscat-import
-        $ cd hipscat-import
-        $ pip install -e .
+        >> conda config --add channels conda-forge
+        >> conda install healpy
+        >> git clone https://github.com/astronomy-commons/hipscat-import
+        >> cd hipscat-import
+        >> pip install -e .
         
     When installing dev dependencies, make sure to include the single quotes.
 
-    .. code-block:: bash
+    .. code-block:: console
         
-        $ pip install -e '.[dev]'
+        >> pip install -e '.[dev]'
 
 Testing
 -------------------------------------------------------------------------------
@@ -97,17 +97,17 @@ paths. These are defined in ``conftest.py`` files. They're powerful and flexible
 Please add or update unit tests for all changes made to the codebase. You can run
 unit tests locally simply with:
 
-.. code-block:: bash
+.. code-block:: console
 
-    pytest
+    >> pytest
 
 If you're making changes to the sphinx documentation (anything under ``docs``),
 you can build the documentation locally with a command like:
 
-.. code-block:: bash
+.. code-block:: console
 
-    cd docs
-    make html
+    >> cd docs
+    >> make html
 
 Create your PR
 -------------------------------------------------------------------------------
