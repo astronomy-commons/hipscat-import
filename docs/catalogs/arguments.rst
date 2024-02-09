@@ -220,6 +220,7 @@ There are several stages to the pipeline execution, and you can expect progress
 reporting to look like the following:
 
 .. code-block::
+    :class: no-copybutton
 
     Mapping  : 100%|██████████| 72/72 [58:55:18<00:00, 2946.09s/it]
     Binning  : 100%|██████████| 1/1 [01:15<00:00, 75.16s/it]

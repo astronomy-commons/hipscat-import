@@ -9,7 +9,7 @@ Installation
 We recommend installing in a virtual environment, like venv or conda. You may
 need to install or upgrade versions of dependencies to work with hipscat-import.
 
-.. code-block:: bash
+.. code-block:: console
 
     pip install hipscat-import
 
@@ -21,10 +21,10 @@ need to install or upgrade versions of dependencies to work with hipscat-import.
     `do not yet exist <https://healpy.readthedocs.io/en/latest/install.html#binary-installation-with-pip-recommended-for-most-other-python-users>`_, 
     so it's recommended to install via conda before proceeding to hipscat-import.
 
-    .. code-block:: bash
+    .. code-block:: console
 
-        $ conda config --append channels conda-forge
-        $ conda install healpy
+        >> conda config --append channels conda-forge
+        >> conda install healpy
 
 Setting up a pipeline
 -------------------------------------------------------------------------------
