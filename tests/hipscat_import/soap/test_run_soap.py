@@ -30,6 +30,7 @@ def test_object_to_source(dask_client, small_sky_soap_args):
     assert catalog.catalog_path == small_sky_soap_args.catalog_path
     assert len(catalog.get_join_pixels()) == 14
     assert catalog.catalog_info.total_rows == 17161
+    assert not catalog.catalog_info.contains_leaf_files
 
 
 @pytest.mark.dask
@@ -57,3 +58,4 @@ def test_object_to_source_with_leaves(
     assert catalog.catalog_path == small_sky_soap_args.catalog_path
     assert len(catalog.get_join_pixels()) == 14
     assert catalog.catalog_info.total_rows == 17161
+    assert catalog.catalog_info.contains_leaf_files
