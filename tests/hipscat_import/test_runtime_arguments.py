@@ -1,6 +1,5 @@
 """Tests of argument validation"""
 
-
 import os
 
 import pytest

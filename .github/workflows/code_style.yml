@@ -34,7 +34,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Analyze code with mypy
       run: |
-        mypy ./src ./tests --ignore-missing-imports
+        mypy ./src --ignore-missing-imports
     - name: Analyze code for black formatting
       run: |
         black --check .

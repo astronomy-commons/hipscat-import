@@ -4,7 +4,6 @@ Methods in this file set up a dask pipeline using futures.
 The actual logic of the map reduce is in the `map_reduce.py` file.
 """
 
-
 import hipscat.io.write_metadata as io
 import numpy as np
 from hipscat import pixel_math
