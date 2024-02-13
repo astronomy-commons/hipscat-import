@@ -1,6 +1,5 @@
 """Tests of argument validation"""
 
-
 import pytest
 
 from hipscat_import.index.arguments import IndexArguments

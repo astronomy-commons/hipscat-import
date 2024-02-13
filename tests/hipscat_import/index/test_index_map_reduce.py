@@ -1,6 +1,5 @@
 """Tests of map reduce operations"""
 
-
 import os
 
 import numpy as np
@@ -117,6 +116,7 @@ def test_create_index_source(
     assert len(data_frame) == 17161
     assert np.logical_and(data_frame["Norder"] >= 0, data_frame["Norder"] <= 2).all()
 
+
 @pytest.mark.dask
 def test_create_index_with_divisions(
     small_sky_source_catalog,
@@ -126,7 +126,7 @@ def test_create_index_with_divisions(
     """Create an index catalog for the large(r) source catalog, passing
     some divisions hints. This should partition the final output according to
     the `compute_partition_size` and not the provided divisions."""
-    divisions = np.arange(start = 70_000, stop = 87_161, step = 5_000)
+    divisions = np.arange(start=70_000, stop=87_161, step=5_000)
     divisions = np.append(divisions, 87_161).tolist()
 
     args = IndexArguments(

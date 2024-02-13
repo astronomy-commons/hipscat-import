@@ -1,6 +1,5 @@
 """Tests of margin cache generation arguments"""
 
-
 import pytest
 
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments

@@ -1,4 +1,5 @@
 """Test full execution of SOAP."""
+
 import pytest
 from hipscat.catalog.association_catalog.association_catalog import AssociationCatalog
 

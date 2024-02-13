@@ -1,4 +1,5 @@
 """Flow control and pipeline entry points."""
+
 import smtplib
 from email.message import EmailMessage
 

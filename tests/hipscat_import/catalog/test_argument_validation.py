@@ -1,6 +1,5 @@
 """Tests of argument validation"""
 
-
 import pytest
 
 from hipscat_import.catalog.arguments import ImportArguments, check_healpix_order_range

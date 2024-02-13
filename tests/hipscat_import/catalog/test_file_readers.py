@@ -1,4 +1,5 @@
 """Test dataframe-generating file readers"""
+
 import os
 
 import hipscat.io.write_metadata as io
