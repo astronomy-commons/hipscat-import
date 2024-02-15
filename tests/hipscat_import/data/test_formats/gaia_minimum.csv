@@ -1,0 +1,20 @@
+# This is a fun little CSV that mimics the structure of a gaia CSV file:
+#  - a lot of lines at the top that start with #
+#     - (they're just comments about what all the fields are)
+#  - but then there's a valid header row that has all the field names in it
+#  - then comes all the data.
+#
+# This also serves as a minimum reproducible example of an edge case 
+# observed when importing gaia data:
+#
+#    the `libname_gspphot` column is often empty. when it's not empty, it's
+#    a string. if you're doing a small slice of an import and end up with 
+#    a partition that only has one row, and the value is empty in that row
+#    then we will encounter a mismatched schema error (even if you're
+#    trying to set the `use_schema_file` argument! how rude!)
+solution_id,designation,ra,dec,phot_g_mean_flux,phot_bp_mean_flux,phot_rp_mean_flux,libname_gspphot
+1636148068921376768,Gaia DR3 4504974017242368,42.11684141174813,2.448036255581827,151.52469272606655,66.08321084851262,71.53650345476014,
+1636148068921376768,Gaia DR3 600333348794752,46.85051095954821,1.5708508816226154,554.7506163487624,118.33570228204036,636.2294413198192,MARCS
+1636148068921376768,Gaia DR3 45637051177279744,63.80151743979008,16.173138610400265,264.4975432639144,105.28242124697012,275.66076963535784,
+1636148068921376768,Gaia DR3 47859679573156864,66.29525930073464,18.38998815031092,363.90170280751545,141.5609641976921,292.1728333746012,
+1636148068921376768,Gaia DR3 35325045153309056,42.87473331568864,17.56862830743009,29516.61205625561,13574.70083390669,22725.110839066703,MARCS

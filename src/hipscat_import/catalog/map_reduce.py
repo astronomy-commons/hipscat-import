@@ -278,7 +278,17 @@ def reduce_pixel_shards(
         if _has_named_index(dataframe):
             dataframe = dataframe.reset_index()
         dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN).sort_index()
-    dataframe.to_parquet(destination_file, storage_options=storage_options)
+        # Adjust the schema to make sure that the _hipscat_index will 
+        # be saved as a uint64
+        if schema:
+            pandas_index_column = schema.get_field_index("__index_level_0__")
+            if pandas_index_column != -1:
+                schema = schema.remove(pandas_index_column)
+
+    if schema:
+        dataframe.to_parquet(destination_file, schema=schema, storage_options=storage_options)
+    else:
+        dataframe.to_parquet(destination_file, storage_options=storage_options)
 
     del dataframe, merged_table, tables
 

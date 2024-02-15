@@ -98,7 +98,9 @@ def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
     )
 
     frame = next(
-        CsvReader(schema_file=schema_file, dtype_backend="numpy_nullable").read(small_sky_single_file)
+        CsvReader(schema_file=schema_file, parquet_kwargs={"dtype_backend": "numpy_nullable"}).read(
+            small_sky_single_file
+        )
     )
     assert len(frame) == 131
 
@@ -193,7 +195,7 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
             header=None,
             separator="|",
             schema_file=schema_file,
-            dtype_backend="numpy_nullable",
+            parquet_kwargs={"dtype_backend": "numpy_nullable"},
         ).read(formats_pipe_csv)
     )
 

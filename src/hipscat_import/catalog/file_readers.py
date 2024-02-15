@@ -126,6 +126,7 @@ class CsvReader(InputReader):
         column_names=None,
         type_map=None,
         separator=",",
+        parquet_kwargs=None,
         **kwargs,
     ):
         self.chunksize = chunksize
@@ -134,15 +135,18 @@ class CsvReader(InputReader):
         self.column_names = column_names
         self.type_map = type_map
         self.separator = separator
+        self.parquet_kwargs = parquet_kwargs
         self.kwargs = kwargs
 
     def read(self, input_file):
         self.regular_file_exists(input_file, **self.kwargs)
 
         if self.schema_file:
+            if self.parquet_kwargs is None:
+                self.parquet_kwargs = {}
             schema_parquet = file_io.load_parquet_to_pandas(
                 FilePointer(self.schema_file),
-                **self.kwargs,
+                **self.parquet_kwargs,
             )
 
         use_column_names = None
