@@ -278,7 +278,7 @@ def reduce_pixel_shards(
         if _has_named_index(dataframe):
             dataframe = dataframe.reset_index()
         dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN).sort_index()
-        # Adjust the schema to make sure that the _hipscat_index will 
+        # Adjust the schema to make sure that the _hipscat_index will
         # be saved as a uint64
         if schema:
             pandas_index_column = schema.get_field_index("__index_level_0__")
