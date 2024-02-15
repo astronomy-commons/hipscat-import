@@ -21,7 +21,7 @@ dependencies = [
     "healpy",
     "hipscat >= 0.2.4",
     "ipykernel", # Support for Jupyter notebooks
-    "pandas < 2.1.0",
+    "pandas < 2.3.0",
     "pyarrow",
     "pyyaml",
     "tqdm",
