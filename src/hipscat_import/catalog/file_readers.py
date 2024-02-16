@@ -116,6 +116,10 @@ class CsvReader(InputReader):
         type_map (dict): the data types to use for columns
         separator (str): the character used for separation. Use '\\s+' to
             process whitespace separated files.
+        parquet_kwargs (dict): additional keyword arguments to use when 
+            reading the parquet schema metadata.
+        kwargs (dict): additional keyword arguments to use when reading
+            the CSV files.
     """
 
     def __init__(
@@ -200,10 +204,8 @@ class FitsReader(InputReader):
           `skip_column_names` will be ignored.
         - If `skip_column_names` is provided, we will remove those columns from processing stages.
 
-    NB:
-        Uses astropy table memmap to avoid reading the entire file into memory.
-
-        See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
+    NB: Uses astropy table memmap to avoid reading the entire file into memory.
+    See: https://docs.astropy.org/en/stable/io/fits/index.html#working-with-large-files
 
 
     Attributes:
