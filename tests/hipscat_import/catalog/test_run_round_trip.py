@@ -450,3 +450,12 @@ def test_import_gaia_minimum(
     assert catalog.catalog_path == args.catalog_path
     assert catalog.catalog_info.total_rows == 5
     assert len(catalog.get_healpix_pixels()) == 3
+
+    # Pick an output file, and make sure it has valid columns:
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=4.parquet")
+    data_frame = pd.read_parquet(output_file)
+    assert data_frame.index.name == "_hipscat_index"
+    column_names = data_frame.columns
+    assert "Norder" in column_names
+    assert "Dir" in column_names
+    assert "Npix" in column_names
