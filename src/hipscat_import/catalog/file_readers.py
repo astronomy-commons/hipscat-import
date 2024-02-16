@@ -116,7 +116,7 @@ class CsvReader(InputReader):
         type_map (dict): the data types to use for columns
         separator (str): the character used for separation. Use '\\s+' to
             process whitespace separated files.
-        parquet_kwargs (dict): additional keyword arguments to use when 
+        parquet_kwargs (dict): additional keyword arguments to use when
             reading the parquet schema metadata.
         kwargs (dict): additional keyword arguments to use when reading
             the CSV files.
