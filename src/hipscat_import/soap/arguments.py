@@ -61,6 +61,7 @@ class SoapArguments(RuntimeArguments):
             "primary_catalog": str(self.object_catalog_dir),
             "join_column": self.source_object_id_column,
             "join_catalog": str(self.source_catalog_dir),
+            "contains_leaf_files": self.write_leaf_files,
         }
         return AssociationCatalogInfo(**info)
 
