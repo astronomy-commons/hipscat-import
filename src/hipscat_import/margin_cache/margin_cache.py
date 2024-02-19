@@ -3,7 +3,7 @@ from dask.distributed import as_completed
 from hipscat import pixel_math
 from hipscat.catalog import PartitionInfo
 from hipscat.io import file_io, parquet_metadata, paths, write_metadata
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 import hipscat_import.margin_cache.margin_cache_map_reduce as mcmr
 

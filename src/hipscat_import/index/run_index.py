@@ -1,7 +1,7 @@
 """Create columnar index of hipscat table using dask for parallelization"""
 
 from hipscat.io import file_io, parquet_metadata, write_metadata
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 import hipscat_import.index.map_reduce as mr
 from hipscat_import.index.arguments import IndexArguments

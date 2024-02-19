@@ -9,7 +9,7 @@ from pathlib import Path
 from dask.distributed import as_completed
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 @dataclass

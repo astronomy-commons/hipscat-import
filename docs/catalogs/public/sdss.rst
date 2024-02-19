@@ -29,7 +29,7 @@ Example conversion
     import glob
     import re
     import pandas as pd
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
     from astropy.table import Table
     from astropy.table.table import descr
 

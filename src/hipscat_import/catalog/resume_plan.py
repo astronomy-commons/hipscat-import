@@ -10,7 +10,7 @@ from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from numpy import frombuffer
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 

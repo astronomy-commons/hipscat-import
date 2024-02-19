@@ -10,7 +10,7 @@ from hipscat import pixel_math
 from hipscat.catalog import PartitionInfo
 from hipscat.io import paths
 from hipscat.io.parquet_metadata import write_parquet_metadata
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.arguments import ImportArguments
