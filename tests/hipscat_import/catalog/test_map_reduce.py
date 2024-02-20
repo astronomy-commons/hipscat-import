@@ -178,7 +178,7 @@ def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parque
         file_reader=get_file_reader(
             "csv",
             schema_file=mixed_schema_csv_parquet,
-            dtype_backend="numpy_nullable",
+            parquet_kwargs={"dtype_backend": "numpy_nullable"},
         ),
         highest_order=0,
         ra_column="ra",

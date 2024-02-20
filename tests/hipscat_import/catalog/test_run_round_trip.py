@@ -411,3 +411,51 @@ def test_import_hipscat_index(
         data_frame.columns,
         ["id", "Norder", "Dir", "Npix"],
     )
+
+
+@pytest.mark.dask
+def test_import_gaia_minimum(
+    dask_client,
+    formats_dir,
+    tmp_path,
+):
+    """Test end-to-end import, using a representative chunk of gaia data."""
+    input_file = os.path.join(formats_dir, "gaia_minimum.csv")
+    schema_file = os.path.join(formats_dir, "gaia_minimum_schema.parquet")
+
+    args = ImportArguments(
+        output_artifact_name="gaia_minimum",
+        input_file_list=[input_file],
+        input_format="csv.gz",
+        file_reader=CsvReader(
+            comment="#",
+            schema_file=schema_file,
+        ),
+        ra_column="ra",
+        dec_column="dec",
+        sort_columns="solution_id",
+        use_schema_file=schema_file,
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 5
+    assert len(catalog.get_healpix_pixels()) == 3
+
+    # Pick an output file, and make sure it has valid columns:
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=4.parquet")
+    data_frame = pd.read_parquet(output_file)
+    assert data_frame.index.name == "_hipscat_index"
+    column_names = data_frame.columns
+    assert "Norder" in column_names
+    assert "Dir" in column_names
+    assert "Npix" in column_names
