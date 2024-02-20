@@ -5,7 +5,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import parquet_metadata, paths, write_metadata
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 from hipscat_import.soap.arguments import SoapArguments

@@ -11,7 +11,7 @@ from hipscat.catalog import Catalog
 from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_tree import PixelAlignment, align_trees
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 from hipscat_import.soap.arguments import SoapArguments
