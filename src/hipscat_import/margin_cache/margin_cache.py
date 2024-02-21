@@ -88,6 +88,7 @@ def _reduce_margin_shards(client, args, partition_pixels):
                 output_path=args.catalog_path,
                 partition_order=pix.order,
                 partition_pixel=pix.pixel,
+                original_catalog_metadata=paths.get_common_metadata_pointer(args.input_catalog_path),
             )
         )
 

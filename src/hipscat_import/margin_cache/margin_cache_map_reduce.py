@@ -1,10 +1,12 @@
 import healpy as hp
 import numpy as np
+import pyarrow as pa
 import pyarrow.dataset as ds
 from hipscat import pixel_math
 from hipscat.catalog.partition_info import PartitionInfo
 from hipscat.io import file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 
@@ -29,7 +31,7 @@ def map_pixel_shards(
         nest=True,
     )
 
-    constrained_data = data.merge(margin_pairs, on="margin_pixel")
+    constrained_data = data.reset_index().merge(margin_pairs, on="margin_pixel")
 
     if len(constrained_data):
         constrained_data.groupby(["partition_order", "partition_pixel"]).apply(
@@ -90,13 +92,16 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
                 PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
             }
         )
+        final_df = final_df.set_index(HIPSCAT_ID_COLUMN).sort_index()
 
         final_df.to_parquet(shard_path)
 
         del data, margin_data, final_df
 
 
-def reduce_margin_shards(intermediate_directory, output_path, partition_order, partition_pixel):
+def reduce_margin_shards(
+    intermediate_directory, output_path, partition_order, partition_pixel, original_catalog_metadata
+):
     """Reduce all partition pixel directories into a single file"""
     shard_dir = get_pixel_cache_directory(
         intermediate_directory, HealpixPixel(partition_order, partition_pixel)
@@ -108,7 +113,15 @@ def reduce_margin_shards(intermediate_directory, output_path, partition_order, p
         file_io.make_directory(margin_cache_dir, exist_ok=True)
 
         if len(full_df):
+            schema = file_io.read_parquet_metadata(original_catalog_metadata).schema.to_arrow_schema()
+
+            schema = (
+                schema.append(pa.field("margin_Norder", pa.uint8()))
+                .append(pa.field("margin_Dir", pa.uint64()))
+                .append(pa.field("margin_Npix", pa.uint64()))
+            )
+
             margin_cache_file_path = paths.pixel_catalog_file(output_path, partition_order, partition_pixel)
 
-            full_df.to_parquet(margin_cache_file_path)
+            full_df.to_parquet(margin_cache_file_path, schema=schema)
             file_io.remove_directory(shard_dir)

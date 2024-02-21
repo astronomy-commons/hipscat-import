@@ -47,6 +47,28 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     assert data.dtypes[PartitionInfo.METADATA_DIR_COLUMN_NAME] == np.uint64
     assert data.dtypes[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] == np.uint64
 
+    npt.assert_array_equal(
+        data.columns,
+        [
+            "source_id",
+            "source_ra",
+            "source_dec",
+            "mjd",
+            "mag",
+            "band",
+            "object_id",
+            "object_ra",
+            "object_dec",
+            "Norder",
+            "Dir",
+            "Npix",
+            "margin_Norder",
+            "margin_Dir",
+            "margin_Npix",
+        ],
+    )
+    assert data.index.name == "_hipscat_index"
+
     catalog = HealpixDataset.read_from_hipscat(args.catalog_path)
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
