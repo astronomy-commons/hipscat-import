@@ -127,11 +127,9 @@ class ImportArguments(RuntimeArguments):
         return CatalogInfo(**info)
 
     def additional_runtime_provenance_info(self) -> dict:
-        file_reader_info = {}
+        file_reader_info = {"type": self.file_reader}
         if isinstance(self.file_reader, InputReader):
             file_reader_info = self.file_reader.provenance_info()
-        elif isinstance(self.file_reader, str):
-            file_reader_info = {"type": self.file_reader}
         return {
             "catalog_name": self.output_artifact_name,
             "epoch": self.epoch,
