@@ -8,6 +8,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
+from hipscat import pixel_math
 
 # pylint: disable=missing-function-docstring, redefined-outer-name
 
@@ -179,10 +180,12 @@ def basic_data_shard_df():
     porder = np.full(360, 1)
     norder = np.full(360, 1)
     npix = np.full(360, 0)
+    hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
 
     test_df = pd.DataFrame(
-        data=zip(ras, dec, ppix, porder, norder, npix),
+        data=zip(hipscat_indexes, ras, dec, ppix, porder, norder, npix),
         columns=[
+            "_hipscat_index",
             "weird_ra",
             "weird_dec",
             "partition_pixel",
@@ -211,10 +214,12 @@ def polar_data_shard_df():
     porder = np.full(360, 2)
     norder = np.full(360, 2)
     npix = np.full(360, 0)
+    hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
 
     test_df = pd.DataFrame(
-        data=zip(ras, dec, ppix, porder, norder, npix),
+        data=zip(hipscat_indexes, ras, dec, ppix, porder, norder, npix),
         columns=[
+            "_hipscat_index",
             "weird_ra",
             "weird_dec",
             "partition_pixel",

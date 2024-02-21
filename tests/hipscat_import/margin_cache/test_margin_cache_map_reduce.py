@@ -1,7 +1,10 @@
 import os
 
+import healpy as hp
+import numpy as np
 import pandas as pd
 import pytest
+from hipscat import pixel_math
 from hipscat.io import paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
@@ -78,12 +81,44 @@ def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
     first_shard_path = paths.pixel_catalog_file(partition_dir, 1, 0)
     second_shard_path = paths.pixel_catalog_file(partition_dir, 1, 1)
 
-    shard_df = basic_data_shard_df.drop(columns=["partition_order", "partition_pixel", "margin_pixel"])
+    ras = np.arange(0.0, 360.0)
+    dec = np.full(360, 0.0)
+    norder = np.full(360, 1)
+    ndir = np.full(360, 0)
+    npix = np.full(360, 0)
+    hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
+    margin_order = np.full(360, 0)
+    margin_dir = np.full(360, 0)
+    margin_pixels = hp.ang2pix(2**3, ras, dec, lonlat=True, nest=True)
 
-    shard_df.to_parquet(first_shard_path)
-    shard_df.to_parquet(second_shard_path)
+    test_df = pd.DataFrame(
+        data=zip(hipscat_indexes, ras, dec, norder, ndir, npix, margin_order, margin_dir, margin_pixels),
+        columns=[
+            "_hipscat_index",
+            "weird_ra",
+            "weird_dec",
+            "Norder",
+            "Dir",
+            "Npix",
+            "margin_Norder",
+            "margin_Dir",
+            "margin_Npix",
+        ],
+    )
 
-    margin_cache_map_reduce.reduce_margin_shards(intermediate_dir, tmp_path, 1, 21)
+    # Create a schema parquet file.
+    schema_path = os.path.join(tmp_path, "metadata.parquet")
+    schema_df = test_df.drop(columns=["margin_Norder", "margin_Dir", "margin_Npix"])
+    schema_df.to_parquet(schema_path)
+
+    basic_data_shard_df = test_df
+
+    basic_data_shard_df.to_parquet(first_shard_path)
+    basic_data_shard_df.to_parquet(second_shard_path)
+
+    margin_cache_map_reduce.reduce_margin_shards(
+        intermediate_dir, tmp_path, 1, 21, original_catalog_metadata=schema_path
+    )
 
     result_path = paths.pixel_catalog_file(tmp_path, 1, 21)
 
