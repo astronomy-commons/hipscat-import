@@ -8,7 +8,7 @@ from hipscat.io.file_io import file_io
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 
-def create_index(args):
+def create_index(args, client):
     """Read primary column, indexing column, and other payload data,
     and write to catalog directory."""
     include_columns = [args.indexing_column]
@@ -77,8 +77,5 @@ def create_index(args):
         engine="pyarrow",
         compute_kwargs={"partition_size": args.compute_partition_size},
     )
-    if args.progress_bar:  # pragma: no cover
-        progress(result)
-    else:
-        wait(result)
+    client.compute(result)
     return len(data)

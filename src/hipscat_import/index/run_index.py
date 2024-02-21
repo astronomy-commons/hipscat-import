@@ -8,13 +8,13 @@ from hipscat_import.index.arguments import IndexArguments
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
 
-def run(args):
+def run(args, client):
     """Run index creation pipeline."""
     if not args:
         raise TypeError("args is required and should be type IndexArguments")
     if not isinstance(args, IndexArguments):
         raise TypeError("args must be type IndexArguments")
-    rows_written = mr.create_index(args)
+    rows_written = mr.create_index(args, client)
 
     # All done - write out the metadata
     with tqdm(

@@ -16,6 +16,7 @@ def test_create_index(
     small_sky_object_catalog,
     assert_parquet_file_index,
     tmp_path,
+    dask_client,
 ):
     """Create an index for simple object catalog"""
     args = IndexArguments(
@@ -26,7 +27,7 @@ def test_create_index(
         overwrite=True,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_object_index", "index", "part.0.parquet")
 
@@ -43,7 +44,7 @@ def test_create_index(
 
 
 @pytest.mark.dask
-def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
+def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path, dask_client):
     """Create an index for simple object catalog, without the _hipscat_index field."""
     args = IndexArguments(
         input_catalog_path=small_sky_object_catalog,
@@ -54,7 +55,7 @@ def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
         overwrite=True,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_object_index", "index", "part.0.parquet")
 
@@ -64,7 +65,7 @@ def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path):
 
 
 @pytest.mark.dask
-def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path):
+def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path, dask_client):
     """Create an index for simple object catalog, without the partitioning columns,
     Norder, Dir, and Npix."""
     args = IndexArguments(
@@ -76,7 +77,7 @@ def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path):
         overwrite=True,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_object_index", "index", "part.0.parquet")
 
@@ -90,6 +91,7 @@ def test_create_index_source(
     small_sky_source_catalog,
     assert_parquet_file_index,
     tmp_path,
+    dask_client,
 ):
     """Create simple index for the source table."""
     args = IndexArguments(
@@ -100,7 +102,7 @@ def test_create_index_source(
         overwrite=True,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
@@ -122,6 +124,7 @@ def test_create_index_with_divisions(
     small_sky_source_catalog,
     assert_parquet_file_index,
     tmp_path,
+    dask_client,
 ):
     """Create an index catalog for the large(r) source catalog, passing
     some divisions hints. This should partition the final output according to
@@ -139,7 +142,7 @@ def test_create_index_with_divisions(
         drop_duplicates=False,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
@@ -161,6 +164,7 @@ def test_create_index_source_by_object(
     small_sky_source_catalog,
     assert_parquet_file_index,
     tmp_path,
+    dask_client,
 ):
     """Create an index for the source table, using the source's object ID
     as the indexing key."""
@@ -172,7 +176,7 @@ def test_create_index_source_by_object(
         overwrite=True,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
@@ -193,6 +197,7 @@ def test_create_index_extra_columns(
     small_sky_source_catalog,
     assert_parquet_file_index,
     tmp_path,
+    dask_client,
 ):
     """Create an index with some additional payload columns."""
     args = IndexArguments(
@@ -204,7 +209,7 @@ def test_create_index_extra_columns(
         overwrite=True,
         progress_bar=False,
     )
-    mr.create_index(args)
+    mr.create_index(args, dask_client)
 
     output_file = os.path.join(tmp_path, "small_sky_source_index", "index", "part.0.parquet")
 
