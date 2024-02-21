@@ -42,7 +42,6 @@ Example import of objects (otmo)
     args = ImportArguments(
         output_artifact_name="ps1_otmo",
         input_file_list=in_file_paths,
-        input_format="csv",
         file_reader=CsvReader(
             header=None,
             index_col=False,
@@ -73,7 +72,6 @@ Example import of detections
     args = ImportArguments(
         output_artifact_name="ps1_detection",
         input_file_list=in_file_paths,
-        input_format="csv",
         file_reader=CsvReader(
             header=None,
             index_col=False,

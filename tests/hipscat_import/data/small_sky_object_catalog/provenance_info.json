@@ -27,7 +27,6 @@
             "input_paths": [
                 "file:///home/delucchi/git/hipscat-import/tests/hipscat_import/data/small_sky/catalog.csv"
             ],
-            "input_format": "csv",
             "input_file_list": [],
             "ra_column": "ra",
             "dec_column": "dec",

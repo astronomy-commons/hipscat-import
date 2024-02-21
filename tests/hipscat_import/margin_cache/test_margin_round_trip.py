@@ -30,7 +30,6 @@ def test_margin_import_gaia_minimum(
     args = ImportArguments(
         output_artifact_name="gaia_minimum",
         input_file_list=[input_file],
-        input_format="csv.gz",
         file_reader=CsvReader(
             comment="#",
             schema_file=schema_file,
@@ -90,8 +89,10 @@ def test_margin_import_mixed_schema_csv(
     """
     args = ImportArguments(
         output_artifact_name="mixed_csv",
-        input_path=mixed_schema_csv_dir,
-        input_format="csv",
+        input_file_list=[
+            os.path.join(mixed_schema_csv_dir, "input_01.csv"),
+            os.path.join(mixed_schema_csv_dir, "input_02.csv"),
+        ],
         output_path=tmp_path,
         dask_tmp=tmp_path,
         constant_healpix_order=3,

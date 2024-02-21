@@ -40,7 +40,6 @@ Example import
     args = ImportArguments(
         output_artifact_name="tic_1",
         input_path="/path/to/tic/",
-        input_format="csv.gz",
         file_reader=CsvReader(
             header=None,
             column_names=type_frame["name"].values.tolist(),

@@ -16,7 +16,6 @@ A minimal arguments block will look something like:
         ra_column="ObjectRA",
         dec_column="ObjectDec",
         input_path="./my_data",
-        input_format="csv",
         output_artifact_name="test_cat",
         output_path="./output",
     )
@@ -102,8 +101,8 @@ Which files?
 
 There are a few ways to specify the files to read:
 
-* ``input_path`` + ``input_format``: 
-    will search for files ending with the format string in the indicated directory.
+* ``input_path``: 
+    will search for files the indicated directory.
 * ``input_file_list``: 
     a list of fully-specified paths you want to read.
 
@@ -162,7 +161,6 @@ You can find the full API documentation for
         ...
         ## Locates files like "/directory/to/files/**starr"
         input_path="/directory/to/files/",
-        input_format="starr",
         ## NB - you need the parens here!
         file_reader=StarrReader(),
 

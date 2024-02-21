@@ -43,7 +43,6 @@ Example import
     args = ImportArguments(
         output_artifact_name="neowise_1",
         input_path="/path/to/neowiser_year8/",
-        input_format="csv.bz2",
         file_reader=CsvReader(
             header=None,
             separator="|",

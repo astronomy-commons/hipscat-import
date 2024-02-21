@@ -70,7 +70,7 @@ Example import
     args = ImportArguments(
         output_artifact_name="sdss_dr16q",
         input_path="/data/sdss/parquet/",
-        input_format="parquet",
+        file_reader="parquet",
         ra_column="RA",
         dec_column="DEC",
         sort_columns="ID",

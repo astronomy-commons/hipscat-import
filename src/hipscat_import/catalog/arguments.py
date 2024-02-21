@@ -27,12 +27,8 @@ class ImportArguments(RuntimeArguments):
     """level of catalog data, object (things in the sky) or source (detections)"""
     input_path: FilePointer | None = None
     """path to search for the input data"""
-    input_format: str = ""
-    """specifier of the input data format. this will be used to find an appropriate
-    InputReader type, and may be used to find input files, via a match like
-    ``<input_path>/*<input_format>`` """
     input_file_list: List[FilePointer] = field(default_factory=list)
-    """can be used instead of `input_format` to import only specified files"""
+    """can be used instead of input_path to import only specified files"""
     input_paths: List[FilePointer] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
     input_storage_options: Union[Dict[Any, Any], None] = None
@@ -74,7 +70,7 @@ class ImportArguments(RuntimeArguments):
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
-    file_reader: InputReader | None = None
+    file_reader: InputReader | str | None = "csv"
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
     resume_plan: ResumePlan | None = None
@@ -86,9 +82,6 @@ class ImportArguments(RuntimeArguments):
     def _check_arguments(self):
         """Check existence and consistency of argument values"""
         super()._check_arguments()
-
-        if not self.input_format:
-            raise ValueError("input_format is required")
 
         if self.constant_healpix_order >= 0:
             check_healpix_order_range(self.constant_healpix_order, "constant_healpix_order")
@@ -104,13 +97,13 @@ class ImportArguments(RuntimeArguments):
 
         if (not self.input_path and not self.input_file_list) or (self.input_path and self.input_file_list):
             raise ValueError("exactly one of input_path or input_file_list is required")
-        if not self.file_reader:
-            self.file_reader = get_file_reader(self.input_format)
+        if isinstance(self.file_reader, str):
+            self.file_reader = get_file_reader(self.file_reader)
 
         # Basic checks complete - make more checks and create directories where necessary
         self.input_paths = find_input_paths(
             self.input_path,
-            f"*{self.input_format}",
+            "**/**.*",
             self.input_file_list,
             storage_options=self.input_storage_options,
         )
@@ -134,13 +127,17 @@ class ImportArguments(RuntimeArguments):
         return CatalogInfo(**info)
 
     def additional_runtime_provenance_info(self) -> dict:
+        file_reader_info = {}
+        if isinstance(self.file_reader, InputReader):
+            file_reader_info = self.file_reader.provenance_info()
+        elif isinstance(self.file_reader, str):
+            file_reader_info = {"type": self.file_reader}
         return {
             "catalog_name": self.output_artifact_name,
             "epoch": self.epoch,
             "catalog_type": self.catalog_type,
             "input_path": str(self.input_path),
             "input_paths": self.input_paths,
-            "input_format": self.input_format,
             "input_file_list": self.input_file_list,
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
@@ -151,7 +148,7 @@ class ImportArguments(RuntimeArguments):
             "pixel_threshold": self.pixel_threshold,
             "mapping_healpix_order": self.mapping_healpix_order,
             "debug_stats_only": self.debug_stats_only,
-            "file_reader_info": self.file_reader.provenance_info() if self.file_reader is not None else {},
+            "file_reader_info": file_reader_info,
         }
 
 
