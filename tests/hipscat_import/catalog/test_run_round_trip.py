@@ -31,7 +31,7 @@ def test_import_source_table(
     args = ImportArguments(
         output_artifact_name="small_sky_source_catalog",
         input_path=small_sky_source_dir,
-        input_format="csv",
+        file_reader="csv",
         catalog_type="source",
         ra_column="source_ra",
         dec_column="source_dec",
@@ -70,8 +70,10 @@ def test_import_mixed_schema_csv(
     """
     args = ImportArguments(
         output_artifact_name="mixed_csv_bad",
-        input_path=mixed_schema_csv_dir,
-        input_format="csv",
+        input_file_list=[
+            os.path.join(mixed_schema_csv_dir, "input_01.csv"),
+            os.path.join(mixed_schema_csv_dir, "input_02.csv"),
+        ],
         output_path=tmp_path,
         dask_tmp=tmp_path,
         highest_healpix_order=1,
@@ -130,7 +132,7 @@ def test_import_preserve_index(
     args = ImportArguments(
         output_artifact_name="pandasindex",
         input_file_list=[formats_pandasindex],
-        input_format="parquet",
+        file_reader="parquet",
         sort_columns="obs_id",
         add_hipscat_index=False,
         output_path=tmp_path,
@@ -156,7 +158,7 @@ def test_import_preserve_index(
     args = ImportArguments(
         output_artifact_name="pandasindex_preserve",
         input_file_list=[formats_pandasindex],
-        input_format="parquet",
+        file_reader="parquet",
         sort_columns="obs_id",
         add_hipscat_index=True,
         output_path=tmp_path,
@@ -221,7 +223,7 @@ def test_import_multiindex(
     args = ImportArguments(
         output_artifact_name="multiindex",
         input_file_list=[formats_multiindex],
-        input_format="parquet",
+        file_reader="parquet",
         sort_columns="obj_id,band",
         add_hipscat_index=False,
         output_path=tmp_path,
@@ -247,7 +249,7 @@ def test_import_multiindex(
     args = ImportArguments(
         output_artifact_name="multiindex_preserve",
         input_file_list=[formats_multiindex],
-        input_format="parquet",
+        file_reader="parquet",
         sort_columns="obj_id,band",
         add_hipscat_index=True,
         output_path=tmp_path,
@@ -283,7 +285,7 @@ def test_import_constant_healpix_order(
     args = ImportArguments(
         output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
-        input_format="csv",
+        file_reader="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         constant_healpix_order=2,
@@ -332,7 +334,6 @@ def test_import_starr_file(
     args = ImportArguments(
         output_artifact_name="starr",
         input_file_list=[formats_dir],
-        input_format="starr",
         file_reader=StarrReader(),
         output_path=tmp_path,
         dask_tmp=tmp_path,
@@ -380,7 +381,7 @@ def test_import_hipscat_index(
     args = ImportArguments(
         output_artifact_name="using_hipscat_index",
         input_file_list=[input_file],
-        input_format="parquet",
+        file_reader="parquet",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         use_hipscat_index=True,
@@ -426,7 +427,6 @@ def test_import_gaia_minimum(
     args = ImportArguments(
         output_artifact_name="gaia_minimum",
         input_file_list=[input_file],
-        input_format="csv.gz",
         file_reader=CsvReader(
             comment="#",
             schema_file=schema_file,

@@ -80,7 +80,7 @@ Challenges with this data set
         input_file_list=files,
         ## NB - you need the parens here!
         file_reader=ZubercalParquetReader(),
-        input_format="parquet",
+        file_reader="parquet",
         catalog_type="source",
         ra_column="objra",
         dec_column="objdec",
