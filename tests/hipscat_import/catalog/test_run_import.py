@@ -70,6 +70,7 @@ def test_resume_dask_runner(
     args = ImportArguments(
         output_artifact_name="resume_catalog",
         input_path=small_sky_parts_dir,
+        file_reader="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
@@ -111,6 +112,7 @@ def test_resume_dask_runner(
     args = ImportArguments(
         output_artifact_name="resume",
         input_path=small_sky_parts_dir,
+        file_reader="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
@@ -217,6 +219,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     args = ImportArguments(
         output_artifact_name="small_sky",
         input_path=small_sky_parts_dir,
+        file_reader="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         highest_healpix_order=1,

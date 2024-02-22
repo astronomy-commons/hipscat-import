@@ -70,7 +70,7 @@ class ImportArguments(RuntimeArguments):
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
-    file_reader: InputReader | str | None = "csv"
+    file_reader: InputReader | str | None = None
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
     resume_plan: ResumePlan | None = None
@@ -97,6 +97,8 @@ class ImportArguments(RuntimeArguments):
 
         if (not self.input_path and not self.input_file_list) or (self.input_path and self.input_file_list):
             raise ValueError("exactly one of input_path or input_file_list is required")
+        if self.file_reader is None:
+            raise ValueError("file_reader is required")
         if isinstance(self.file_reader, str):
             self.file_reader = get_file_reader(self.file_reader)
 

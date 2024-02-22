@@ -31,6 +31,7 @@ def test_import_source_table(
     args = ImportArguments(
         output_artifact_name="small_sky_source_catalog",
         input_path=small_sky_source_dir,
+        file_reader="csv",
         catalog_type="source",
         ra_column="source_ra",
         dec_column="source_dec",
@@ -284,6 +285,7 @@ def test_import_constant_healpix_order(
     args = ImportArguments(
         output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
+        file_reader="csv",
         output_path=tmp_path,
         dask_tmp=tmp_path,
         constant_healpix_order=2,

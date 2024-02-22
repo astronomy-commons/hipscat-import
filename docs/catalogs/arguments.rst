@@ -16,6 +16,7 @@ A minimal arguments block will look something like:
         ra_column="ObjectRA",
         dec_column="ObjectDec",
         input_path="./my_data",
+        file_reader="csv",
         output_artifact_name="test_cat",
         output_path="./output",
     )

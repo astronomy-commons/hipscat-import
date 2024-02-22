@@ -13,12 +13,21 @@ def test_none():
         ImportArguments()
 
 
-def test_empty_required(tmp_path):
+def test_empty_required(small_sky_parts_dir, tmp_path):
     """*Most* required arguments are provided."""
+    ## File reader is missing
+    with pytest.raises(ValueError, match="file_reader"):
+        ImportArguments(
+            output_artifact_name="catalog",
+            file_reader=None,
+            input_path=small_sky_parts_dir,
+            output_path=tmp_path,
+        )
     ## Input path is missing
     with pytest.raises(ValueError, match="input_file"):
         ImportArguments(
             output_artifact_name="catalog",
+            file_reader="csv",
             input_path="",
             output_path=tmp_path,
             overwrite=True,
@@ -31,6 +40,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
     ImportArguments(
         output_artifact_name="catalog",
         input_path=blank_data_dir,
+        file_reader="csv",
         output_path=tmp_path,
         progress_bar=False,
     )
@@ -40,6 +50,7 @@ def test_invalid_paths(blank_data_dir, tmp_path):
         ImportArguments(
             output_artifact_name="catalog",
             input_path="path",
+            file_reader="csv",
             output_path=tmp_path,
             overwrite=True,
         )
@@ -50,6 +61,7 @@ def test_missing_paths(tmp_path):
     with pytest.raises(FileNotFoundError):
         ImportArguments(
             output_artifact_name="catalog",
+            file_reader="csv",
             input_path=tmp_path,
             output_path=tmp_path,
             overwrite=True,
@@ -62,6 +74,7 @@ def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     args = ImportArguments(
         output_artifact_name="catalog",
         input_path=blank_data_dir,
+        file_reader="csv",
         output_path=tmp_path_str,
         tmp_dir=tmp_path_str,
         progress_bar=False,
@@ -76,6 +89,7 @@ def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
     args = ImportArguments(
         output_artifact_name="catalog",
         input_path=small_sky_parts_dir,
+        file_reader="csv",
         output_path=tmp_path,
         progress_bar=False,
     )
@@ -88,6 +102,7 @@ def test_single_debug_file(formats_headers_csv, tmp_path):
     args = ImportArguments(
         output_artifact_name="catalog",
         input_file_list=[formats_headers_csv],
+        file_reader="csv",
         output_path=tmp_path,
         progress_bar=False,
     )
@@ -101,6 +116,7 @@ def test_healpix_args(blank_data_dir, tmp_path):
         ImportArguments(
             output_artifact_name="catalog",
             input_path=blank_data_dir,
+            file_reader="csv",
             output_path=tmp_path,
             highest_healpix_order=30,
             overwrite=True,
@@ -109,6 +125,7 @@ def test_healpix_args(blank_data_dir, tmp_path):
         ImportArguments(
             output_artifact_name="catalog",
             input_path=blank_data_dir,
+            file_reader="csv",
             output_path=tmp_path,
             pixel_threshold=3,
             overwrite=True,
@@ -117,6 +134,7 @@ def test_healpix_args(blank_data_dir, tmp_path):
         ImportArguments(
             output_artifact_name="catalog",
             input_path=blank_data_dir,
+            file_reader="csv",
             output_path=tmp_path,
             constant_healpix_order=30,
             overwrite=True,
@@ -130,6 +148,7 @@ def test_catalog_type(blank_data_dir, tmp_path):
             output_artifact_name="catalog",
             catalog_type=None,
             input_path=blank_data_dir,
+            file_reader="csv",
             output_path=tmp_path,
         )
 
@@ -138,6 +157,7 @@ def test_catalog_type(blank_data_dir, tmp_path):
             output_artifact_name="catalog",
             catalog_type="association",
             input_path=blank_data_dir,
+            file_reader="csv",
             output_path=tmp_path,
         )
 
@@ -147,6 +167,7 @@ def test_to_catalog_info(blank_data_dir, tmp_path):
     args = ImportArguments(
         output_artifact_name="catalog",
         input_path=blank_data_dir,
+        file_reader="csv",
         output_path=tmp_path,
         tmp_dir=tmp_path,
         progress_bar=False,
@@ -161,6 +182,7 @@ def test_provenance_info(blank_data_dir, tmp_path):
     args = ImportArguments(
         output_artifact_name="catalog",
         input_path=blank_data_dir,
+        file_reader="csv",
         output_path=tmp_path,
         tmp_dir=tmp_path,
         progress_bar=False,
