@@ -107,15 +107,15 @@ class RuntimeArguments:
         """
         runtime_args = {
             "catalog_name": self.output_artifact_name,
-            "output_path": str(self.output_path),
+            "output_path": self.output_path,
             "output_artifact_name": self.output_artifact_name,
-            "tmp_dir": str(self.tmp_dir),
+            "tmp_dir": self.tmp_dir,
             "overwrite": self.overwrite,
-            "dask_tmp": str(self.dask_tmp),
+            "dask_tmp": self.dask_tmp,
             "dask_n_workers": self.dask_n_workers,
             "dask_threads_per_worker": self.dask_threads_per_worker,
             "catalog_path": self.catalog_path,
-            "tmp_path": str(self.tmp_path),
+            "tmp_path": self.tmp_path,
         }
 
         runtime_args.update(self.additional_runtime_provenance_info())

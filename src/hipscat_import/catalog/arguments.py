@@ -136,7 +136,7 @@ class ImportArguments(RuntimeArguments):
             "catalog_name": self.output_artifact_name,
             "epoch": self.epoch,
             "catalog_type": self.catalog_type,
-            "input_path": str(self.input_path),
+            "input_path": self.input_path,
             "input_paths": self.input_paths,
             "input_file_list": self.input_file_list,
             "ra_column": self.ra_column,

@@ -67,7 +67,7 @@ class IndexArguments(RuntimeArguments):
             "catalog_name": self.output_artifact_name,
             "total_rows": total_rows,
             "catalog_type": "index",
-            "primary_catalog": str(self.input_catalog_path),
+            "primary_catalog": self.input_catalog_path,
             "indexing_column": self.indexing_column,
             "extra_columns": self.extra_columns,
         }
@@ -75,9 +75,9 @@ class IndexArguments(RuntimeArguments):
 
     def additional_runtime_provenance_info(self) -> dict:
         return {
-            "input_catalog_path": str(self.input_catalog_path),
+            "input_catalog_path": self.input_catalog_path,
             "indexing_column": self.indexing_column,
             "extra_columns": self.extra_columns,
-            "include_hipscat_index": str(self.include_hipscat_index),
+            "include_hipscat_index": self.include_hipscat_index,
             "include_order_pixel": self.include_order_pixel,
         }

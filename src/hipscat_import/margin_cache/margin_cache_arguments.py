@@ -71,7 +71,7 @@ class MarginCacheArguments(RuntimeArguments):
 
     def additional_runtime_provenance_info(self) -> dict:
         return {
-            "input_catalog_path": str(self.input_catalog_path),
+            "input_catalog_path": self.input_catalog_path,
             "margin_threshold": self.margin_threshold,
             "margin_order": self.margin_order,
         }

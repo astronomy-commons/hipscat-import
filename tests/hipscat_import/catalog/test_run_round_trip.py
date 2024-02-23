@@ -6,6 +6,7 @@ regression the test case is exercising.
 
 import glob
 import os
+from pathlib import Path
 
 import numpy as np
 import numpy.testing as npt
@@ -67,17 +68,18 @@ def test_import_mixed_schema_csv(
     - the two input files in `mixed_schema_csv_dir` have different *implied* schemas
         when parsed by pandas. this verifies that they end up with the same schema
         and can be combined into a single parquet file.
+    - this additionally uses pathlib.Path for all path inputs.
     """
     args = ImportArguments(
         output_artifact_name="mixed_csv_bad",
         input_file_list=[
-            os.path.join(mixed_schema_csv_dir, "input_01.csv"),
-            os.path.join(mixed_schema_csv_dir, "input_02.csv"),
+            Path(mixed_schema_csv_dir) / "input_01.csv",
+            Path(mixed_schema_csv_dir) / "input_02.csv",
         ],
-        output_path=tmp_path,
-        dask_tmp=tmp_path,
+        output_path=Path(tmp_path),
+        dask_tmp=Path(tmp_path),
         highest_healpix_order=1,
-        file_reader=get_file_reader("csv", chunksize=1, schema_file=mixed_schema_csv_parquet),
+        file_reader=get_file_reader("csv", chunksize=1, schema_file=Path(mixed_schema_csv_parquet)),
         progress_bar=False,
     )
 
