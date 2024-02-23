@@ -430,6 +430,7 @@ def test_import_gaia_minimum(
         file_reader=CsvReader(
             comment="#",
             schema_file=schema_file,
+            parquet_kwargs={"dtype_backend": "numpy_nullable"},
         ),
         ra_column="ra",
         dec_column="dec",
