@@ -42,6 +42,6 @@ class VerificationArguments(RuntimeArguments):
     def additional_runtime_provenance_info(self) -> dict:
         return {
             "pipeline": "verification pipeline",
-            "input_catalog_path": str(self.input_catalog_path),
+            "input_catalog_path": self.input_catalog_path,
             "field_distribution_cols": self.field_distribution_cols,
         }
