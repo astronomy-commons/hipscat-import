@@ -46,7 +46,7 @@ jobs:
       uses: slackapi/slack-github-action@v1
       with:
         # For posting a rich message using Block Kit
-        payload: | # The payload defined here can be customized to you liking https://api.slack.com/reference/block-kit/blocks 
+        payload: |
           {
             "blocks": [
               {
@@ -60,7 +60,7 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "GitHub Action build result: *${{ job.status }}* :${{ job.status }}:" # Note that we expect the slack workspace to have an emoji called “failed” in this case.
+                  "text": "GitHub Action build result: *${{ job.status }}* :${{ job.status }}:"
                 }
               },
               {
