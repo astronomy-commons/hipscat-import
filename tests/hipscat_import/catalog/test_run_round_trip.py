@@ -12,6 +12,7 @@ import numpy.testing as npt
 import pandas as pd
 import pytest
 from hipscat.catalog.catalog import Catalog
+from hipscat.pixel_math.hipscat_id import hipscat_id_to_healpix
 
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
@@ -430,6 +431,7 @@ def test_import_gaia_minimum(
         file_reader=CsvReader(
             comment="#",
             schema_file=schema_file,
+            parquet_kwargs={"dtype_backend": "numpy_nullable"},
         ),
         ra_column="ra",
         dec_column="dec",
@@ -452,9 +454,14 @@ def test_import_gaia_minimum(
     assert len(catalog.get_healpix_pixels()) == 3
 
     # Pick an output file, and make sure it has valid columns:
-    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=4.parquet")
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=5.parquet")
     data_frame = pd.read_parquet(output_file)
+
+    # Make sure that the hipscat index values match the pixel for the partition (0,5)
     assert data_frame.index.name == "_hipscat_index"
+    hipscat_index_pixels = hipscat_id_to_healpix(data_frame.index.values, 0)
+    npt.assert_array_equal(hipscat_index_pixels, [5, 5, 5])
+
     column_names = data_frame.columns
     assert "Norder" in column_names
     assert "Dir" in column_names

@@ -64,8 +64,8 @@ def _iterate_input_file(
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
                 2**highest_order,
-                data[ra_column].values,
-                data[dec_column].values,
+                data[ra_column].to_numpy(copy=False, dtype=float),
+                data[dec_column].to_numpy(copy=False, dtype=float),
                 lonlat=True,
                 nest=True,
             )
