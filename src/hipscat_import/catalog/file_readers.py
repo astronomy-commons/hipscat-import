@@ -175,7 +175,7 @@ class CsvReader(InputReader):
             **self.kwargs,
         ) as reader:
             for chunk in reader:
-                yield chunk
+                yield from chunk
 
     def provenance_info(self) -> dict:
         str_type_map = {}
