@@ -280,7 +280,7 @@ def reduce_pixel_shards(
             pandas_index_column = schema.get_field_index("__index_level_0__")
             if pandas_index_column != -1:
                 schema = schema.remove(pandas_index_column)
-            schema = schema.insert(0, pa.field("_hipscat_index", pa.uint64()))
+            schema = schema.insert(0, pa.field(HIPSCAT_ID_COLUMN, pa.uint64()))
     elif use_hipscat_index:
         if dataframe.index.name != HIPSCAT_ID_COLUMN:
             dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN)
