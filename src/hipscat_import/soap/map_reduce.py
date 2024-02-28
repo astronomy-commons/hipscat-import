@@ -32,22 +32,27 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
     if not soap_args.write_leaf_files or rows_written == 0:
         return rows_written
 
+    # Prepare the dataframe columns
+    prepared_data = pd.DataFrame(
+        data={
+            "object_id": joined_data.index.values,
+            "source_id": joined_data[soap_args.source_id_column],
+            "Norder": np.full(rows_written, fill_value=object_pixel.order, dtype=np.uint8),
+            "Dir": np.full(rows_written, fill_value=object_pixel.dir, dtype=np.uint64),
+            "Npix": np.full(rows_written, fill_value=object_pixel.pixel, dtype=np.uint64),
+            "join_Norder": np.full(rows_written, fill_value=source_pixel.order, dtype=np.uint8),
+            "join_Dir": np.full(rows_written, fill_value=source_pixel.dir, dtype=np.uint64),
+            "join_Npix": np.full(rows_written, fill_value=source_pixel.pixel, dtype=np.uint64),
+        },
+    )
+
+    # Write to parquet file.
     pixel_dir = get_pixel_cache_directory(soap_args.tmp_path, object_pixel)
     file_io.make_directory(pixel_dir, exist_ok=True)
     output_file = file_io.append_paths_to_pointer(
         pixel_dir, f"source_{source_pixel.order}_{source_pixel.pixel}.parquet"
     )
-    joined_data = joined_data.reset_index()
-
-    joined_data["Norder"] = np.full(rows_written, fill_value=object_pixel.order, dtype=np.uint8)
-    joined_data["Dir"] = np.full(rows_written, fill_value=object_pixel.dir, dtype=np.uint64)
-    joined_data["Npix"] = np.full(rows_written, fill_value=object_pixel.pixel, dtype=np.uint64)
-
-    joined_data["join_Norder"] = np.full(rows_written, fill_value=source_pixel.order, dtype=np.uint8)
-    joined_data["join_Dir"] = np.full(rows_written, fill_value=source_pixel.dir, dtype=np.uint64)
-    joined_data["join_Npix"] = np.full(rows_written, fill_value=source_pixel.pixel, dtype=np.uint64)
-
-    joined_data.to_parquet(output_file, index=True)
+    prepared_data.to_parquet(output_file, index=False)
 
     return rows_written
 

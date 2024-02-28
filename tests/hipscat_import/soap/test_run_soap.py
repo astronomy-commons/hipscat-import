@@ -1,5 +1,9 @@
 """Test full execution of SOAP."""
 
+import os
+
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.association_catalog.association_catalog import AssociationCatalog
 
@@ -36,7 +40,7 @@ def test_object_to_source(dask_client, small_sky_soap_args):
 
 @pytest.mark.dask
 def test_object_to_source_with_leaves(
-    dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog
+    dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog, assert_text_file_matches
 ):
     """Test creating association between object and source catalogs."""
     small_sky_soap_args = SoapArguments(
@@ -60,3 +64,43 @@ def test_object_to_source_with_leaves(
     assert len(catalog.get_join_pixels()) == 14
     assert catalog.catalog_info.total_rows == 17161
     assert catalog.catalog_info.contains_leaf_files
+
+    parquet_file_name = os.path.join(small_sky_soap_args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    assert os.path.exists(parquet_file_name), f"file not found [{parquet_file_name}]"
+
+    parquet_file = pq.ParquetFile(parquet_file_name)
+    assert parquet_file.metadata.num_row_groups == 14
+    assert parquet_file.metadata.num_rows == 17161
+    assert parquet_file.metadata.num_columns == 8
+
+    exepcted_schema = pa.schema(
+        [
+            pa.field("object_id", pa.int64()),
+            pa.field("source_id", pa.int64()),
+            pa.field("Norder", pa.uint8()),
+            pa.field("Dir", pa.uint64()),
+            pa.field("Npix", pa.uint64()),
+            pa.field("join_Norder", pa.uint8()),
+            pa.field("join_Dir", pa.uint64()),
+            pa.field("join_Npix", pa.uint64()),
+        ]
+    )
+    assert parquet_file.metadata.schema.to_arrow_schema().equals(exepcted_schema, check_metadata=False)
+
+    expected_lines = [
+        "{",
+        '    "catalog_name": "small_sky_object_to_source",',
+        '    "catalog_type": "association",',
+        '    "total_rows": 17161,',
+        r'    "primary_catalog": ".*small_sky_object_catalog",',
+        '    "primary_column": "id",',
+        '    "primary_column_association": "object_id",',
+        r'    "join_catalog": ".*small_sky_source_catalog",',
+        '    "join_column": "object_id",',
+        '    "join_column_association": "source_id",',
+        '    "contains_leaf_files": true',
+        "}",
+    ]
+
+    metadata_filename = os.path.join(small_sky_soap_args.catalog_path, "catalog_info.json")
+    assert_text_file_matches(expected_lines, metadata_filename)
