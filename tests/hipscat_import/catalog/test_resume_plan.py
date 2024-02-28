@@ -37,19 +37,22 @@ def test_done_checks(tmp_path):
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)
     plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
 
-    with pytest.raises(ValueError, match="before reducing"):
-        plan.gather_plan()
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="before reducing"):
+            plan.gather_plan()
 
     plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
-    with pytest.raises(ValueError, match="before reducing"):
-        plan.gather_plan()
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="before reducing"):
+            plan.gather_plan()
 
     plan.clean_resume_files()
 
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)
     plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
-    with pytest.raises(ValueError, match="before splitting"):
-        plan.gather_plan()
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="before splitting"):
+            plan.gather_plan()
 
 
 def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
@@ -63,30 +66,33 @@ def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
     map_files = plan.map_files
     assert len(map_files) == 2
 
-    with pytest.raises(ValueError, match="Different file set"):
-        ResumePlan(
-            tmp_path=tmp_path,
-            progress_bar=False,
-            resume=True,
-            input_paths=[small_sky_single_file],
-        )
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="Different file set"):
+            ResumePlan(
+                tmp_path=tmp_path,
+                progress_bar=False,
+                resume=True,
+                input_paths=[small_sky_single_file],
+            )
 
     ## List is the same length, but includes a duplicate
-    with pytest.raises(ValueError, match="Different file set"):
-        ResumePlan(
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="Different file set"):
+            ResumePlan(
+                tmp_path=tmp_path,
+                progress_bar=False,
+                resume=True,
+                input_paths=[small_sky_single_file, small_sky_single_file],
+            )
+
+    ## Includes a duplicate file, but that's ok.
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        plan = ResumePlan(
             tmp_path=tmp_path,
             progress_bar=False,
             resume=True,
-            input_paths=[small_sky_single_file, small_sky_single_file],
+            input_paths=[small_sky_single_file, small_sky_single_file, formats_headers_csv],
         )
-
-    ## Includes a duplicate file, but that's ok.
-    plan = ResumePlan(
-        tmp_path=tmp_path,
-        progress_bar=False,
-        resume=True,
-        input_paths=[small_sky_single_file, small_sky_single_file, formats_headers_csv],
-    )
     map_files = plan.map_files
     assert len(map_files) == 2
 
@@ -148,13 +154,15 @@ def test_read_write_splitting_keys(tmp_path, small_sky_single_file, formats_head
 
     ResumePlan.touch_key_done_file(tmp_path, ResumePlan.SPLITTING_STAGE, "split_0")
 
-    plan.gather_plan()
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        plan.gather_plan()
     split_keys = plan.split_keys
     assert len(split_keys) == 1
     assert split_keys[0][0] == "split_1"
 
     ResumePlan.touch_key_done_file(tmp_path, ResumePlan.SPLITTING_STAGE, "split_1")
-    plan.gather_plan()
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        plan.gather_plan()
     split_keys = plan.split_keys
     assert len(split_keys) == 0
 

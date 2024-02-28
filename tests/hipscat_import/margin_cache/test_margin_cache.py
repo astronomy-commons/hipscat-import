@@ -77,14 +77,15 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
 @pytest.mark.dask(timeout=150)
 def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, dask_client):
     """Test that margin cache generation can generate a file for a negative pixel."""
-    args = MarginCacheArguments(
-        margin_threshold=36000.0,
-        input_catalog_path=small_sky_source_catalog,
-        output_path=tmp_path,
-        output_artifact_name="catalog_cache",
-        margin_order=4,
-        progress_bar=False,
-    )
+    with pytest.warns(UserWarning, match="smaller resolution"):
+        args = MarginCacheArguments(
+            margin_threshold=36000.0,
+            input_catalog_path=small_sky_source_catalog,
+            output_path=tmp_path,
+            output_artifact_name="catalog_cache",
+            margin_order=4,
+            progress_bar=False,
+        )
 
     assert args.catalog.catalog_info.ra_column == "source_ra"
 

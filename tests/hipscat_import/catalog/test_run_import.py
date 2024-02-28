@@ -67,19 +67,20 @@ def test_resume_dask_runner(
         os.path.join(tmp_path, "resume_catalog", "Norder=0"),
     )
 
-    args = ImportArguments(
-        output_artifact_name="resume_catalog",
-        input_path=small_sky_parts_dir,
-        file_reader="csv",
-        output_path=tmp_path,
-        dask_tmp=tmp_path,
-        tmp_dir=tmp_path,
-        resume_tmp=os.path.join(tmp_path, "tmp"),
-        overwrite=True,
-        highest_healpix_order=0,
-        pixel_threshold=1000,
-        progress_bar=False,
-    )
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        args = ImportArguments(
+            output_artifact_name="resume_catalog",
+            input_path=small_sky_parts_dir,
+            file_reader="csv",
+            output_path=tmp_path,
+            dask_tmp=tmp_path,
+            tmp_dir=tmp_path,
+            resume_tmp=os.path.join(tmp_path, "tmp"),
+            overwrite=True,
+            highest_healpix_order=0,
+            pixel_threshold=1000,
+            progress_bar=False,
+        )
 
     runner.run(args, dask_client)
 
