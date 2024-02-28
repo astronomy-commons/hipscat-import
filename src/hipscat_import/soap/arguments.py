@@ -58,8 +58,10 @@ class SoapArguments(RuntimeArguments):
             "catalog_type": CatalogType.ASSOCIATION,
             "total_rows": total_rows,
             "primary_column": self.object_id_column,
+            "primary_column_association": "object_id",
             "primary_catalog": self.object_catalog_dir,
             "join_column": self.source_object_id_column,
+            "join_column_association": "source_id",
             "join_catalog": self.source_catalog_dir,
             "contains_leaf_files": self.write_leaf_files,
         }
