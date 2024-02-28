@@ -416,6 +416,49 @@ def test_import_hipscat_index(
 
 
 @pytest.mark.dask
+def test_import_hipscat_index_no_pandas(
+    dask_client,
+    formats_dir,
+    assert_parquet_file_ids,
+    tmp_path,
+):
+    """Test basic execution, using a previously-computed _hipscat_index column for spatial partitioning."""
+    input_file = os.path.join(formats_dir, "hipscat_index.csv")
+    args = ImportArguments(
+        output_artifact_name="using_hipscat_index",
+        input_file_list=[input_file],
+        file_reader="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        use_hipscat_index=True,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_healpix_pixels()) == 1
+
+    # Check that the catalog parquet file exists and contains correct object IDs
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+
+    expected_ids = [*range(700, 831)]
+    assert_parquet_file_ids(output_file, "id", expected_ids)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.name == "_hipscat_index"
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["id", "magnitude", "nobs", "Norder", "Dir", "Npix"],
+    )
+
+
+@pytest.mark.dask
 def test_import_gaia_minimum(
     dask_client,
     formats_dir,
