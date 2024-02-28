@@ -162,6 +162,27 @@ def test_catalog_type(blank_data_dir, tmp_path):
         )
 
 
+def test_use_hipscat_index(blank_data_dir, tmp_path):
+    with pytest.raises(ValueError, match="no sort columns should be added"):
+        ImportArguments(
+            output_artifact_name="catalog",
+            input_path=blank_data_dir,
+            file_reader="csv",
+            output_path=tmp_path,
+            use_hipscat_index=True,
+            sort_columns="foo",
+        )
+    ImportArguments(
+        output_artifact_name="catalog",
+        input_path=blank_data_dir,
+        file_reader="csv",
+        output_path=tmp_path,
+        use_hipscat_index=True,
+        sort_columns="",  # empty string is ok
+        overwrite=True,
+    )
+
+
 def test_to_catalog_info(blank_data_dir, tmp_path):
     """Verify creation of catalog parameters for catalog to be created."""
     args = ImportArguments(
