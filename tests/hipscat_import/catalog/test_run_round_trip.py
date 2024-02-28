@@ -388,11 +388,9 @@ def test_import_hipscat_index(
         output_path=tmp_path,
         dask_tmp=tmp_path,
         use_hipscat_index=True,
-        add_hipscat_index=False,
         highest_healpix_order=2,
         pixel_threshold=3_000,
         progress_bar=False,
-        sort_columns="_hipscat_index",
     )
 
     runner.run(args, dask_client)

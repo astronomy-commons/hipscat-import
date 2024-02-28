@@ -263,11 +263,28 @@ def reduce_pixel_shards(
     dataframe = merged_table.to_pandas()
     if sort_columns:
         dataframe = dataframe.sort_values(sort_columns.split(","))
-    if add_hipscat_index and not use_hipscat_index:
+    if add_hipscat_index:
+        ## If we had a meaningful index before, preserve it as a column.
+        if _has_named_index(dataframe):
+            dataframe = dataframe.reset_index()
+
         dataframe[HIPSCAT_ID_COLUMN] = pixel_math.compute_hipscat_id(
             dataframe[ra_column].values,
             dataframe[dec_column].values,
         )
+        dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN).sort_index()
+
+        # Adjust the schema to make sure that the _hipscat_index will
+        # be saved as a uint64
+        if schema:
+            pandas_index_column = schema.get_field_index("__index_level_0__")
+            if pandas_index_column != -1:
+                schema = schema.remove(pandas_index_column)
+            schema = schema.insert(0, pa.field("_hipscat_index", pa.uint64()))
+    elif use_hipscat_index:
+        if dataframe.index.name != HIPSCAT_ID_COLUMN:
+            dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN)
+        dataframe = dataframe.sort_index()
 
     dataframe["Norder"] = np.full(rows_written, fill_value=healpix_pixel.order, dtype=np.uint8)
     dataframe["Dir"] = np.full(rows_written, fill_value=healpix_pixel.dir, dtype=np.uint64)
@@ -279,21 +296,6 @@ def reduce_pixel_shards(
             .append(pa.field("Dir", pa.uint64()))
             .append(pa.field("Npix", pa.uint64()))
         )
-
-    if add_hipscat_index:
-        ## If we had a meaningful index before, preserve it as a column.
-        if _has_named_index(dataframe):
-            dataframe = dataframe.reset_index()
-        dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN).sort_index()
-        # Adjust the schema to make sure that the _hipscat_index will
-        # be saved as a uint64
-        if schema:
-            pandas_index_column = schema.get_field_index("__index_level_0__")
-            if pandas_index_column != -1:
-                schema = schema.remove(pandas_index_column)
-            schema = schema.insert(0, pa.field("_hipscat_index", pa.uint64()))
-
-    if schema:
         dataframe.to_parquet(destination_file, schema=schema, storage_options=storage_options)
     else:
         dataframe.to_parquet(destination_file, storage_options=storage_options)
