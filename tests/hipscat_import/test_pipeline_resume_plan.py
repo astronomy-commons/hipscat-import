@@ -85,8 +85,7 @@ def test_safe_to_resume(tmp_path):
     ## explicitly setting resume=True
     done_file = "action_done"
     plan.touch_stage_done_file(done_file)
-    with pytest.raises(ValueError, match="contains intermediate"):
-        plan.safe_to_resume()
+    plan.safe_to_resume()
 
     ## If we mark as a resuming pipeline, we're safe to resume.
     resuming_plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False, resume=True)

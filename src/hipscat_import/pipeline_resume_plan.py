@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,11 +36,11 @@ class PipelineResumePlan:
         """
         if file_io.directory_has_contents(self.tmp_path):
             if not self.resume:
-                raise ValueError(
-                    f"tmp_path ({self.tmp_path}) contains intermediate files."
-                    " choose a different directory or use --resume flag"
+                self.clean_resume_files()
+            else:
+                warnings.warn(
+                    f"tmp_path ({self.tmp_path}) contains intermediate files; resuming prior progress."
                 )
-            print(f"tmp_path ({self.tmp_path}) contains intermediate files. resuming prior progress.")
         else:
             file_io.make_directory(self.tmp_path, exist_ok=True)
 
