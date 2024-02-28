@@ -102,6 +102,11 @@ class ImportArguments(RuntimeArguments):
         if isinstance(self.file_reader, str):
             self.file_reader = get_file_reader(self.file_reader)
 
+        if self.use_hipscat_index:
+            self.add_hipscat_index = False
+            if self.sort_columns:
+                raise ValueError("When using _hipscat_index for position, no sort columns should be added")
+
         # Basic checks complete - make more checks and create directories where necessary
         self.input_paths = find_input_paths(
             self.input_path,
