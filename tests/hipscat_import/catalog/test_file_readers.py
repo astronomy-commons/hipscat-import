@@ -97,11 +97,7 @@ def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
         schema_file,
     )
 
-    frame = next(
-        CsvReader(schema_file=schema_file, parquet_kwargs={"dtype_backend": "numpy_nullable"}).read(
-            small_sky_single_file
-        )
-    )
+    frame = next(CsvReader(schema_file=schema_file).read(small_sky_single_file))
     assert len(frame) == 131
 
     column_types = frame.dtypes.to_dict()
@@ -195,7 +191,6 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
             header=None,
             separator="|",
             schema_file=schema_file,
-            parquet_kwargs={"dtype_backend": "numpy_nullable"},
         ).read(formats_pipe_csv)
     )
 

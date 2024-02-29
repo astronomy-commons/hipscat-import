@@ -150,6 +150,7 @@ class CsvReader(InputReader):
                 self.parquet_kwargs = {}
             schema_parquet = file_io.load_parquet_to_pandas(
                 FilePointer(self.schema_file),
+                dtype_backend="numpy_nullable",
                 **self.parquet_kwargs,
             )
 

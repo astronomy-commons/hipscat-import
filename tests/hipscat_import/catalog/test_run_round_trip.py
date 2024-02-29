@@ -11,6 +11,8 @@ from pathlib import Path
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.catalog import Catalog
 from hipscat.pixel_math.hipscat_id import hipscat_id_to_healpix
@@ -84,18 +86,33 @@ def test_import_mixed_schema_csv(
         progress_bar=False,
     )
 
-    with pytest.raises(RuntimeError, match="Some reducing stages failed"):
-        runner.run(args, dask_client)
-
-    ## Try again, but with the schema specified.
-    args.use_schema_file = mixed_schema_csv_parquet
-    args.output_artifact_name = "mixed_csv_good"
     runner.run(args, dask_client)
 
     # Check that the catalog parquet file exists
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert_parquet_file_ids(output_file, "id", [*range(700, 708)])
+
+    # Check that the schema is correct for leaf parquet and _metadata files
+    expected_parquet_schema = pa.schema(
+        [
+            pa.field("id", pa.int64()),
+            pa.field("ra", pa.float64()),
+            pa.field("dec", pa.float64()),
+            pa.field("ra_error", pa.int64()),
+            pa.field("dec_error", pa.int64()),
+            pa.field("comment", pa.string()),
+            pa.field("code", pa.string()),
+            pa.field("Norder", pa.uint8()),
+            pa.field("Dir", pa.uint64()),
+            pa.field("Npix", pa.uint64()),
+            pa.field("_hipscat_index", pa.uint64()),
+        ]
+    )
+    schema = pq.read_metadata(output_file).schema.to_arrow_schema()
+    assert schema.equals(expected_parquet_schema, check_metadata=False)
+    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    assert schema.equals(expected_parquet_schema, check_metadata=False)
 
 
 @pytest.mark.dask
@@ -474,7 +491,6 @@ def test_import_gaia_minimum(
         file_reader=CsvReader(
             comment="#",
             schema_file=schema_file,
-            parquet_kwargs={"dtype_backend": "numpy_nullable"},
         ),
         ra_column="ra",
         dec_column="dec",
