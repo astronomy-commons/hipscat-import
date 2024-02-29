@@ -45,7 +45,7 @@ Example import
         input_path="/path/to/neowiser_year8/",
         file_reader=CsvReader(
             header=None,
-            separator="|",
+            sep="|",
             column_names=type_frame["name"].values.tolist(),
             type_map=type_map,
             chunksize=250_000,
