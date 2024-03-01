@@ -15,7 +15,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "dask<=2024.2.0",
+    "dask<=2024.2.1",
     "dask[distributed]",
     "deprecated",
     "healpy",
