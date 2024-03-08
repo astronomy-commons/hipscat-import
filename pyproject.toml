@@ -33,6 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black",
+    "jupyter", # Clear notebook output
     "mypy", # Used for static type checking of files
     "pre-commit", # Used to run checks before finalizing a git commit
     "pylint", # Used for static linting of files
