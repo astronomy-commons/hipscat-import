@@ -314,6 +314,45 @@ def test_import_constant_healpix_order(
 
 
 @pytest.mark.dask
+def test_import_lowest_healpix_order(
+    dask_client,
+    small_sky_parts_dir,
+    tmp_path,
+):
+    """Test basic execution.
+    - tests that all the final tiles are at the lowest healpix order,
+        and that we don't create tiles where there is no data.
+    """
+    args = ImportArguments(
+        output_artifact_name="small_sky_object_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        lowest_healpix_order=2,
+        highest_healpix_order=4,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    # Check that the partition info file exists - all pixels at order 2!
+    assert all(pixel.order == 2 for pixel in catalog.partition_info.get_healpix_pixels())
+
+    # Pick a parquet file and make sure it contains as many rows as we expect
+    output_file = os.path.join(args.catalog_path, "Norder=2", "Dir=0", "Npix=178.parquet")
+
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert len(data_frame) == 14
+    ids = data_frame["id"]
+    assert np.logical_and(ids >= 700, ids < 832).all()
+
+
+@pytest.mark.dask
 def test_import_starr_file(
     dask_client,
     formats_dir,
