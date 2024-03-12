@@ -82,7 +82,12 @@ def test_import_mixed_schema_csv(
         output_path=Path(tmp_path),
         dask_tmp=Path(tmp_path),
         highest_healpix_order=1,
-        file_reader=get_file_reader("csv", chunksize=1, schema_file=Path(mixed_schema_csv_parquet)),
+        file_reader=get_file_reader(
+            "csv",
+            chunksize=1,
+            schema_file=Path(mixed_schema_csv_parquet),
+            parquet_kwargs={"dtype_backend": "numpy_nullable"},
+        ),
         progress_bar=False,
     )
 
