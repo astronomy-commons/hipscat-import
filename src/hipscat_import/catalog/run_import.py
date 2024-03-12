@@ -135,11 +135,13 @@ def run(args, client):
             alignment = pixel_math.generate_alignment(
                 raw_histogram,
                 highest_order=args.highest_healpix_order,
+                lowest_order=args.lowest_healpix_order,
                 threshold=args.pixel_threshold,
             )
             destination_pixel_map = pixel_math.compute_pixel_map(
                 raw_histogram,
                 highest_order=args.highest_healpix_order,
+                lowest_order=args.lowest_healpix_order,
                 threshold=args.pixel_threshold,
             )
         step_progress.update(1)

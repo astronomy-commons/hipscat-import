@@ -56,6 +56,10 @@ class ImportArguments(RuntimeArguments):
     """healpix order to use when mapping. if this is
     a positive number, this will be the order of all final pixels and we
     will not combine pixels according to the threshold"""
+    lowest_healpix_order: int = 0
+    """the lowest possible healpix order that we will use for the final 
+    catalog partitioning. setting this higher than 0 will prevent creating
+    partitions with a large area on the sky."""
     highest_healpix_order: int = 7
     """healpix order to use when mapping. this will
     not necessarily be the order used in the final catalog, as we may combine
@@ -83,11 +87,16 @@ class ImportArguments(RuntimeArguments):
         """Check existence and consistency of argument values"""
         super()._check_arguments()
 
+        if self.lowest_healpix_order == self.highest_healpix_order:
+            self.constant_healpix_order = self.lowest_healpix_order
         if self.constant_healpix_order >= 0:
             check_healpix_order_range(self.constant_healpix_order, "constant_healpix_order")
             self.mapping_healpix_order = self.constant_healpix_order
         else:
             check_healpix_order_range(self.highest_healpix_order, "highest_healpix_order")
+            check_healpix_order_range(
+                self.lowest_healpix_order, "lowest_healpix_order", upper_bound=self.highest_healpix_order
+            )
             if not 100 <= self.pixel_threshold <= 1_000_000_000:
                 raise ValueError("pixel_threshold should be between 100 and 1,000,000,000")
             self.mapping_healpix_order = self.highest_healpix_order
@@ -149,6 +158,7 @@ class ImportArguments(RuntimeArguments):
             "use_hipscat_index": self.use_hipscat_index,
             "sort_columns": self.sort_columns,
             "constant_healpix_order": self.constant_healpix_order,
+            "lowest_healpix_order": self.lowest_healpix_order,
             "highest_healpix_order": self.highest_healpix_order,
             "pixel_threshold": self.pixel_threshold,
             "mapping_healpix_order": self.mapping_healpix_order,

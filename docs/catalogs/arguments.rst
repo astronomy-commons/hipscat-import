@@ -203,10 +203,27 @@ this parameter, see notebook :doc:`/notebooks/estimate_pixel_threshold`
 
 For more discussion of the "Binning" and all other stages, see :doc:`temp_files`
 
-Alternatively, you can use the ``constant_healpix_order`` argument. This will 
-**ignore** both of the ``pixel_threshold`` and ``highest_healpix_order`` arguments
-and the catalog will be partitioned by healpix pixels at the
-``constant_healpix_order``. This can be useful for very sparse datasets.
+Sparse Datasets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For sparse datasets you might want to force your catalog partitioning to avoid
+partitions with very large area on they sky. 
+
+Why? If you have sparse data that you know you will want to cross-match or join
+to a catalog that is much denser, you may find yourself trying to match a large
+(in terms of area on the sky) pixel to thousands of smaller pixels in the denser
+catalog that occupy the same large region in the sky. Using more pixels of higher
+order will have some inefficiencies in terms of on-disk storage, but will be 
+easier to compute joins and cross-matches to large datasets.
+
+There are two strategies for tweaking the partitioning:
+
+* **order range** - use the ``lowest_healpix_order`` argument, in addition
+  to the ``highest_healpix_order``.
+* **constant order** - use the ``constant_healpix_order`` argument. This will 
+  **ignore** the ``pixel_threshold``, ``highest_healpix_order``, and 
+  ``lowest_healpix_order`` arguments and the catalog will be partitioned by 
+  healpix pixels at the ``constant_healpix_order``.
 
 Progress Reporting
 -------------------------------------------------------------------------------
