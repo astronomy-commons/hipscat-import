@@ -43,7 +43,7 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
         if isinstance(args, ImportArguments):
             catalog_runner.run(args, client)
         elif isinstance(args, IndexArguments):
-            index_runner.run(args)
+            index_runner.run(args, client)
         elif isinstance(args, MarginCacheArguments):
             margin_runner.generate_margin_cache(args, client)
         elif isinstance(args, SoapArguments):

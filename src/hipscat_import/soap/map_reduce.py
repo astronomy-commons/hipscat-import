@@ -36,7 +36,11 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
     prepared_data = pd.DataFrame(
         data={
             "object_id": joined_data.index.values,
-            "source_id": joined_data[soap_args.source_id_column],
+            "source_id": (
+                joined_data.index.values
+                if soap_args.source_object_id_column == soap_args.source_id_column
+                else joined_data[soap_args.source_id_column]
+            ),
             "Norder": np.full(rows_written, fill_value=object_pixel.order, dtype=np.uint8),
             "Dir": np.full(rows_written, fill_value=object_pixel.dir, dtype=np.uint64),
             "Npix": np.full(rows_written, fill_value=object_pixel.pixel, dtype=np.uint64),
@@ -44,7 +48,7 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
             "join_Dir": np.full(rows_written, fill_value=source_pixel.dir, dtype=np.uint64),
             "join_Npix": np.full(rows_written, fill_value=source_pixel.pixel, dtype=np.uint64),
         },
-    )
+    ).drop_duplicates()
 
     # Write to parquet file.
     pixel_dir = get_pixel_cache_directory(soap_args.tmp_path, object_pixel)
@@ -94,7 +98,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
         pixel_order=source_pixel.order,
         pixel_number=source_pixel.pixel,
     )
-    if soap_args.write_leaf_files:
+    if soap_args.write_leaf_files and soap_args.source_object_id_column != soap_args.source_id_column:
         read_columns = [soap_args.source_object_id_column, soap_args.source_id_column]
     else:
         read_columns = [soap_args.source_object_id_column]

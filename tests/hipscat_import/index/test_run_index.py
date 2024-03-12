@@ -15,20 +15,21 @@ from hipscat_import.index.arguments import IndexArguments
 def test_empty_args():
     """Runner should fail with empty arguments"""
     with pytest.raises(TypeError, match="IndexArguments"):
-        runner.run(None)
+        runner.run(None, None)
 
 
 def test_bad_args():
     """Runner should fail with mis-typed arguments"""
     args = {"output_artifact_name": "bad_arg_type"}
     with pytest.raises(TypeError, match="IndexArguments"):
-        runner.run(args)
+        runner.run(args, None)
 
 
 @pytest.mark.dask
 def test_run_index(
     small_sky_object_catalog,
     tmp_path,
+    dask_client,
 ):
     """Test appropriate metadata is written"""
 
@@ -40,7 +41,7 @@ def test_run_index(
         overwrite=True,
         progress_bar=False,
     )
-    runner.run(args)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Dataset.read_from_hipscat(args.catalog_path)
@@ -72,6 +73,7 @@ def test_run_index(
 def test_run_index_on_source(
     small_sky_source_catalog,
     tmp_path,
+    dask_client,
 ):
     """Test appropriate metadata is written, when primary catalog covers multiple pixels."""
 
@@ -83,7 +85,7 @@ def test_run_index_on_source(
         overwrite=True,
         progress_bar=False,
     )
-    runner.run(args)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Dataset.read_from_hipscat(args.catalog_path)
@@ -114,7 +116,7 @@ def test_run_index_on_source(
 @pytest.mark.dask
 def test_run_index_on_source_object_id(
     small_sky_source_catalog,
-    dask_client,  # pylint: disable=unused-argument
+    dask_client,
     tmp_path,
     assert_parquet_file_index,
 ):
@@ -129,7 +131,7 @@ def test_run_index_on_source_object_id(
         include_hipscat_index=False,
         progress_bar=False,
     )
-    runner.run(args)
+    runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
     catalog = Dataset.read_from_hipscat(args.catalog_path)

@@ -2,13 +2,31 @@
 
 import dask.dataframe as dd
 import numpy as np
-from dask.distributed import progress, wait
+import pandas as pd
 from hipscat.io import paths
-from hipscat.io.file_io import file_io
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 
-def create_index(args):
+def read_leaf_file(input_file, include_columns, include_hipscat_index, drop_duplicates):
+    """Mapping function called once per input file.
+
+    Reads the leaf parquet file, and returns with appropriate columns and duplicates dropped."""
+    data = pd.read_parquet(
+        input_file,
+        columns=include_columns,
+        engine="pyarrow",
+    )
+
+    data = data.reset_index()
+    if not include_hipscat_index:
+        data = data.drop(columns=[HIPSCAT_ID_COLUMN])
+
+    if drop_duplicates:
+        data = data.drop_duplicates()
+    return data
+
+
+def create_index(args, client):
     """Read primary column, indexing column, and other payload data,
     and write to catalog directory."""
     include_columns = [args.indexing_column]
@@ -19,15 +37,19 @@ def create_index(args):
 
     index_dir = paths.append_paths_to_pointer(args.catalog_path, "index")
 
-    metadata_file = paths.get_parquet_metadata_pointer(args.input_catalog_path)
-
-    metadata = file_io.read_parquet_metadata(metadata_file)
-    data = dd.read_parquet(
-        path=args.input_catalog_path,
-        columns=include_columns,
-        engine="pyarrow",
-        dataset={"partitioning": {"flavor": "hive", "schema": metadata.schema.to_arrow_schema()}},
-        filesystem="arrow",
+    data = dd.from_map(
+        read_leaf_file,
+        [
+            paths.pixel_catalog_file(
+                catalog_base_dir=args.input_catalog.catalog_base_dir,
+                pixel_order=pixel.order,
+                pixel_number=pixel.pixel,
+            )
+            for pixel in args.input_catalog.get_healpix_pixels()
+        ],
+        include_columns=include_columns,
+        include_hipscat_index=args.include_hipscat_index,
+        drop_duplicates=args.drop_duplicates,
     )
 
     if args.include_order_pixel:
@@ -36,15 +58,6 @@ def create_index(args):
         data["Dir"] = data["Dir"].astype(np.uint64)
         data["Npix"] = data["Npix"].astype(np.uint64)
 
-    # There are some silly dask things happening here:
-    # - Turn the existing index column into a regular column
-    # - If that had been the _hipscat_index, and we don't want it anymore, drop it
-    # - Create a new index, using our target indexing_column.
-    #   Use division hints if provided.
-    data = data.reset_index()
-    if not args.include_hipscat_index:
-        data = data.drop(columns=[HIPSCAT_ID_COLUMN])
-
     if args.division_hints is not None and len(args.division_hints) > 2:
         data = data.set_index(args.indexing_column, divisions=args.division_hints)
     else:
@@ -52,24 +65,7 @@ def create_index(args):
         # https://docs.dask.org/en/latest/generated/dask.dataframe.DataFrame.set_index.html
         data = data.set_index(args.indexing_column)
 
-    if args.drop_duplicates:
-        # More dask things:
-        # - Repartition the whole dataset to account for limited memory in
-        #   pyarrow in the drop_duplicates implementation (
-        #   "array cannot contain more than 2147483646 bytes")
-        # - Reset the index, so the indexing_column values can be considered
-        #   when de-duping.
-        # - Drop duplicate rows
-        # - Set the index back to our indexing_column, but this time, the
-        #   values are still sorted so it's cheaper.
-        data = (
-            data.repartition(partition_size=1_000_000_000)
-            .reset_index()
-            .drop_duplicates()
-            .set_index(args.indexing_column, sorted=True, partition_size=args.compute_partition_size)
-        )
-    else:
-        data = data.repartition(partition_size=args.compute_partition_size)
+    data = data.repartition(partition_size=args.compute_partition_size)
 
     # Now just write it out to leaf parquet files!
     result = data.to_parquet(
@@ -77,8 +73,5 @@ def create_index(args):
         engine="pyarrow",
         compute_kwargs={"partition_size": args.compute_partition_size},
     )
-    if args.progress_bar:  # pragma: no cover
-        progress(result)
-    else:
-        wait(result)
+    client.compute(result)
     return len(data)

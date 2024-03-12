@@ -1,8 +1,10 @@
-sphinx
-sphinx-rtd-theme
-sphinx-autoapi
-nbsphinx
+
+ipykernel
 ipython
 jupytext
-jupyter
+nbconvert
+nbsphinx
+sphinx
+sphinx-autoapi
 sphinx-copybutton
+sphinx-rtd-theme
