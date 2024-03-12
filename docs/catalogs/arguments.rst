@@ -129,7 +129,7 @@ reading CSV, FITS, and Parquet input files, but you can subclass the reader
 type to suit whatever input files you've got.
 
 You only need to provide the ``file_reader`` argument if you are using a custom file reader
-or passing parameters to the file reader. For example you might use ``file_reader=CsvReader(separator="\s+")``
+or passing parameters to the file reader. For example you might use ``file_reader=CsvReader(sep="\s+")``
 to parse a whitespace separated file.
 
 You can find the full API documentation for 

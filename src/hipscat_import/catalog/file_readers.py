@@ -13,12 +13,10 @@ from hipscat.io import FilePointer, file_io
 def get_file_reader(
     file_format,
     chunksize=500_000,
-    header="infer",
     schema_file=None,
     column_names=None,
     skip_column_names=None,
     type_map=None,
-    separator=",",
     **kwargs,
 ):
     """Get a generator file reader for common file types
@@ -33,24 +31,19 @@ def get_file_reader(
             - `parquet`, compressed columnar data format
 
         chunksize (int): number of rows to read in a single iteration.
-        header (int, list of int, None, default 'infer'): for CSV files, rows to
-            use as the header with column names
         schema_file (str): path to a parquet schema file. if provided, header names
             and column types will be pulled from the parquet schema metadata.
         column_names (list[str]): for CSV files, the names of columns if no header
             is available. for fits files, a list of columns to *keep*.
         skip_column_names (list[str]): for fits files, a list of columns to remove.
         type_map (dict): for CSV files, the data types to use for columns
-        separator (str): for CSV files, the character used for separation.
     """
     if "csv" in file_format:
         return CsvReader(
             chunksize=chunksize,
-            header=header,
             schema_file=schema_file,
             column_names=column_names,
             type_map=type_map,
-            separator=separator,
             **kwargs,
         )
     if file_format == "fits":
@@ -114,8 +107,6 @@ class CsvReader(InputReader):
             and column types will be pulled from the parquet schema metadata.
         column_names (list[str]): the names of columns if no header is available
         type_map (dict): the data types to use for columns
-        separator (str): the character used for separation. Use '\\s+' to
-            process whitespace separated files.
         parquet_kwargs (dict): additional keyword arguments to use when
             reading the parquet schema metadata.
         kwargs (dict): additional keyword arguments to use when reading
@@ -129,7 +120,6 @@ class CsvReader(InputReader):
         schema_file=None,
         column_names=None,
         type_map=None,
-        separator=",",
         parquet_kwargs=None,
         **kwargs,
     ):
@@ -138,12 +128,8 @@ class CsvReader(InputReader):
         self.schema_file = schema_file
         self.column_names = column_names
         self.type_map = type_map
-        self.separator = separator
         self.parquet_kwargs = parquet_kwargs
         self.kwargs = kwargs
-
-    def read(self, input_file):
-        self.regular_file_exists(input_file, **self.kwargs)
 
         if self.schema_file:
             if self.parquet_kwargs is None:
@@ -153,41 +139,38 @@ class CsvReader(InputReader):
                 **self.parquet_kwargs,
             )
 
-        use_column_names = None
         if self.column_names:
-            use_column_names = self.column_names
+            self.kwargs["names"] = self.column_names
         elif not self.header and self.schema_file:
-            use_column_names = schema_parquet.columns
+            self.kwargs["names"] = schema_parquet.columns
 
-        use_type_map = None
         if self.type_map:
-            use_type_map = self.type_map
+            self.kwargs["dtype"] = self.type_map
         elif self.schema_file:
-            use_type_map = schema_parquet.dtypes.to_dict()
+            self.kwargs["dtype"] = schema_parquet.dtypes.to_dict()
+
+    def read(self, input_file):
+        self.regular_file_exists(input_file, **self.kwargs)
 
         with file_io.load_csv_to_pandas(
             FilePointer(input_file),
             chunksize=self.chunksize,
-            sep=self.separator,
             header=self.header,
-            names=use_column_names,
-            dtype=use_type_map,
             **self.kwargs,
         ) as reader:
             yield from reader
 
     def provenance_info(self) -> dict:
-        str_type_map = {}
+        str_kwargs = {}
         if self.type_map:
-            str_type_map = {key: str(value) for (key, value) in self.type_map.items()}
+            str_kwargs = {key: str(value) for (key, value) in self.kwargs.items()}
         provenance_info = {
             "input_reader_type": "CsvReader",
             "chunksize": self.chunksize,
-            "header": self.header,
             "schema_file": self.schema_file,
-            "separator": self.separator,
             "column_names": self.column_names,
-            "type_map": str_type_map,
+            "parquet_kwargs": self.parquet_kwargs,
+            "kwargs": str_kwargs,
         }
         return provenance_info
 

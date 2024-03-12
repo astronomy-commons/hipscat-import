@@ -129,7 +129,7 @@ def test_csv_reader_kwargs(small_sky_single_file):
 def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     """Verify we can read a pipe-delimited csv file without a header row."""
     total_chunks = 0
-    for frame in CsvReader(header=None, separator="|").read(formats_pipe_csv):
+    for frame in CsvReader(header=None, sep="|").read(formats_pipe_csv):
         total_chunks += 1
         assert len(frame) == 3
         assert np.all(frame[0] == ["AA", "BB", "CC"])
@@ -139,9 +139,9 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     ## Provide header names and types in a few formats
     frame = next(
         CsvReader(
-            header=None,
-            separator="|",
             column_names=["letters", "ints", "empty", "numeric"],
+            header=None,
+            sep="|",
         ).read(formats_pipe_csv)
     )
     assert len(frame) == 3
@@ -157,8 +157,6 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
 
     frame = next(
         CsvReader(
-            header=None,
-            separator="|",
             column_names=["letters", "ints", "empty", "numeric"],
             type_map={
                 "letters": object,
@@ -166,6 +164,8 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
                 "empty": "Int64",
                 "numeric": int,
             },
+            header=None,
+            sep="|",
         ).read(formats_pipe_csv)
     )
     assert len(frame) == 3
@@ -192,10 +192,7 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
 
     frame = next(
         CsvReader(
-            header=None,
-            separator="|",
-            schema_file=schema_file,
-            parquet_kwargs={"dtype_backend": "numpy_nullable"},
+            schema_file=schema_file, header=None, sep="|", parquet_kwargs={"dtype_backend": "numpy_nullable"}
         ).read(formats_pipe_csv)
     )
 
@@ -215,7 +212,7 @@ def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
     """Test that we get some provenance info and it is parseable into JSON."""
     reader = CsvReader(
         header=None,
-        separator="|",
+        sep="|",
         column_names=["letters", "ints", "empty", "numeric"],
         type_map={
             "letters": object,

@@ -44,11 +44,11 @@ Example import
         output_artifact_name="allwise",
         input_path="/path/to/allwise/",
         file_reader=CsvReader(
+            chunksize=250_000,
             header=None,
-            separator="|",
+            sep="|",
             column_names=type_frame["name"].values.tolist(),
             type_map=type_map,
-            chunksize=250_000,
         ),
         use_schema_file="allwise_schema.parquet",
         ra_column="ra",
