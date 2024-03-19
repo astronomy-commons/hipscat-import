@@ -53,10 +53,16 @@ def run(args, client):
         total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
     ) as step_progress:
         if args.write_leaf_files:
-            parquet_metadata.write_parquet_metadata(args.catalog_path)
+            parquet_metadata.write_parquet_metadata(
+                args.catalog_path,
+                storage_options=args.output_storage_options,
+            )
             total_rows = 0
             metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
-            for row_group in parquet_metadata.read_row_group_fragments(metadata_path):
+            for row_group in parquet_metadata.read_row_group_fragments(
+                metadata_path,
+                storage_options=args.output_storage_options,
+            ):
                 total_rows += row_group.num_rows
             partition_join_info = PartitionJoinInfo.read_from_file(
                 metadata_path, storage_options=args.output_storage_options
@@ -65,7 +71,9 @@ def run(args, client):
                 catalog_path=args.catalog_path, storage_options=args.output_storage_options
             )
         else:
-            total_rows = combine_partial_results(args.tmp_path, args.catalog_path)
+            total_rows = combine_partial_results(
+                args.tmp_path, args.catalog_path, args.output_storage_options
+            )
         step_progress.update(1)
         total_rows = int(total_rows)
         catalog_info = args.to_catalog_info(total_rows)
@@ -73,9 +81,14 @@ def run(args, client):
             catalog_base_dir=args.catalog_path,
             dataset_info=catalog_info,
             tool_args=args.provenance_info(),
+            storage_options=args.output_storage_options,
         )
         step_progress.update(1)
-        write_metadata.write_catalog_info(dataset_info=catalog_info, catalog_base_dir=args.catalog_path)
+        write_metadata.write_catalog_info(
+            dataset_info=catalog_info,
+            catalog_base_dir=args.catalog_path,
+            storage_options=args.output_storage_options,
+        )
         step_progress.update(1)
         resume_plan.clean_resume_files()
         step_progress.update(1)
