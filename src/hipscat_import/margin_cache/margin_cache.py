@@ -38,14 +38,14 @@ def _find_partition_margin_pixel_pairs(stats, margin_order):
     return margin_pairs_df
 
 
-def _create_margin_directory(stats, output_path):
+def _create_margin_directory(stats, output_path, storage_options):
     """Creates directories for all the catalog partitions."""
     for healpixel in stats:
         order = healpixel.order
         pix = healpixel.pixel
 
         destination_dir = paths.pixel_directory(output_path, order, pix)
-        file_io.make_directory(destination_dir, exist_ok=True)
+        file_io.make_directory(destination_dir, exist_ok=True, storage_options=storage_options)
 
 
 def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
@@ -58,6 +58,7 @@ def _map_to_margin_shards(client, args, partition_pixels, margin_pairs):
             client.submit(
                 mcmr.map_pixel_shards,
                 partition_file=partition_file,
+                input_storage_options=args.input_storage_options,
                 margin_pairs=mp_future,
                 margin_threshold=args.margin_threshold,
                 output_path=args.tmp_path,
@@ -86,9 +87,11 @@ def _reduce_margin_shards(client, args, partition_pixels):
                 mcmr.reduce_margin_shards,
                 intermediate_directory=args.tmp_path,
                 output_path=args.catalog_path,
+                output_storage_options=args.output_storage_options,
                 partition_order=pix.order,
                 partition_pixel=pix.pixel,
                 original_catalog_metadata=paths.get_common_metadata_pointer(args.input_catalog_path),
+                input_storage_options=args.input_storage_options,
             )
         )
 
@@ -119,7 +122,7 @@ def generate_margin_cache(args, client):
 
     margin_pairs = _find_partition_margin_pixel_pairs(combined_pixels, args.margin_order)
 
-    _create_margin_directory(combined_pixels, args.catalog_path)
+    _create_margin_directory(combined_pixels, args.catalog_path, args.output_storage_options)
 
     _map_to_margin_shards(
         client=client,
@@ -131,7 +134,9 @@ def generate_margin_cache(args, client):
     _reduce_margin_shards(client=client, args=args, partition_pixels=combined_pixels)
 
     with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
-        parquet_metadata.write_parquet_metadata(args.catalog_path)
+        parquet_metadata.write_parquet_metadata(
+            args.catalog_path, storage_options=args.output_storage_options
+        )
         step_progress.update(1)
         total_rows = 0
         metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
@@ -151,10 +156,15 @@ def generate_margin_cache(args, client):
             catalog_base_dir=args.catalog_path,
             dataset_info=margin_catalog_info,
             tool_args=args.provenance_info(),
+            storage_options=args.output_storage_options,
         )
         write_metadata.write_catalog_info(
-            catalog_base_dir=args.catalog_path, dataset_info=margin_catalog_info
+            catalog_base_dir=args.catalog_path,
+            dataset_info=margin_catalog_info,
+            storage_options=args.output_storage_options,
         )
         step_progress.update(1)
-        file_io.remove_directory(args.tmp_path, ignore_errors=True)
+        file_io.remove_directory(
+            args.tmp_path, ignore_errors=True, storage_options=args.output_storage_options
+        )
         step_progress.update(1)

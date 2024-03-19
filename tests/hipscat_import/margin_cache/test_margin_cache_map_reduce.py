@@ -117,7 +117,13 @@ def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
     basic_data_shard_df.to_parquet(second_shard_path)
 
     margin_cache_map_reduce.reduce_margin_shards(
-        intermediate_dir, tmp_path, 1, 21, original_catalog_metadata=schema_path
+        intermediate_dir,
+        tmp_path,
+        None,
+        1,
+        21,
+        original_catalog_metadata=schema_path,
+        input_storage_options=None,
     )
 
     result_path = paths.pixel_catalog_file(tmp_path, 1, 21)

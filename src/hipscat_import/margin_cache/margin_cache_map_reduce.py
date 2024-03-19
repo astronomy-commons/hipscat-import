@@ -13,6 +13,7 @@ from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 
 def map_pixel_shards(
     partition_file,
+    input_storage_options,
     margin_pairs,
     margin_threshold,
     output_path,
@@ -21,7 +22,7 @@ def map_pixel_shards(
     dec_column,
 ):
     """Creates margin cache shards from a source partition file."""
-    data = file_io.load_parquet_to_pandas(partition_file)
+    data = file_io.load_parquet_to_pandas(partition_file, storage_options=input_storage_options)
 
     data["margin_pixel"] = hp.ang2pix(
         2**margin_order,
@@ -100,7 +101,13 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
 
 def reduce_margin_shards(
-    intermediate_directory, output_path, partition_order, partition_pixel, original_catalog_metadata
+    intermediate_directory,
+    output_path,
+    output_storage_options,
+    partition_order,
+    partition_pixel,
+    original_catalog_metadata,
+    input_storage_options,
 ):
     """Reduce all partition pixel directories into a single file"""
     shard_dir = get_pixel_cache_directory(
@@ -110,10 +117,12 @@ def reduce_margin_shards(
         data = ds.dataset(shard_dir, format="parquet")
         full_df = data.to_table().to_pandas()
         margin_cache_dir = paths.pixel_directory(output_path, partition_order, partition_pixel)
-        file_io.make_directory(margin_cache_dir, exist_ok=True)
+        file_io.make_directory(margin_cache_dir, exist_ok=True, storage_options=output_storage_options)
 
         if len(full_df):
-            schema = file_io.read_parquet_metadata(original_catalog_metadata).schema.to_arrow_schema()
+            schema = file_io.read_parquet_metadata(
+                original_catalog_metadata, storage_options=input_storage_options
+            ).schema.to_arrow_schema()
 
             schema = (
                 schema.append(pa.field("margin_Norder", pa.uint8()))
@@ -123,5 +132,5 @@ def reduce_margin_shards(
 
             margin_cache_file_path = paths.pixel_catalog_file(output_path, partition_order, partition_pixel)
 
-            full_df.to_parquet(margin_cache_file_path, schema=schema)
+            full_df.to_parquet(margin_cache_file_path, schema=schema, storage_options=output_storage_options)
             file_io.remove_directory(shard_dir)
