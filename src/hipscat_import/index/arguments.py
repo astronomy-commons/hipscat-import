@@ -1,7 +1,7 @@
 """Utility to hold all arguments required throughout indexing"""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from hipscat.catalog import Catalog
 from hipscat.catalog.index.index_catalog_info import IndexCatalogInfo
@@ -17,6 +17,8 @@ class IndexArguments(RuntimeArguments):
     ## Input
     input_catalog_path: str = ""
     input_catalog: Optional[Catalog] = None
+    input_storage_options: Union[Dict[Any, Any], None] = None
+    """optional dictionary of abstract filesystem credentials for the INPUT."""
     indexing_column: str = ""
     extra_columns: List[str] = field(default_factory=list)
 
@@ -54,9 +56,11 @@ class IndexArguments(RuntimeArguments):
         if not self.include_hipscat_index and not self.include_order_pixel:
             raise ValueError("At least one of include_hipscat_index or include_order_pixel must be True")
 
-        if not is_valid_catalog(self.input_catalog_path):
+        if not is_valid_catalog(self.input_catalog_path, storage_options=self.input_storage_options):
             raise ValueError("input_catalog_path not a valid catalog")
-        self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
+        self.input_catalog = Catalog.read_from_hipscat(
+            catalog_path=self.input_catalog_path, storage_options=self.input_storage_options
+        )
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")

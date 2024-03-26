@@ -1,5 +1,6 @@
 import warnings
 from dataclasses import dataclass
+from typing import Any, Dict, Union
 
 import healpy as hp
 from hipscat.catalog import Catalog
@@ -26,6 +27,8 @@ class MarginCacheArguments(RuntimeArguments):
 
     input_catalog_path: str = ""
     """the path to the hipscat-formatted input catalog."""
+    input_storage_options: Union[Dict[Any, Any], None] = None
+    """optional dictionary of abstract filesystem credentials for the INPUT."""
 
     def __post_init__(self):
         self._check_arguments()
@@ -34,10 +37,12 @@ class MarginCacheArguments(RuntimeArguments):
         super()._check_arguments()
         if not self.input_catalog_path:
             raise ValueError("input_catalog_path is required")
-        if not is_valid_catalog(self.input_catalog_path):
+        if not is_valid_catalog(self.input_catalog_path, storage_options=self.input_storage_options):
             raise ValueError("input_catalog_path not a valid catalog")
 
-        self.catalog = Catalog.read_from_hipscat(self.input_catalog_path)
+        self.catalog = Catalog.read_from_hipscat(
+            self.input_catalog_path, storage_options=self.input_storage_options
+        )
 
         highest_order = self.catalog.partition_info.get_highest_order()
         margin_pixel_k = highest_order + 1

@@ -157,6 +157,7 @@ def test_create_margin_directory(small_sky_source_catalog, tmp_path):
     mc._create_margin_directory(
         stats=args.catalog.partition_info.get_healpix_pixels(),
         output_path=args.catalog_path,
+        storage_options=None,
     )
 
     output = file_io.append_paths_to_pointer(args.catalog_path, "Norder=0", "Dir=0")

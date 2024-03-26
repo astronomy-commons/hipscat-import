@@ -116,7 +116,7 @@ def test_combine_results(tmp_path):
     partitions_csv_file = os.path.join(input_path, "0_11.csv")
     join_info.to_csv(partitions_csv_file, index=False)
 
-    total_num_rows = combine_partial_results(input_path, output_path)
+    total_num_rows = combine_partial_results(input_path, output_path, None)
     assert total_num_rows == 131
 
     result = pd.read_csv(os.path.join(output_path, "partition_join_info.csv"))

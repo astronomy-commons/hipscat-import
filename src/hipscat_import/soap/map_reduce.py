@@ -7,6 +7,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import FilePointer, file_io, paths
+from hipscat.io.file_io.file_pointer import get_fs, strip_leading_slash_for_pyarrow
 from hipscat.io.parquet_metadata import get_healpix_pixel_from_metadata
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.healpix_pixel_function import get_pixel_argsort
@@ -22,9 +23,9 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
         pixel_order=object_pixel.order,
         pixel_number=object_pixel.pixel,
     )
-    object_data = file_io.load_parquet_to_pandas(object_path, columns=[soap_args.object_id_column]).set_index(
-        soap_args.object_id_column
-    )
+    object_data = file_io.load_parquet_to_pandas(
+        object_path, columns=[soap_args.object_id_column], storage_options=soap_args.object_storage_options
+    ).set_index(soap_args.object_id_column)
 
     joined_data = source_data.merge(object_data, how="inner", left_index=True, right_index=True)
 
@@ -102,9 +103,9 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
         read_columns = [soap_args.source_object_id_column, soap_args.source_id_column]
     else:
         read_columns = [soap_args.source_object_id_column]
-    source_data = file_io.load_parquet_to_pandas(source_path, columns=read_columns).set_index(
-        soap_args.source_object_id_column
-    )
+    source_data = file_io.load_parquet_to_pandas(
+        source_path, columns=read_columns, storage_options=soap_args.source_storage_options
+    ).set_index(soap_args.source_object_id_column)
 
     remaining_sources = len(source_data)
     results = []
@@ -128,7 +129,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
     _write_count_results(soap_args.tmp_path, source_pixel, results)
 
 
-def combine_partial_results(input_path, output_path) -> int:
+def combine_partial_results(input_path, output_path, output_storage_options) -> int:
     """Combine many partial CSVs into single partition join info.
     Also write out a debug file with counts of unmatched sources, if any.
 
@@ -156,6 +157,7 @@ def combine_partial_results(input_path, output_path) -> int:
         dataframe=matched,
         file_pointer=file_io.append_paths_to_pointer(output_path, "partition_join_info.csv"),
         index=False,
+        storage_options=output_storage_options,
     )
 
     if len(unmatched) > 0:
@@ -163,6 +165,7 @@ def combine_partial_results(input_path, output_path) -> int:
             dataframe=unmatched,
             file_pointer=file_io.append_paths_to_pointer(output_path, "unmatched_sources.csv"),
             index=False,
+            storage_options=output_storage_options,
         )
 
     primary_only = matched.groupby(["Norder", "Dir", "Npix"])["num_rows"].sum().reset_index()
@@ -170,10 +173,11 @@ def combine_partial_results(input_path, output_path) -> int:
         dataframe=primary_only,
         file_pointer=file_io.append_paths_to_pointer(output_path, "partition_info.csv"),
         index=False,
+        storage_options=output_storage_options,
     )
 
     join_info = PartitionJoinInfo(matched)
-    join_info.write_to_metadata_files(output_path)
+    join_info.write_to_metadata_files(output_path, storage_options=output_storage_options)
 
     return primary_only["num_rows"].sum()
 
@@ -213,10 +217,14 @@ def reduce_joins(
     # Write all of the shards into a single parquet file, one row-group-per-shard.
     starting_catalog_path = FilePointer(str(soap_args.catalog_path))
     destination_dir = paths.pixel_directory(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-    file_io.make_directory(destination_dir, exist_ok=True)
+    file_io.make_directory(destination_dir, exist_ok=True, storage_options=soap_args.output_storage_options)
 
     output_file = paths.pixel_catalog_file(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-    with pq.ParquetWriter(output_file, shards[0].schema) as writer:
+    file_system, output_file = get_fs(
+        file_pointer=output_file, storage_options=soap_args.output_storage_options
+    )
+    output_file = strip_leading_slash_for_pyarrow(output_file, protocol=file_system.protocol)
+    with pq.ParquetWriter(output_file, shards[0].schema, filesystem=file_system) as writer:
         for table in shards:
             writer.write_table(table)
 

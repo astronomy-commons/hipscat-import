@@ -39,6 +39,31 @@ def test_object_to_source(dask_client, small_sky_soap_args):
 
 
 @pytest.mark.dask
+def test_object_to_self(dask_client, tmp_path, small_sky_object_catalog):
+    """Test creating association between object and source catalogs."""
+    small_sky_soap_args = SoapArguments(
+        object_catalog_dir=small_sky_object_catalog,
+        object_id_column="id",
+        source_catalog_dir=small_sky_object_catalog,
+        source_object_id_column="id",
+        output_path=tmp_path,
+        overwrite=True,
+        progress_bar=False,
+        source_id_column="id",
+        output_artifact_name="small_sky_object_to_source",
+    )
+    runner.run(small_sky_soap_args, dask_client)
+
+    ## Check that the association data can be parsed as a valid association catalog.
+    catalog = AssociationCatalog.read_from_hipscat(small_sky_soap_args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == small_sky_soap_args.catalog_path
+    assert len(catalog.get_join_pixels()) == 1
+    assert catalog.catalog_info.total_rows == 131
+    assert not catalog.catalog_info.contains_leaf_files
+
+
+@pytest.mark.dask
 def test_object_to_source_with_leaves(
     dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog, assert_text_file_matches
 ):

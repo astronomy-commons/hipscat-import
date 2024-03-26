@@ -7,7 +7,7 @@ from hipscat.io import paths
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 
-def read_leaf_file(input_file, include_columns, include_hipscat_index, drop_duplicates):
+def read_leaf_file(input_file, include_columns, include_hipscat_index, drop_duplicates, storage_options):
     """Mapping function called once per input file.
 
     Reads the leaf parquet file, and returns with appropriate columns and duplicates dropped."""
@@ -15,6 +15,7 @@ def read_leaf_file(input_file, include_columns, include_hipscat_index, drop_dupl
         input_file,
         columns=include_columns,
         engine="pyarrow",
+        storage_options=storage_options,
     )
 
     data = data.reset_index()
@@ -50,6 +51,7 @@ def create_index(args, client):
         include_columns=include_columns,
         include_hipscat_index=args.include_hipscat_index,
         drop_duplicates=args.drop_duplicates,
+        storage_options=args.input_storage_options,
     )
 
     if args.include_order_pixel:
@@ -72,6 +74,7 @@ def create_index(args, client):
         path=index_dir,
         engine="pyarrow",
         compute_kwargs={"partition_size": args.compute_partition_size},
+        storage_options=args.output_storage_options,
     )
     client.compute(result)
     return len(data)
