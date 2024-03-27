@@ -101,7 +101,7 @@ def test_read_single_fits(tmp_path, formats_fits):
 
 def test_map_headers_wrong(formats_headers_csv):
     """Test loading the a file with non-default headers (without specifying right headers)"""
-    with pytest.raises(ValueError, match="header"):
+    with pytest.raises(ValueError, match="columns expected but not found"):
         mr.map_to_pixels(
             input_file=formats_headers_csv,
             file_reader=get_file_reader("csv"),
@@ -156,7 +156,7 @@ def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
     result = read_partial_histogram(tmp_path, "map_0")
     npt.assert_array_equal(result, expected)
 
-    with pytest.raises(ValueError, match="_hipscat_index not in"):
+    with pytest.raises(ValueError, match="columns expected but not found"):
         mr.map_to_pixels(
             input_file=small_sky_single_file,
             file_reader=get_file_reader("csv"),
