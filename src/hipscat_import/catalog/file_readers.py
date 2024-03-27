@@ -63,11 +63,13 @@ class InputReader(abc.ABC):
     """Base class for chunking file readers."""
 
     @abc.abstractmethod
-    def read(self, input_file):
+    def read(self, input_file, read_columns=None):
         """Read the input file, or chunk of the input file.
 
         Args:
             input_file(str): path to the input file.
+            read_columns(List[str]): subset of columns to read.
+                if None, all columns are read
         Yields:
             DataFrame containing chunk of file info.
         """
@@ -149,8 +151,11 @@ class CsvReader(InputReader):
         elif self.schema_file:
             self.kwargs["dtype"] = schema_parquet.dtypes.to_dict()
 
-    def read(self, input_file):
+    def read(self, input_file, read_columns=None):
         self.regular_file_exists(input_file, **self.kwargs)
+
+        if read_columns:
+            self.kwargs["usecols"] = read_columns
 
         with file_io.load_csv_to_pandas(
             FilePointer(input_file),
@@ -206,9 +211,11 @@ class FitsReader(InputReader):
         self.skip_column_names = skip_column_names
         self.kwargs = kwargs
 
-    def read(self, input_file):
+    def read(self, input_file, read_columns=None):
         self.regular_file_exists(input_file, **self.kwargs)
         table = Table.read(input_file, memmap=True, **self.kwargs)
+        if read_columns:
+            table.keep_columns(read_columns)
         if self.column_names:
             table.keep_columns(self.column_names)
         elif self.skip_column_names:
@@ -244,7 +251,7 @@ class ParquetReader(InputReader):
         self.chunksize = chunksize
         self.kwargs = kwargs
 
-    def read(self, input_file):
+    def read(self, input_file, read_columns=None):
         self.regular_file_exists(input_file, **self.kwargs)
         parquet_file = pq.ParquetFile(input_file, **self.kwargs)
         for smaller_table in parquet_file.iter_batches(batch_size=self.chunksize, use_pandas_metadata=True):

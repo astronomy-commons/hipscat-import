@@ -389,11 +389,11 @@ def test_import_starr_file(
     class StarrReader(CsvReader):
         """Shallow subclass"""
 
-        def read(self, input_file):
+        def read(self, input_file, read_columns=None):
             files = glob.glob(f"{input_file}/**.starr")
             files.sort()
             for file in files:
-                return super().read(file)
+                return super().read(file, read_columns)
 
     args = ImportArguments(
         output_artifact_name="starr",

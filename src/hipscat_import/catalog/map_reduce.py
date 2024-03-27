@@ -39,28 +39,19 @@ def _iterate_input_file(
     ra_column,
     dec_column,
     use_hipscat_index=False,
+    read_columns=None,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
     if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
-    required_columns = [ra_column, dec_column]
-
-    for chunk_number, data in enumerate(file_reader.read(input_file)):
+    for chunk_number, data in enumerate(file_reader.read(input_file, read_columns=read_columns)):
         if use_hipscat_index:
             if data.index.name == HIPSCAT_ID_COLUMN:
                 mapped_pixels = hipscat_id_to_healpix(data.index, target_order=highest_order)
-            elif HIPSCAT_ID_COLUMN in data.columns:
-                mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
             else:
-                raise ValueError(
-                    f"Invalid column names in input file: {HIPSCAT_ID_COLUMN} not in {input_file}"
-                )
+                mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
         else:
-            if not all(x in data.columns for x in required_columns):
-                raise ValueError(
-                    f"Invalid column names in input file: {', '.join(required_columns)} not in {input_file}"
-                )
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
                 2**highest_order,
@@ -103,8 +94,14 @@ def map_to_pixels(
         FileNotFoundError: if the file does not exist, or is a directory
     """
     histo = pixel_math.empty_histogram(highest_order)
+
+    if use_hipscat_index:
+        read_columns = [HIPSCAT_ID_COLUMN]
+    else:
+        read_columns = [ra_column, dec_column]
+
     for _, _, mapped_pixels in _iterate_input_file(
-        input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index
+        input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index, read_columns
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         mapped_pixel = mapped_pixel.astype(np.int64)
