@@ -45,23 +45,13 @@ def _iterate_input_file(
     if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
-    required_columns = [ra_column, dec_column]
-
     for chunk_number, data in enumerate(file_reader.read(input_file, read_columns=read_columns)):
         if use_hipscat_index:
             if data.index.name == HIPSCAT_ID_COLUMN:
                 mapped_pixels = hipscat_id_to_healpix(data.index, target_order=highest_order)
-            elif HIPSCAT_ID_COLUMN in data.columns:
-                mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
             else:
-                raise ValueError(
-                    f"Invalid column names in input file: {HIPSCAT_ID_COLUMN} not in {input_file}"
-                )
+                mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
         else:
-            if not all(x in data.columns for x in required_columns):
-                raise ValueError(
-                    f"Invalid column names in input file: {', '.join(required_columns)} not in {input_file}"
-                )
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
                 2**highest_order,
