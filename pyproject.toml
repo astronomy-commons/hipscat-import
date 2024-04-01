@@ -26,7 +26,7 @@ dependencies = [
     "pyyaml",
     "tqdm",
     "numpy < 1.25",
-    "fsspec <= 2024.2.0", # Remove when pyarrow updates to reflect api changes
+    "fsspec <= 2024.3.1", # Remove when pyarrow updates to reflect api changes
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
