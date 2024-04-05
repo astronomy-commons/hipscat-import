@@ -27,11 +27,9 @@ See related projects:
 
 [![GitHub issue custom search in repo](https://img.shields.io/github/issues-search/astronomy-commons/hipscat-import?color=purple&label=Good%20first%20issues&query=is%3Aopen%20label%3A%22good%20first%20issue%22)](https://github.com/astronomy-commons/hipscat-import/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
-See the [contribution guide](https://hipscat-import.readthedocs.io/en/latest/overview/contributing.html)
+See the [contribution guide](https://hipscat-import.readthedocs.io/en/latest/guide/contributing.html)
 for complete installation instructions and contribution best practices.
 
 ## Acknowledgements
 
-LINCC Frameworks is supported by Schmidt Futures, a philanthropic initiative
-founded by Eric and Wendy Schmidt, as part of the Virtual Institute of 
-Astrophysics (VIA).
+This project is supported by Schmidt Sciences.
