@@ -21,6 +21,8 @@ and provide steps to import those catalogs in case these hints help anyone else.
    sdss
    tic
    zubercal
+   ZTF Bright Transient Survey and New General Catalogue <https://lsdb.readthedocs.io/en/stable/tutorials/ztf_bts-ngc.html>
+   GAIA and DES <https://lsdb.readthedocs.io/en/stable/tutorials/des-gaia.html>
 
 .. tip::
    Want to see more?
