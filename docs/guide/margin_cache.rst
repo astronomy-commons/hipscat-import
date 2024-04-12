@@ -18,8 +18,10 @@ and where to put the output files. A minimal arguments block will look something
     args = MarginCacheArguments(
         input_catalog_path="./my_data/my_catalog",
         output_path="./output",
+        margin_threshold=10.0,
         output_artifact_name="my_catalog_10arcs",
     )
+    
 
 More details on each of these parameters is provided in sections below.
 
