@@ -27,6 +27,9 @@ class RuntimeArguments:
     ## Execution
     tmp_dir: str = ""
     """path for storing intermediate files"""
+    resume: bool = True
+    """if there are existing intermediate resume files, should we
+    read those and continue to run pipeline where we left off"""
     progress_bar: bool = True
     """if true, a tqdm progress bar will be displayed for user
     feedback of map reduce progress"""
@@ -68,6 +71,8 @@ class RuntimeArguments:
             raise ValueError("dask_threads_per_worker should be greater than 0")
 
         self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_artifact_name)
+        if not self.resume:
+            file_io.remove_directory(self.catalog_path, storage_options=self.output_storage_options)
         file_io.make_directory(self.catalog_path, exist_ok=True, storage_options=self.output_storage_options)
 
         if self.tmp_dir:

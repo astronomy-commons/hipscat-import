@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
+import healpy as hp
 import numpy as np
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
@@ -107,36 +108,43 @@ class ResumePlan(PipelineResumePlan):
         - Try to find a combined histogram
         - Otherwise, combine histograms from partials
         - Otherwise, return an empty histogram
-
         """
-        full_histogram = pixel_math.empty_histogram(healpix_order)
-
-        ## Look for the single combined histogram file.
         file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
         if file_io.does_file_or_directory_exist(file_name):
+            # Look for the single combined histogram file
             with open(file_name, "rb") as file_handle:
-                return frombuffer(file_handle.read(), dtype=np.int64)
+                full_histogram = frombuffer(file_handle.read(), dtype=np.int64)
+        else:
+            # Read the histogram from partial binaries
+            full_histogram = self.read_histogram_from_partials(healpix_order)
+        if len(full_histogram) != hp.order2npix(healpix_order):
+            raise ValueError(
+                "The histogram from the previous execution is incompatible "
+                + "with the current healpix order. To run with a different "
+                + "configuration set `resume` to False"
+            )
+        return full_histogram
 
-        ## Otherwise:
-        # - read all the partial histograms
-        # - combine into a single histogram
-        # - write out as a single histogram for future reads
-        # - remove all partial histograms
+    def _get_partial_filenames(self):
         remaining_map_files = self.get_remaining_map_keys()
         if len(remaining_map_files) > 0:
             raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
         histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "**.binary")
-        for file_name in histogram_files:
-            with open(file_name, "rb") as file_handle:
-                full_histogram = np.add(full_histogram, frombuffer(file_handle.read(), dtype=np.int64))
+        return histogram_files
 
-        file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
-        with open(file_name, "wb+") as file_handle:
-            file_handle.write(full_histogram.data)
-        file_io.remove_directory(
-            file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
-            ignore_errors=True,
-        )
+    def read_histogram_from_partials(self, healpix_order):
+        """Combines the histogram partials to get the full histogram."""
+        histogram_files = self._get_partial_filenames()
+        if len(histogram_files) == 0:
+            return pixel_math.empty_histogram(healpix_order)
+        for index, file_name in enumerate(histogram_files):
+            with open(file_name, "rb") as file_handle:
+                full_histogram = (
+                    frombuffer(file_handle.read(), dtype=np.int64)
+                    if index == 0
+                    else np.add(full_histogram, frombuffer(file_handle.read(), dtype=np.int64))
+                )
+        self._reduce_partial_histograms(full_histogram)
         return full_histogram
 
     @classmethod
@@ -157,6 +165,16 @@ class ResumePlan(PipelineResumePlan):
         file_name = file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary")
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
+
+    def _reduce_partial_histograms(self, histogram):
+        """Writes the full histogram to disk, removing the pre-existing partials."""
+        file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
+        with open(file_name, "wb+") as file_handle:
+            file_handle.write(histogram.data)
+        file_io.remove_directory(
+            file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
+            ignore_errors=True,
+        )
 
     def get_remaining_split_keys(self):
         """Gather remaining keys, dropping successful split tasks from done file names.
