@@ -83,13 +83,14 @@ While the pipeline runs, we take notes of our progress so that the pipeline can
 be resumed at a later time, if the job is pre-empted or canceled for any reason.
 
 When instantiating a pipeline, you can use the ``resume`` flag to indicate that
-we can resume from an earlier execution of the pipeline.
+we can resume from an earlier execution of the pipeline. By default, if any resume
+files are found, we will restore the pipeline's previous progress.
 
-By default, if any resume files are found, we will restore the pipeline's previous progress.
-Otherwise, if you've set ``resume=False``, the pipeline will start from scratch.
-
-To address this, go to the temp directory you've specified and remove any intermediate
-files created by the previous runs of the ``hipscat-import`` pipeline.
+If you want to start the pipeline from scratch you can simply set `resume=False`.
+Alternatively, go to the temp directory you've specified and remove any intermediate
+files created by the previous runs of the ``hipscat-import`` pipeline. You should also
+remove the output directory if it has any content. The resume argument performs these
+cleaning operations automatically for you.
 
 Reading input files
 -------------------------------------------------------------------------------

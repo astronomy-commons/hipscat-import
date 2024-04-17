@@ -28,8 +28,9 @@ class RuntimeArguments:
     tmp_dir: str = ""
     """path for storing intermediate files"""
     resume: bool = True
-    """if there are existing intermediate resume files, should we
-    read those and continue to run pipeline where we left off"""
+    """If True, we try to read any existing intermediate files and continue to run
+    the pipeline where we left off. If False, we start the import from scratch,
+    overwriting any content of the output directory."""
     progress_bar: bool = True
     """if true, a tqdm progress bar will be displayed for user
     feedback of map reduce progress"""
@@ -72,7 +73,9 @@ class RuntimeArguments:
 
         self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_artifact_name)
         if not self.resume:
-            file_io.remove_directory(self.catalog_path, storage_options=self.output_storage_options)
+            file_io.remove_directory(
+                self.catalog_path, ignore_errors=True, storage_options=self.output_storage_options
+            )
         file_io.make_directory(self.catalog_path, exist_ok=True, storage_options=self.output_storage_options)
 
         if self.tmp_dir:
