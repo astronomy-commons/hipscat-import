@@ -119,9 +119,9 @@ class ResumePlan(PipelineResumePlan):
             full_histogram = self.read_histogram_from_partials(healpix_order)
         if len(full_histogram) != hp.order2npix(healpix_order):
             raise ValueError(
-                "The histogram from the previous execution is incompatible "
-                + "with the current healpix order. To run with a different "
-                + "configuration set `resume` to False"
+                "The histogram from the previous execution is incompatible with "
+                + "the highest healpix order. To start the importing pipeline "
+                + "from scratch with the current order set `resume` to False."
             )
         return full_histogram
 

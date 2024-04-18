@@ -172,21 +172,21 @@ def test_resume_dask_runner_diff_args(
         os.path.join(tmp_path, "resume_catalog", "Norder=0"),
     )
 
-    with pytest.raises(ValueError, match="incompatible with the current healpix order"):
-        args = ImportArguments(
-            output_artifact_name="resume_catalog",
-            input_path=small_sky_parts_dir,
-            file_reader="csv",
-            output_path=tmp_path,
-            dask_tmp=tmp_path,
-            tmp_dir=tmp_path,
-            resume_tmp=os.path.join(tmp_path, "tmp"),
-            lowest_healpix_order=1,
-            highest_healpix_order=1,
-            pixel_threshold=1000,
-            progress_bar=False,
-        )
-        runner.run(args, dask_client)
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="incompatible with the highest healpix order"):
+            args = ImportArguments(
+                output_artifact_name="resume_catalog",
+                input_path=small_sky_parts_dir,
+                file_reader="csv",
+                output_path=tmp_path,
+                dask_tmp=tmp_path,
+                tmp_dir=tmp_path,
+                resume_tmp=os.path.join(tmp_path, "tmp"),
+                constant_healpix_order=1,
+                pixel_threshold=1000,
+                progress_bar=False,
+            )
+            runner.run(args, dask_client)
 
     # Running with resume set to "False" will start the pipeline from scratch
     args = ImportArguments(
@@ -197,8 +197,7 @@ def test_resume_dask_runner_diff_args(
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
         resume_tmp=os.path.join(tmp_path, "tmp"),
-        lowest_healpix_order=1,
-        highest_healpix_order=1,
+        constant_healpix_order=1,
         pixel_threshold=1000,
         progress_bar=False,
         resume=False,
