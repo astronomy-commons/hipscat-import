@@ -21,11 +21,11 @@ dependencies = [
     "healpy",
     "hipscat >= 0.2.9",
     "ipykernel", # Support for Jupyter notebooks
-    "pandas < 2.1.0",
+    "pandas",
     "pyarrow",
     "pyyaml",
     "tqdm",
-    "numpy < 1.25",
+    "numpy",
     "fsspec <= 2024.2.0", # Remove when pyarrow updates to reflect api changes
 ]
 
