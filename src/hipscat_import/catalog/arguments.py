@@ -49,9 +49,6 @@ class ImportArguments(RuntimeArguments):
     use_schema_file: str | None = None
     """path to a parquet file with schema metadata. this will be used for column
     metadata when writing the files, if specified"""
-    resume: bool = True
-    """if there are existing intermediate resume files, should we
-    read those and continue to create a new catalog where we left off"""
     constant_healpix_order: int = -1
     """healpix order to use when mapping. if this is
     a positive number, this will be the order of all final pixels and we

@@ -38,7 +38,6 @@ def test_run_index(
         indexing_column="id",
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         progress_bar=False,
     )
     runner.run(args, dask_client)
@@ -82,7 +81,6 @@ def test_run_index_on_source(
         indexing_column="source_id",
         output_path=tmp_path,
         output_artifact_name="small_sky_source_id_index",
-        overwrite=True,
         progress_bar=False,
     )
     runner.run(args, dask_client)
@@ -127,7 +125,6 @@ def test_run_index_on_source_object_id(
         indexing_column="object_id",
         output_path=tmp_path,
         output_artifact_name="small_sky_source_object_id_index",
-        overwrite=True,
         include_hipscat_index=False,
         progress_bar=False,
     )

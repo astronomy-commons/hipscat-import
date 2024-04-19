@@ -41,8 +41,7 @@ class PipelineResumePlan:
                 warnings.warn(
                     f"tmp_path ({self.tmp_path}) contains intermediate files; resuming prior progress."
                 )
-        else:
-            file_io.make_directory(self.tmp_path, exist_ok=True)
+        file_io.make_directory(self.tmp_path, exist_ok=True)
 
     def done_file_exists(self, stage_name):
         """Is there a file at a given path?
