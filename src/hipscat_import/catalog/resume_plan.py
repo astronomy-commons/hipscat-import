@@ -135,16 +135,18 @@ class ResumePlan(PipelineResumePlan):
     def read_histogram_from_partials(self, healpix_order):
         """Combines the histogram partials to get the full histogram."""
         histogram_files = self._get_partial_filenames()
-        if len(histogram_files) == 0:
-            return pixel_math.empty_histogram(healpix_order)
+        full_histogram = pixel_math.empty_histogram(healpix_order)
+        # Read the partial histograms and make sure they are all the same size
         for index, file_name in enumerate(histogram_files):
             with open(file_name, "rb") as file_handle:
-                full_histogram = (
-                    frombuffer(file_handle.read(), dtype=np.int64)
-                    if index == 0
-                    else np.add(full_histogram, frombuffer(file_handle.read(), dtype=np.int64))
-                )
-        self._reduce_partial_histograms(full_histogram)
+                partial = frombuffer(file_handle.read(), dtype=np.int64)
+                if index == 0:
+                    full_histogram = partial
+                elif len(partial) != len(full_histogram):
+                    raise ValueError("The histogram partials have inconsistent sizes.")
+                else:
+                    full_histogram = np.add(full_histogram, partial)
+        self._write_combined_histogram(full_histogram)
         return full_histogram
 
     @classmethod
@@ -166,7 +168,7 @@ class ResumePlan(PipelineResumePlan):
         with open(file_name, "wb+") as file_handle:
             file_handle.write(histogram.data)
 
-    def _reduce_partial_histograms(self, histogram):
+    def _write_combined_histogram(self, histogram):
         """Writes the full histogram to disk, removing the pre-existing partials."""
         file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
         with open(file_name, "wb+") as file_handle:
