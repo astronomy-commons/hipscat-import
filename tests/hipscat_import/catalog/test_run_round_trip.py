@@ -44,7 +44,6 @@ def test_import_source_table(
         dask_tmp=tmp_path,
         highest_healpix_order=2,
         pixel_threshold=3_000,
-        overwrite=True,
         progress_bar=False,
     )
 

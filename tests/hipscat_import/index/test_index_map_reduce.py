@@ -24,7 +24,6 @@ def test_create_index(
         indexing_column="id",
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         progress_bar=False,
     )
     mr.create_index(args, dask_client)
@@ -52,7 +51,6 @@ def test_create_index_no_hipscat_index(small_sky_object_catalog, tmp_path, dask_
         include_hipscat_index=False,
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         progress_bar=False,
     )
     mr.create_index(args, dask_client)
@@ -74,7 +72,6 @@ def test_create_index_no_order_pixel(small_sky_object_catalog, tmp_path, dask_cl
         include_order_pixel=False,
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         progress_bar=False,
     )
     mr.create_index(args, dask_client)
@@ -94,7 +91,6 @@ def test_create_index_source(small_sky_source_catalog, assert_parquet_file_index
         indexing_column="source_id",
         output_path=tmp_path,
         output_artifact_name="small_sky_source_index",
-        overwrite=True,
         progress_bar=False,
     )
     mr.create_index(args, dask_client)
@@ -132,7 +128,6 @@ def test_create_index_with_divisions(
         indexing_column="source_id",
         output_path=tmp_path,
         output_artifact_name="small_sky_source_index",
-        overwrite=True,
         division_hints=divisions,
         drop_duplicates=False,
         progress_bar=False,
@@ -168,7 +163,6 @@ def test_create_index_source_by_object(
         indexing_column="object_id",
         output_path=tmp_path,
         output_artifact_name="small_sky_source_index",
-        overwrite=True,
         progress_bar=False,
     )
     mr.create_index(args, dask_client)
@@ -201,7 +195,6 @@ def test_create_index_extra_columns(
         output_path=tmp_path,
         extra_columns=["source_ra"],
         output_artifact_name="small_sky_source_index",
-        overwrite=True,
         progress_bar=False,
     )
     mr.create_index(args, dask_client)

@@ -30,7 +30,6 @@ def test_empty_required(small_sky_parts_dir, tmp_path):
             file_reader="csv",
             input_path="",
             output_path=tmp_path,
-            overwrite=True,
         )
 
 
@@ -52,7 +51,6 @@ def test_invalid_paths(blank_data_dir, tmp_path):
             input_path="path",
             file_reader="csv",
             output_path=tmp_path,
-            overwrite=True,
         )
 
 
@@ -64,7 +62,6 @@ def test_missing_paths(tmp_path):
             file_reader="csv",
             input_path=tmp_path,
             output_path=tmp_path,
-            overwrite=True,
         )
 
 
@@ -119,7 +116,6 @@ def test_healpix_args(blank_data_dir, tmp_path):
             file_reader="csv",
             output_path=tmp_path,
             highest_healpix_order=30,
-            overwrite=True,
         )
     with pytest.raises(ValueError, match="pixel_threshold"):
         ImportArguments(
@@ -128,7 +124,6 @@ def test_healpix_args(blank_data_dir, tmp_path):
             file_reader="csv",
             output_path=tmp_path,
             pixel_threshold=3,
-            overwrite=True,
         )
     with pytest.raises(ValueError, match="constant_healpix_order"):
         ImportArguments(
@@ -137,7 +132,6 @@ def test_healpix_args(blank_data_dir, tmp_path):
             file_reader="csv",
             output_path=tmp_path,
             constant_healpix_order=30,
-            overwrite=True,
         )
 
 
@@ -179,7 +173,6 @@ def test_use_hipscat_index(blank_data_dir, tmp_path):
         output_path=tmp_path,
         use_hipscat_index=True,
         sort_columns="",  # empty string is ok
-        overwrite=True,
     )
 
 

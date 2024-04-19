@@ -42,7 +42,6 @@ def test_empty_required(tmp_path, small_sky_object_catalog, small_sky_source_cat
                 output_path=test_args[5],
                 ## always set these False
                 progress_bar=False,
-                overwrite=True,
             )
 
 
@@ -58,7 +57,6 @@ def test_catalog_paths(tmp_path, small_sky_object_catalog, small_sky_source_cata
             output_artifact_name="small_sky_association",
             output_path=tmp_path,
             progress_bar=False,
-            overwrite=True,
         )
 
     ## Source catalog path is bad.
@@ -71,7 +69,6 @@ def test_catalog_paths(tmp_path, small_sky_object_catalog, small_sky_source_cata
             output_artifact_name="small_sky_association",
             output_path=tmp_path,
             progress_bar=False,
-            overwrite=True,
         )
 
 
@@ -87,5 +84,4 @@ def test_compute_partition_size(tmp_path, small_sky_object_catalog, small_sky_so
             output_path=tmp_path,
             progress_bar=False,
             compute_partition_size=10,  ## not a valid option
-            overwrite=True,
         )

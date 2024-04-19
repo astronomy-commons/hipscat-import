@@ -57,28 +57,6 @@ def test_invalid_paths(tmp_path):
         RuntimeArguments(output_artifact_name="catalog", output_path=tmp_path, dask_tmp="/foo/path")
 
 
-def test_output_overwrite(tmp_path):
-    """Test that we can write to existing directory, but not one with contents"""
-    ## Create the directory first
-    RuntimeArguments(
-        output_artifact_name="blank",
-        output_path=tmp_path,
-    )
-
-    with pytest.raises(ValueError, match="use --overwrite flag"):
-        RuntimeArguments(
-            output_artifact_name="blank",
-            output_path=tmp_path,
-        )
-
-    ## No error with overwrite flag
-    RuntimeArguments(
-        output_artifact_name="blank",
-        output_path=tmp_path,
-        overwrite=True,
-    )
-
-
 def test_good_paths(tmp_path):
     """Required arguments are provided, and paths are found."""
     _ = RuntimeArguments(
@@ -113,7 +91,6 @@ def test_tmp_path_creation(tmp_path):
         output_artifact_name="special_catalog",
         output_path=output_path,
         tmp_dir=temp_path,
-        overwrite=True,
         progress_bar=False,
     )
     assert "special_catalog" in str(args.tmp_path)
@@ -124,7 +101,6 @@ def test_tmp_path_creation(tmp_path):
         output_artifact_name="special_catalog",
         output_path=output_path,
         dask_tmp=dask_tmp_path,
-        overwrite=True,
     )
     assert "special_catalog" in str(args.tmp_path)
     assert "unique_dask_directory" in str(args.tmp_path)
@@ -160,4 +136,4 @@ def test_provenance_info(tmp_path):
     )
 
     runtime_args = args.provenance_info()["runtime_args"]
-    assert len(runtime_args) == 10
+    assert len(runtime_args) == 9

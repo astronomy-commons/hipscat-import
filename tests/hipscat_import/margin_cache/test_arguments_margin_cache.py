@@ -24,7 +24,6 @@ def test_empty_required(tmp_path):
             margin_threshold=5.0,
             output_path=tmp_path,
             output_artifact_name="catalog_cache",
-            overwrite=True,
         )
 
 
