@@ -28,7 +28,6 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             indexing_column="id",
             output_path=tmp_path,
             output_artifact_name="small_sky_object_index",
-            overwrite=True,
         )
 
     ## Indexing column is required.
@@ -38,7 +37,6 @@ def test_empty_required(tmp_path, small_sky_object_catalog):
             indexing_column="",
             output_path=tmp_path,
             output_artifact_name="small_sky_object_index",
-            overwrite=True,
         )
 
 
@@ -91,7 +89,6 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         indexing_column="id",
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         include_hipscat_index=True,
         include_order_pixel=True,
     )
@@ -101,7 +98,6 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         indexing_column="id",
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         include_hipscat_index=True,
         include_order_pixel=False,
     )
@@ -110,7 +106,6 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         indexing_column="id",
         output_path=tmp_path,
         output_artifact_name="small_sky_object_index",
-        overwrite=True,
         include_hipscat_index=False,
         include_order_pixel=True,
     )

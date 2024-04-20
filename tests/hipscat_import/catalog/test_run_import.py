@@ -76,7 +76,6 @@ def test_resume_dask_runner(
             dask_tmp=tmp_path,
             tmp_dir=tmp_path,
             resume_tmp=os.path.join(tmp_path, "tmp"),
-            overwrite=True,
             highest_healpix_order=0,
             pixel_threshold=1000,
             progress_bar=False,
@@ -117,7 +116,6 @@ def test_resume_dask_runner(
         output_path=tmp_path,
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
-        overwrite=True,
         highest_healpix_order=0,
         pixel_threshold=1000,
         progress_bar=False,
@@ -133,6 +131,133 @@ def test_resume_dask_runner(
     assert catalog.catalog_info.total_rows == 131
     assert len(catalog.get_healpix_pixels()) == 1
     assert_parquet_file_ids(output_file, "id", expected_ids)
+
+
+@pytest.mark.dask
+def test_resume_dask_runner_diff_pixel_order(
+    dask_client,
+    small_sky_parts_dir,
+    resume_dir,
+    tmp_path,
+    assert_parquet_file_ids,
+):
+    """Test execution in the presence of histogram files that are not compatible
+    with the current HEALPix order."""
+    ## First, copy over our intermediate files.
+    ## This prevents overwriting source-controlled resume files.
+    intermediate_dir = os.path.join(tmp_path, "resume_catalog", "intermediate")
+    shutil.copytree(
+        os.path.join(resume_dir, "intermediate"),
+        intermediate_dir,
+    )
+
+    ## Now set up our resume files to match previous work.
+    resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
+    ResumePlan(tmp_path=resume_tmp, progress_bar=False)
+    histogram = hist.empty_histogram(0)
+    histogram[11] = 131
+    empty = hist.empty_histogram(0)
+    for file_index in range(0, 5):
+        ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
+        ResumePlan.write_partial_histogram(
+            tmp_path=resume_tmp,
+            mapping_key=f"map_{file_index}",
+            histogram=histogram if file_index == 0 else empty,
+        )
+
+    ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
+
+    shutil.copytree(
+        os.path.join(resume_dir, "Norder=0"),
+        os.path.join(tmp_path, "resume_catalog", "Norder=0"),
+    )
+
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="incompatible with the highest healpix order"):
+            args = ImportArguments(
+                output_artifact_name="resume_catalog",
+                input_path=small_sky_parts_dir,
+                file_reader="csv",
+                output_path=tmp_path,
+                dask_tmp=tmp_path,
+                tmp_dir=tmp_path,
+                resume_tmp=os.path.join(tmp_path, "tmp"),
+                constant_healpix_order=1,
+                pixel_threshold=1000,
+                progress_bar=False,
+            )
+            runner.run(args, dask_client)
+
+    # Running with resume set to "False" will start the pipeline from scratch
+    args = ImportArguments(
+        output_artifact_name="resume_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        tmp_dir=tmp_path,
+        resume_tmp=os.path.join(tmp_path, "tmp"),
+        constant_healpix_order=1,
+        pixel_threshold=1000,
+        progress_bar=False,
+        resume=False,
+    )
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.ra_column == "ra"
+    assert catalog.catalog_info.dec_column == "dec"
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_healpix_pixels()) == 4
+
+    for n_pix in range(44, 48):
+        filename = os.path.join("Norder=1", "Dir=0", f"Npix={n_pix}.parquet")
+        output_filepath = os.path.join(args.catalog_path, filename)
+        expected_filepath = os.path.join(resume_dir, filename)
+        expected_file = pd.read_parquet(expected_filepath, engine="pyarrow")
+        assert_parquet_file_ids(output_filepath, "id", expected_file["id"].to_numpy())
+
+
+@pytest.mark.dask
+def test_resume_dask_runner_histograms_diff_size(
+    dask_client,
+    small_sky_parts_dir,
+    tmp_path,
+):
+    """Tests that the pipeline errors if the partial histograms have different sizes."""
+    resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
+    ResumePlan(tmp_path=resume_tmp, progress_bar=False)
+
+    # We'll create mock partial histograms of size 0 and 2
+    histogram = hist.empty_histogram(0)
+    wrong_histogram = hist.empty_histogram(2)
+
+    for file_index in range(0, 5):
+        ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
+        ResumePlan.write_partial_histogram(
+            tmp_path=resume_tmp,
+            mapping_key=f"map_{file_index}",
+            histogram=histogram if file_index % 2 == 0 else wrong_histogram,
+        )
+
+    with pytest.warns(UserWarning, match="resuming prior progress"):
+        with pytest.raises(ValueError, match="histogram partials have inconsistent sizes"):
+            args = ImportArguments(
+                output_artifact_name="resume_catalog",
+                input_path=small_sky_parts_dir,
+                file_reader="csv",
+                output_path=tmp_path,
+                dask_tmp=tmp_path,
+                tmp_dir=tmp_path,
+                resume_tmp=os.path.join(tmp_path, "tmp"),
+                constant_healpix_order=1,
+                pixel_threshold=1000,
+                progress_bar=False,
+            )
+            runner.run(args, dask_client)
 
 
 @pytest.mark.dask

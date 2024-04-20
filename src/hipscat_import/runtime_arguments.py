@@ -27,9 +27,10 @@ class RuntimeArguments:
     ## Execution
     tmp_dir: str = ""
     """path for storing intermediate files"""
-    overwrite: bool = False
-    """if there is existing data at the `catalog_path`, 
-    should we overwrite and create a new catalog"""
+    resume: bool = True
+    """If True, we try to read any existing intermediate files and continue to run
+    the pipeline where we left off. If False, we start the import from scratch,
+    overwriting any content of the output directory."""
     progress_bar: bool = True
     """if true, a tqdm progress bar will be displayed for user
     feedback of map reduce progress"""
@@ -71,12 +72,10 @@ class RuntimeArguments:
             raise ValueError("dask_threads_per_worker should be greater than 0")
 
         self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_artifact_name)
-        if not self.overwrite:
-            if file_io.directory_has_contents(self.catalog_path, storage_options=self.output_storage_options):
-                raise ValueError(
-                    f"output_path ({self.catalog_path}) contains files."
-                    " choose a different directory or use --overwrite flag"
-                )
+        if not self.resume:
+            file_io.remove_directory(
+                self.catalog_path, ignore_errors=True, storage_options=self.output_storage_options
+            )
         file_io.make_directory(self.catalog_path, exist_ok=True, storage_options=self.output_storage_options)
 
         if self.tmp_dir:
@@ -110,7 +109,6 @@ class RuntimeArguments:
             "output_path": self.output_path,
             "output_artifact_name": self.output_artifact_name,
             "tmp_dir": self.tmp_dir,
-            "overwrite": self.overwrite,
             "dask_tmp": self.dask_tmp,
             "dask_n_workers": self.dask_n_workers,
             "dask_threads_per_worker": self.dask_threads_per_worker,

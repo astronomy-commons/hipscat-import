@@ -121,11 +121,6 @@ def formats_pandasindex(test_data_dir):
 
 
 @pytest.fixture
-def formats_multiindex(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats", "multiindex.parquet")
-
-
-@pytest.fixture
 def small_sky_parts_dir(test_data_dir):
     return os.path.join(test_data_dir, "small_sky_parts")
 
