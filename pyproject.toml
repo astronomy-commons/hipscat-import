@@ -18,7 +18,7 @@ dependencies = [
     "dask[complete]>=2024.3.0", # Includes dask expressions.
     "deprecated",
     "healpy",
-    "hipscat >= 0.2.9",
+    "hipscat >=0.3.0",
     "ipykernel", # Support for Jupyter notebooks
     "pandas",
     "pyarrow",
