@@ -15,8 +15,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "dask<=2024.2.0",
-    "dask[distributed]",
+    "dask[complete]>=2024.3.0", # Includes dask expressions.
     "deprecated",
     "healpy",
     "hipscat >= 0.2.9",

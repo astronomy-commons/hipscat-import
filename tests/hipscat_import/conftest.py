@@ -32,7 +32,7 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         timeout = None
         for mark in item.iter_markers(name="dask"):
-            timeout = 5
+            timeout = 10
             if "timeout" in mark.kwargs:
                 timeout = int(mark.kwargs.get("timeout"))
             if "skip_ray" in mark.kwargs and use_ray:
