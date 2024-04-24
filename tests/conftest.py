@@ -31,7 +31,7 @@ def dask_client(use_ray):
 
         disable_dask_on_ray()
     else:
-        client = Client()
+        client = Client(n_workers=1, threads_per_worker=1)
         yield client
         client.close()
 

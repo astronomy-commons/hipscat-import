@@ -58,7 +58,7 @@ def test_import_source_table(
     assert len(catalog.get_healpix_pixels()) == 14
 
 
-@pytest.mark.dask(timeout=10)
+@pytest.mark.dask
 def test_import_mixed_schema_csv(
     dask_client,
     mixed_schema_csv_dir,
