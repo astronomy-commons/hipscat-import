@@ -225,7 +225,18 @@ class FitsReader(InputReader):
         read_rows = 0
 
         while read_rows < total_rows:
-            yield table[read_rows : read_rows + self.chunksize].to_pandas()
+            df_chunk = table[read_rows : read_rows + self.chunksize].to_pandas()
+            for column in df_chunk.columns:
+                if (
+                    df_chunk[column].dtype == object
+                    and df_chunk[column].apply(lambda x: isinstance(x, bytes)).any()
+                ):
+                    df_chunk[column] = df_chunk[column].apply(
+                        lambda x: x.decode("utf-8") if isinstance(x, bytes) else x
+                    )
+
+            yield df_chunk
+
             read_rows += self.chunksize
 
     def provenance_info(self) -> dict:
