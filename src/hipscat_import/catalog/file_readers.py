@@ -4,6 +4,7 @@ import abc
 from typing import Any, Dict, Union
 
 import pyarrow.parquet as pq
+from astropy.io import ascii as ascii_reader
 from astropy.table import Table
 from hipscat.io import FilePointer, file_io
 
@@ -38,7 +39,7 @@ def get_file_reader(
         skip_column_names (list[str]): for fits files, a list of columns to remove.
         type_map (dict): for CSV files, the data types to use for columns
     """
-    if "csv" in file_format:
+    if file_format == "csv":
         return CsvReader(
             chunksize=chunksize,
             schema_file=schema_file,
@@ -46,6 +47,8 @@ def get_file_reader(
             type_map=type_map,
             **kwargs,
         )
+    if file_format == "ecsv":
+        return AstropyEcsvReader(**kwargs)
     if file_format == "fits":
         return FitsReader(
             chunksize=chunksize,
@@ -178,6 +181,27 @@ class CsvReader(InputReader):
             "kwargs": str_kwargs,
         }
         return provenance_info
+
+
+class AstropyEcsvReader(InputReader):
+    """Reads astropy ascii .ecsv files.
+
+    Note that this is NOT a chunked reader. Use caution when reading
+    large ECSV files with this reader."""
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    def read(self, input_file, read_columns=None):
+        self.regular_file_exists(input_file, **self.kwargs)
+        if read_columns:
+            self.kwargs["include_names"] = read_columns
+
+        astropy_table = ascii_reader.read(input_file, format="ecsv", **self.kwargs)
+        yield astropy_table.to_pandas()
+
+    def provenance_info(self):
+        return {"input_reader_type": "AstropyEcsvReader"}
 
 
 class FitsReader(InputReader):

@@ -477,3 +477,35 @@ def test_import_gaia_minimum(
     assert "Norder" in column_names
     assert "Dir" in column_names
     assert "Npix" in column_names
+
+
+@pytest.mark.dask
+def test_gaia_ecsv(
+    dask_client,
+    formats_dir,
+    tmp_path,
+):
+    input_file = os.path.join(formats_dir, "gaia_epoch.ecsv")
+
+    args = ImportArguments(
+        output_artifact_name="gaia_e_astropy",
+        input_file_list=[input_file],
+        file_reader="ecsv",
+        ra_column="ra",
+        dec_column="dec",
+        sort_columns="solution_id,source_id",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 3
+    assert len(catalog.get_healpix_pixels()) == 1

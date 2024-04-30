@@ -1,0 +1,383 @@
+# %ECSV 1.0
+# ---
+# delimiter: ','
+# meta: !!omap
+# - RELEASE: Gaia DR3
+# - TABLE: epoch_photometry
+# - DESCRIPTION: >
+#     Epoch photometry. Each row in this table contains the light curve for a given object in bands G, BP and RP as stored in the DataLink Massive data base. This table makes extensive use of array types. It can be obtained selecting the RAW data structure option. A flat table (sparse cube), which one photometric point per source per row can be obtained using INDIVIDUAL or COMBINED. 
+#     
+#     Note this table is not available through the main archive TAP interface. Data are delivered via the Massive Data service indexed by the VO Datalink protocol and described in Chapter~\ref{chap:archive}. For example this can be actioned in the archive user interface by querying the main source catalogue {\tt GaiaSource} and selecting {\tt hasEpochPhotometry}~{\tt = 't'}.
+# - CITATION: >
+#     How to cite and acknowledge Gaia: 
+#     https://gea.esac.esa.int/archive/documentation/credits.html 
+# - KNOWN_ISSUES: >
+#     Known issues: 
+#     https://www.cosmos.esa.int/web/gaia-users/known-issues 
+# - DOCUMENTATION: >
+#     Tutorials and documentation: 
+#     https://www.cosmos.esa.int/web/gaia-users/archive 
+# datatype:
+# - 
+#   name: solution_id
+#   datatype: int64
+#   description: Solution Identifier
+#   meta:
+#     ucd: meta.version
+# - 
+#   name: source_id
+#   datatype: int64
+#   description: Unique source identifier (unique within a particular Data Release)
+#   meta:
+#     ucd: meta.id;meta.main
+# - 
+#   name: ra
+#   datatype: float64
+#   unit: deg
+#   description: Right ascension
+#   meta:
+#     ucd: pos.eq.ra;meta.main
+# - 
+#   name: dec
+#   datatype: float64
+#   unit: deg
+#   description: Declination
+#   meta:
+#     ucd: pos.eq.dec;meta.main
+# - 
+#   name: n_transits
+#   datatype: int16
+#   description: Number of Gaia transits
+#   meta:
+#     ucd: meta.number
+# - 
+#   name: transit_id
+#   datatype: string 
+#   subtype: 'int64[null]' 
+#   description: Transit unique identifier
+#   meta:
+#     ucd: meta.id
+# - 
+#   name: g_transit_time
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: d
+#   description: Transit averaged G band observing time
+#   meta:
+#     ucd: time.epoch
+# - 
+#   name: g_transit_flux
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: "'electron'.s**-1"
+#   description: Transit averaged G band flux
+#   meta:
+#     ucd: phot.flux;stat.mean
+# - 
+#   name: g_transit_flux_error
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: "'electron'.s**-1"
+#   description: Transit averaged G band flux error
+#   meta:
+#     ucd: stat.error;phot.flux;em.opt
+# - 
+#   name: g_transit_flux_over_error
+#   datatype: string 
+#   subtype: 'float32[null]' 
+#   description: Transit averaged G band flux divided by its error
+#   meta:
+#     ucd: stat.snr;phot.flux;em.opt
+# - 
+#   name: g_transit_mag
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: mag
+#   description: Transit averaged G band Vega magnitude
+#   meta:
+#     ucd: phot.mag;em.opt
+# - 
+#   name: g_transit_n_obs
+#   datatype: string 
+#   subtype: 'int8[null]' 
+#   description: Number of CCD observations contributing to transit averaged G band flux
+#   meta:
+#     ucd: meta.number
+# - 
+#   name: bp_obs_time
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: d
+#   description: BP CCD transit observing time
+#   meta:
+#     ucd: time.epoch
+# - 
+#   name: bp_flux
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: "'electron'.s**-1"
+#   description: BP band flux
+#   meta:
+#     ucd: phot.flux;stat.mean
+# - 
+#   name: bp_flux_error
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: "'electron'.s**-1"
+#   description: BP band flux error
+#   meta:
+#     ucd: stat.error;phot.flux;em.opt.B
+# - 
+#   name: bp_flux_over_error
+#   datatype: string 
+#   subtype: 'float32[null]' 
+#   description: BP band flux divided by its error
+#   meta:
+#     ucd: stat.snr;phot.flux;em.opt.B
+# - 
+#   name: bp_mag
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: mag
+#   description: BP band Vega magnitude
+#   meta:
+#     ucd: phot.mag;em.opt.B
+# - 
+#   name: rp_obs_time
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: d
+#   description: RP CCD transit observing time
+#   meta:
+#     ucd: time.epoch
+# - 
+#   name: rp_flux
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: "'electron'.s**-1"
+#   description: RP band flux
+#   meta:
+#     ucd: phot.flux;stat.mean
+# - 
+#   name: rp_flux_error
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: "'electron'.s**-1"
+#   description: RP band flux error
+#   meta:
+#     ucd: stat.error;phot.flux;em.opt.R
+# - 
+#   name: rp_flux_over_error
+#   datatype: string 
+#   subtype: 'float32[null]' 
+#   description: RP band flux divided by its error
+#   meta:
+#     ucd: stat.snr;phot.flux;em.opt.R
+# - 
+#   name: rp_mag
+#   datatype: string 
+#   subtype: 'float64[null]' 
+#   unit: mag
+#   description: RP band Vega magnitude
+#   meta:
+#     ucd: phot.mag;em.opt.R
+# - 
+#   name: photometry_flag_noisy_data
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: G band flux scatter larger than expected by photometry processing (all CCDs considered)
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_sm_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: SM transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af1_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF1 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af2_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF2 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af3_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF3 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af4_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF4 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af5_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF5 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af6_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF6 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af7_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF7 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af8_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF8 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af9_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF9 transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_bp_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: BP transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_rp_unavailable
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: RP transit unavailable by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_sm_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: SM transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af1_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF1 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af2_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF2 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af3_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF3 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af4_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF4 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af5_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF5 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af6_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF6 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af7_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF7 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af8_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF8 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_af9_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: AF9 transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_bp_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: BP transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: photometry_flag_rp_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: RP transit rejected by photometry processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: variability_flag_g_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: Average G transit photometry rejected by variability processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: variability_flag_bp_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: BP transit photometry rejected by variability processing
+#   meta:
+#     ucd: meta.code.status
+# - 
+#   name: variability_flag_rp_reject
+#   datatype: string 
+#   subtype: 'bool[null]' 
+#   description: RP transit photometry rejected by variability processing
+#   meta:
+#     ucd: meta.code.status
+solution_id,source_id,ra,dec,n_transits,transit_id,g_transit_time,g_transit_flux,g_transit_flux_error,g_transit_flux_over_error,g_transit_mag,g_transit_n_obs,bp_obs_time,bp_flux,bp_flux_error,bp_flux_over_error,bp_mag,rp_obs_time,rp_flux,rp_flux_error,rp_flux_over_error,rp_mag,photometry_flag_noisy_data,photometry_flag_sm_unavailable,photometry_flag_af1_unavailable,photometry_flag_af2_unavailable,photometry_flag_af3_unavailable,photometry_flag_af4_unavailable,photometry_flag_af5_unavailable,photometry_flag_af6_unavailable,photometry_flag_af7_unavailable,photometry_flag_af8_unavailable,photometry_flag_af9_unavailable,photometry_flag_bp_unavailable,photometry_flag_rp_unavailable,photometry_flag_sm_reject,photometry_flag_af1_reject,photometry_flag_af2_reject,photometry_flag_af3_reject,photometry_flag_af4_reject,photometry_flag_af5_reject,photometry_flag_af6_reject,photometry_flag_af7_reject,photometry_flag_af8_reject,photometry_flag_af9_reject,photometry_flag_bp_reject,photometry_flag_rp_reject,variability_flag_g_reject,variability_flag_bp_reject,variability_flag_rp_reject
+375316653866487564,10655814178816,45.176533,0.260830,16,"[23446114172990364,34116674451158251,34120766734792046,37064561981297838,37074302784136557,44166836144588237,45566799985943100,46958511299260633,46962603569767842,54882924246995834,54887016538231279,56503847820891835,57830886072431104,66552874274932640,67686401786008481,67690494068966827]","[1820.8582445068785,2013.8238611752959,2013.8978742516988,2067.1397937607753,2067.3159665807166,2195.581168307347,2220.8964950896507,2246.0624502301457,2246.1364501657963,2389.3718159999257,2389.4458367226107,2418.688149835204,2442.689066987086,2600.4175280985633,2620.9149683016713,2620.9889609900306]","[88.4427029996188,111.9332126821821,107.38546026397574,119.91350576077532,125.68656494896341,115.56347347027378,114.66917181278484,117.86805670276284,111.16039001011782,105.13957313828779,112.16786015978207,104.4884401000525,107.43448576279673,146.37881737940523,122.72002458471708,134.16915171066083]","[4.6663981134041865,3.1378611371902063,7.597602949764081,3.742846805173082,5.8635889749549905,4.979218170868872,2.6967412515144766,4.181668589217119,7.599314802545037,4.700957555987714,4.967312613328217,5.384889310883042,2.450638488837192,43.655084105686335,4.207357299856779,3.421674196629076]","[18.953098,35.671818,14.134124,32.038048,21.435091,23.20916,42.521385,28.186848,14.627686,22.365564,22.581196,19.404009,43.839386,3.353076,29.16796,39.21155]","[20.820711849343382,20.564969444648,20.610003159796424,20.49019661683444,20.43914472455841,20.530315399859386,20.538750177384102,20.508876558672828,20.5724917124421,20.632951343378444,20.562695779897915,20.639696252862784,20.609507593523972,20.273671281821343,20.465078283035865,20.36823518220249]","[9,9,9,9,9,8,8,9,9,8,9,9,9,8,9,7]","[NaN,2013.824175991924,2013.898188556091,2067.140108900182,2067.316280984657,2195.5815110299773,2220.8967818744018,NaN,2246.1367646002964,2389.372138040189,NaN,NaN,2442.6893817945693,2600.4178708493787,2620.9152827539974,2620.989283712845]","[NaN,50.02119536688079,60.92343031534604,98.46241228767994,102.50012951988501,66.49032128954433,23.783341359526982,NaN,115.07244751824801,26.191248721685252,NaN,NaN,157841.99293824387,124.99197404182677,64.96586837424123,151.18554907624576]","[NaN,18.10006450465289,14.268000336991522,13.597454758682364,16.404889761840895,18.189023259256242,13.290053652017367,NaN,18.667629743763264,22.32544752004266,NaN,NaN,190.46744913505594,25.563115323165963,17.299873693596094,25.768016739249262]","[NaN,2.763592,4.2699347,7.2412386,6.248145,3.655519,1.7895595,NaN,6.1642776,1.1731567,NaN,NaN,828.7085,4.889544,3.75528,5.8671784]","[NaN,21.09065705093793,20.87658134465433,20.355366036799484,20.311731180373236,20.781646136993224,21.897860042565135,NaN,20.186113839894244,21.79315170379229,NaN,NaN,12.34298582642162,20.096336898102376,20.806829096110604,19.889766511964766]","[NaN,2013.824262814028,2013.8982777757303,2067.140194101321,2067.31636967502,2195.58159843649,2220.8968681661945,2246.062853809447,2246.136853256234,2389.372223408542,NaN,2418.6885499463165,2442.689468876669,2600.4179581277053,2620.91537096986,2620.989371130907]","[NaN,128.36870228920998,1224.480103808764,52.32976200924867,67.34696176210835,100.16059071557785,35.634526749900566,114.27883933199361,52.65048144610354,1566.8893953334514,NaN,67.09300395365047,391.6258293583941,37.78167109523686,86.4760656898816,54.4567577536267]","[NaN,17.311945100796404,23.141278768573013,15.780427527953833,22.555679858664707,14.361793409420528,14.506510939882208,15.145956592129048,16.96213450628167,30.703411074725544,NaN,16.573277015599203,17.029735748189506,20.67178582235318,15.350204592395077,18.47426637395365]","[NaN,7.415036,52.913242,3.3161182,2.9858093,6.9741006,2.4564505,7.5451713,3.104001,51.033073,NaN,4.048264,22.99659,1.8276926,5.633545,2.9477088]","[NaN,19.476747624064554,17.028016169144834,20.451023602118635,20.17710048095196,19.746153308140126,20.868218012521837,19.602980949053894,20.444389634125322,16.760299647972438,NaN,20.1812024087325,18.26571718212993,20.80469259367304,19.905655694259885,20.40776604928127]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""True"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""True"",""True"",""True"",""False"",""False"",""False""]","[""True"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""True"",""False"",""True"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""True"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""True"",""True"",""True"",""False"",""False"",""False""]","[""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""True"",""False"",""False"",""False"",""False"",""False""]"
+375316653866487564,10892037246720,45.188575,0.282424,23,"[17285472453571529,17295213305426420,23446114215063972,23455855034241801,24575684863213921,34116673540470139,34120765824759296,35461507659526600,37064561031419049,37074301834257765,44166836110115797,44170928391108045,45566800935690793,46962603740816306,54882923308651464,54887015599755839,56499755505820804,57830885123207701,57840625982009968,64919333517923324,66552875224680360,67686402107396551,67690494387209169]","[1709.4456508186668,1709.62182353116,1820.8582469690355,1821.0344051795712,1841.2841718044378,2013.8238428335283,2013.8978559230118,2038.1466810609045,2067.139775091599,2067.315969011719,2195.5811694829804,2195.6551980628024,2220.896485950102,2246.1364547225835,2389.371811178037,2389.4458178407945,2418.6141618603906,2442.6890485670056,2442.8652209956,2570.8786601787124,2600.417575053399,2620.914975370119,2620.988947916781]","[510.11090224436253,521.7867820329403,485.5783643191328,497.2442275753201,480.1480841708623,567.6424235834729,590.9929152075982,585.5119907382764,579.7702202275904,590.393532333229,567.8675077678074,567.7919418333437,579.6695649118257,560.8010650650622,586.4499553177868,584.7975757776001,590.696032051804,590.3056183289998,605.0077218940169,626.6139711759605,643.982289766436,642.2948310622696,642.2952344312171]","[6.333240503392744,9.256909070009174,8.044719115666455,4.54117770442133,9.380304398029397,6.099658277529502,7.171866662277056,7.377505876154177,4.485464700692952,7.907909149072136,4.099750816755995,4.3412081000832385,2.1346767126605384,9.73305301325769,5.657311195983945,8.121970199268143,5.964354293927447,3.3834712294070535,10.742714747487073,6.651341455435661,4.381874493710585,6.51571010267537,6.431174958133063]","[80.545006,56.36728,60.35989,109.49676,51.186832,93.06135,82.404335,79.36449,129.25533,74.658615,138.5127,130.79123,271.5491,57.618206,103.66231,72.00194,99.03772,174.46745,56.317955,94.208664,146.96503,98.57634,99.87215]","[18.91820535329736,18.893634183800046,18.97171854743403,18.945942491620393,18.98392886622143,18.80217975298266,18.758411180523716,18.768527383444344,18.779227106682075,18.75951288901954,18.801749317203097,18.801893805361132,18.77941562034566,18.815344792643028,18.766789473227004,18.769852957987304,18.75895673322328,18.75967457528385,18.73296457276094,18.694866682516366,18.665182057206017,18.66803079956574,18.668030117710444]","[9,9,9,8,8,9,9,8,9,8,8,9,9,9,8,9,8,9,9,9,7,9,8]","[1709.4459656183233,1709.6221378171274,1820.8585611827712,1821.0347061104897,1841.2845144918692,2013.8241576602807,2013.898170235541,2038.1469953195563,2067.140090230351,2067.3162623198314,2195.5815121749542,2195.6555128988357,2220.89680085117,2246.1367691252026,2389.3721191604086,2389.446132400051,NaN,2442.6893633756954,2442.8655352502005,2570.8789751472436,2600.417889687375,2620.915289794015,2620.9892906977375]","[447.39225699368416,294.40385760112446,361.23488275771075,203.7002183789311,300.217491898273,231.66957847629558,309.6831071569084,344.03741986863395,294.591631045706,409.2228112392768,354.7470052339776,291.8090948900459,309.24049346002107,268.4152714148305,249.01168434520775,361.7467421547743,NaN,320.2587397609973,386.7844451821304,351.0692226718205,329.85141631654227,666.4385312062207,304.4916136537776]","[25.44536837706597,23.97431212360982,19.358870546326543,15.505604345739945,27.523167082289124,20.183436146355657,15.98457979855215,30.45934818736193,15.024178949702543,18.357592412725616,16.717151901614166,17.348152683343404,15.559197446117269,19.19714702595089,28.109125614426066,16.875399977025527,NaN,15.485993600501223,18.030210451279117,15.046128184821116,26.49156236797403,17.72976857918327,26.785734339337584]","[17.582464,12.279971,18.659916,13.137199,10.90781,11.478203,19.373865,11.29497,19.607836,22.291748,21.220541,16.820759,19.875093,13.982039,8.858748,21.436337,NaN,20.680542,21.45202,23.33286,12.451188,37.588676,11.367679]","[18.71182105704196,19.166183475038125,18.94406801218027,19.566063479321656,19.14495223475693,19.426369694629514,19.111248426401545,18.99702801083206,19.165491203406475,18.808642629497104,18.963745371194936,19.175795156953498,19.11280132177304,19.26652416262774,19.347992900993923,18.942530644278122,NaN,19.074789739949367,18.86986971506348,18.97506032163904,19.042746332810395,18.279141969416145,19.129603876446176]","[1709.446052535526,1709.6222272055606,1820.8586505935564,1821.0347914761173,1841.2846022955941,2013.8242444294367,2013.8982594207314,2038.147084732371,2067.140175433236,2067.3163510120767,2195.581599748926,2195.6555995797257,2220.896887150199,2246.136857913846,2389.3722044949736,2389.446220775954,NaN,2442.689450450096,2442.8656246109176,2570.879060400987,2600.4179769630455,2620.9153781466916,2620.9893782757254]","[375.7001906198894,471.08907173609873,428.92398851927715,400.94723269716343,393.2534773867783,351.6899500088983,409.03478358714614,402.8423856771985,398.73357555298145,427.4403221003913,661.7290497218023,370.11156250676487,417.69537722181377,446.0925322386357,332.5918636164385,390.7998553669832,NaN,414.10134622323295,401.02418096910316,381.21891054285226,358.4727057957105,417.328868856559,561.2549116755724]","[18.70246580801628,20.705461272989393,18.811492470192533,17.769799584864995,29.62493045874468,19.08309133630911,19.358331526545324,18.41714904598636,16.79732166649528,24.285264505155855,18.686365441651358,18.538046545119006,17.249847304111395,19.393391351208003,24.82433572451839,18.53425905501362,NaN,16.661645532541847,18.42713564663918,16.80692187916608,22.738775117852786,17.63433436175742,21.538630211517784]","[20.08827,22.751923,22.801167,22.563408,13.27441,18.429401,21.12965,21.873222,23.737926,17.60081,35.4124,19.964972,24.21444,23.002296,13.397816,21.08527,NaN,24.853569,21.762697,22.682257,15.76482,23.6657,26.05806]","[18.310791962623505,18.065137927036226,18.166944661668992,18.240177450254837,18.261214072133033,18.38249560622268,18.21849489814342,18.23505760304652,18.246188483208577,18.170706780053738,17.696194999981067,18.327063868838053,18.19574632914079,18.12433311854207,18.44311644960212,18.26800951536311,NaN,18.20512889521763,18.23996909987334,18.294959411449376,18.361755266232763,18.196699430631973,17.874995114548174]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""True"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""True"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""True"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True""]","[""False"",""False"",""True"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False""]"
+375316653866487564,14263587225600,45.134758,0.321555,23,"[17285472096929389,23446116765069633,23455857585427124,24575685541906043,26219908448655224,34116672525185184,34120764803838247,35461505134686873,37064560751585095,37074301570801698,44166838636135174,44170930918438146,45566801325762404,46962606293312520,54882922616727185,54887014904816905,56499752956470501,57830884715054268,64919336034505486,66552875484460299,66556967768748551,67686404600124152,67690496881771774]","[1709.4456205615986,1820.8582908278997,1821.034434997406,1841.2841686294744,1871.0162732499325,2013.82382745074,2013.8978404389236,2038.1466394127438,2067.139774427169,2067.3158350499402,2195.5812123388873,2195.655247969727,2220.896467984215,2246.1364965963935,2389.371795107803,2389.4458087448465,2418.614091966379,2442.689017325447,2570.8787023299114,2600.417575510222,2600.491575283582,2620.9150162485444,2620.9889888284765]","[30529.60769302229,31110.189119397397,31165.50863531161,30783.08828921544,30583.69952729235,30660.550459005244,30696.118340285793,30981.798620686735,30977.42402079153,30986.09981776094,30973.049670389017,30971.355087276825,30770.07813497299,30839.197660991114,30858.24662718986,30897.14264304786,30872.820897349917,31018.761844798995,30884.010502612553,30869.89507617865,30860.424679040978,30694.88979780787,30664.668785969694]","[35.258757279931686,28.173543172333996,32.615753972320995,45.521775583751754,65.08523868805665,32.27527439369725,34.60351957570741,42.102488898411046,86.0321946283818,66.44446656282315,20.308507328572283,49.1020064331647,49.66329008100429,45.2252754142573,31.40219094459022,29.461452406486888,35.59198031693767,32.15967119017122,25.204747584388574,38.47254669009791,32.190327419629035,14.824085855822593,24.147446322028706]","[865.87305,1104.2341,955.53546,676.2278,469.90225,949.9703,887.0808,735.8662,360.0678,466.34583,1525.1268,630.7554,619.5739,681.9018,982.67816,1048.7312,867.4095,964.5236,1225.3251,802.38763,958.6863,2070.6094,1269.8928]","[14.475563807983537,14.45511023905391,14.453181319131012,14.466586397218514,14.473641821402984,14.470916998003453,14.469658215820061,14.459600300220913,14.459753615943509,14.459449578136981,14.459906944572953,14.459966348493115,14.46704536940537,14.464609190684886,14.463938752770932,14.46257107235563,14.46342608342309,14.45830572110367,14.463032638377154,14.463528983657607,14.463862121511655,14.469701670817395,14.470771171645225]","[8,9,9,7,9,9,9,8,9,5,8,8,8,9,9,9,9,8,9,9,9,9,8]","[1709.4459633945173,1820.8586050355277,1821.034749983687,1841.2845234476108,1871.016588315517,2013.8241421972684,2013.8981546769348,2038.1469536838908,2067.1400894720446,NaN,2195.5815550181896,2195.655555761013,2220.8968040676727,2246.1368110043136,2389.3721100352986,2389.446123219349,2418.6144068716276,2442.689360169182,2570.8790172827808,2600.417890229468,2600.4918895218266,2620.9153306907133,2620.989331629483]","[10236.768205388042,10281.400489125948,10304.620887998559,10266.518313804007,10054.16033784717,10089.548340631456,10004.223191710133,10402.920697440182,10140.278149820995,NaN,10367.064701430394,10304.412473420713,10047.3786442136,10212.883399905915,9949.312355160053,10201.161835850455,10361.03660071929,10393.197897594822,10234.201339935818,10200.204745886982,10143.181849894534,10051.432752110728,10191.887006407364]","[61.953189087167736,50.9692241130703,53.69645953272666,70.8088208029474,54.16047366988125,52.36135690873731,49.386793963752275,55.68183469191844,50.137703612588595,NaN,50.80853339207791,50.91191647830047,50.22471610887263,50.14632255933985,59.51002067325697,49.452679279473756,59.50975115842141,50.615605390854356,51.83909862507264,52.512857175025594,49.511689486393884,51.47548793555421,55.280176670390716]","[165.23392,201.71782,191.90503,144.98926,185.63649,192.69073,202.56879,186.82791,202.24855,NaN,204.04181,202.39687,200.0485,203.66167,167.18718,206.28128,174.10654,205.33585,197.42244,194.24205,204.86438,195.26639,184.36784]","[15.313135041995029,15.308411524656943,15.305962169536276,15.309984250297228,15.332677698745588,15.328862902177864,15.338083785378679,15.29565399622777,15.32341754593837,NaN,15.299402693297283,15.305984129154545,15.33341029246326,15.315671281765598,15.344059551792302,15.31691812213683,15.300034196132692,15.296669223807344,15.313407324044267,15.317019992491556,15.32310668651703,15.332972287280285,15.31790571539878]","[1709.4460507880729,1820.8586944680944,1821.0348353859256,1841.2846108239585,1871.0166731757663,2013.82422941098,2013.8982441441974,2038.1470430501686,2067.140175251773,NaN,2195.581642659884,2195.6556425179506,2220.896889823952,2246.136899770318,2389.3721959159466,2389.4462119588507,2418.6144928871454,2442.6894477085184,2570.879102638924,2600.41797702687,2600.491978926086,2620.915418955866,2620.9894191065096]","[29689.389879044542,30168.29204899511,29867.32488426496,29952.303062304392,30122.794285628956,29681.72988041046,29842.110973500046,29798.051646235654,29882.939349695793,NaN,30047.772433300663,29949.21848601029,29571.44627139427,29671.965805618867,29666.388895774115,29701.94487743392,29933.2761818607,29984.251899006973,30024.652985050798,29860.875536744024,29906.233653550913,29794.57251789278,29682.965540054058]","[88.39569948033233,82.79945002529604,85.60149045966097,87.39777892716207,87.21065430018679,84.7158039776544,82.37783605528433,82.00582546741096,85.03175661493162,NaN,83.80725029756215,83.97539195308325,84.54343110278526,82.13248682381042,93.50064226548773,82.04432533821063,92.96473531002518,83.78238433976637,86.04693388083618,85.84631767410401,82.0579416997619,82.50625204295895,83.96846602613918]","[335.86917,364.35376,348.9113,342.7124,345.40268,350.3683,362.25897,363.36505,351.4327,NaN,358.53427,356.6428,349.77817,361.26953,317.2854,362.02313,321.9853,357.88254,348.93344,347.84106,364.45264,361.11896,353.50134]","[13.566392318960318,13.549018691966193,13.559904686026083,13.55681994779742,13.55065736133848,13.566672480019273,13.560821648546828,13.562425829802189,13.559337217713114,NaN,13.553364797477803,13.556931765863983,13.570714087681246,13.567029701569854,13.567233787206451,13.565933281743494,13.557509869274917,13.555662456779938,13.554200509472565,13.560139157852738,13.558491195964715,13.562552604404253,13.5666272814243]","[""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""True"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]","[""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""True"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""False""]"
