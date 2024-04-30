@@ -23,7 +23,7 @@ def _map_pixels(args, client):
     if args.resume_plan.is_mapping_done():
         return
 
-    reader_future = client.scatter(args.file_reader)
+    reader_future = client.scatter(args.file_reader, hash=False)
     futures = []
     for key, file_path in args.resume_plan.map_files:
         futures.append(
@@ -48,7 +48,7 @@ def _split_pixels(args, alignment_future, client):
     if args.resume_plan.is_splitting_done():
         return
 
-    reader_future = client.scatter(args.file_reader)
+    reader_future = client.scatter(args.file_reader, hash=False)
     futures = []
     for key, file_path in args.resume_plan.split_keys:
         futures.append(
