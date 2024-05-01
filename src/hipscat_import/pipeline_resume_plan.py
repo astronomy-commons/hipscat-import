@@ -101,7 +101,7 @@ class PipelineResumePlan:
         Returns:
             list of keys taken from files like /resume/path/{key}{extension}
         """
-        result_files = file_io.find_files_matching_path(directory, f"**{extension}")
+        result_files = file_io.find_files_matching_path(directory, f"*{extension}")
         keys = []
         for file_path in result_files:
             result_file_name = file_io.get_basename_from_filepointer(file_path)
