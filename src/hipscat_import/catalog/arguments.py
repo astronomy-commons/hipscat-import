@@ -116,7 +116,7 @@ class ImportArguments(RuntimeArguments):
         # Basic checks complete - make more checks and create directories where necessary
         self.input_paths = find_input_paths(
             self.input_path,
-            "**/**.*",
+            "**/*.*",
             self.input_file_list,
             storage_options=self.input_storage_options,
         )

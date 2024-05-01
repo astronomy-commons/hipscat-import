@@ -141,7 +141,7 @@ def combine_partial_results(input_path, output_path, output_storage_options) -> 
     Returns:
         integer that is the sum of all matched num_rows.
     """
-    partial_files = file_io.find_files_matching_path(input_path, "**.csv")
+    partial_files = file_io.find_files_matching_path(input_path, "*.csv")
     partials = []
 
     for partial_file in partial_files:
@@ -194,7 +194,7 @@ def reduce_joins(
         return
     # Find all of the constituent files / source pixels. Create a list of PyArrow Tables from those
     # parquet files. We need to know the schema before we create the ParquetWriter.
-    shard_file_list = file_io.find_files_matching_path(pixel_dir, "source**.parquet")
+    shard_file_list = file_io.find_files_matching_path(pixel_dir, "source*.parquet")
 
     if len(shard_file_list) == 0:
         return
