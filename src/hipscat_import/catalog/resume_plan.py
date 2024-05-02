@@ -129,7 +129,7 @@ class ResumePlan(PipelineResumePlan):
         remaining_map_files = self.get_remaining_map_keys()
         if len(remaining_map_files) > 0:
             raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
-        histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "**.binary")
+        histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.binary")
         return histogram_files
 
     def read_histogram_from_partials(self, healpix_order):
