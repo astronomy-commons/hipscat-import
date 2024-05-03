@@ -97,8 +97,10 @@ def test_safe_to_resume(tmp_path):
 
 
 @pytest.mark.dask
-def test_wait_for_futures(tmp_path, dask_client):
-    """Test that we can wait around for futures to complete."""
+def test_wait_for_futures(tmp_path, dask_client, capsys):
+    """Test that we can wait around for futures to complete.
+
+    Additionally test that relevant parts of the traceback are printed to stdout."""
     plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False, resume=False)
 
     def error_on_even(argument):
@@ -114,6 +116,10 @@ def test_wait_for_futures(tmp_path, dask_client):
     futures = [dask_client.submit(error_on_even, 1), dask_client.submit(error_on_even, 2)]
     with pytest.raises(RuntimeError, match="Some test stages failed"):
         plan.wait_for_futures(futures, "test")
+
+        captured = capsys.readouterr()
+        assert "we are at odds with evens" in captured
+        assert "error_on_even" in captured
 
 
 def test_formatted_stage_name():
