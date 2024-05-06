@@ -1,1 +1,1 @@
-git+https://github.com/delucchi-cmu/healsparse.git@main
+git+https://github.com/delucchi-cmu/healsparse.git@delucchi/black
