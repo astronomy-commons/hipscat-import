@@ -6,11 +6,10 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 import healpy as hp
+import healsparse
 import numpy as np
-from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from numpy import frombuffer
 from tqdm.auto import tqdm
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -33,7 +32,7 @@ class ResumePlan(PipelineResumePlan):
     SPLITTING_STAGE = "splitting"
     REDUCING_STAGE = "reducing"
 
-    HISTOGRAM_BINARY_FILE = "mapping_histogram.binary"
+    HISTOGRAM_BINARY_FILE = "mapping_histogram.hs"
     HISTOGRAMS_DIR = "histograms"
 
     def __post_init__(self):
@@ -92,10 +91,10 @@ class ResumePlan(PipelineResumePlan):
         """Gather remaining keys, dropping successful mapping tasks from histogram names.
 
         Returns:
-            list of mapping keys *not* found in files like /resume/path/mapping_key.binary
+            list of mapping keys *not* found in files like /resume/path/mapping_key.hs
         """
         prefix = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR)
-        mapped_keys = self.get_keys_from_file_names(prefix, ".binary")
+        mapped_keys = self.get_keys_from_file_names(prefix, ".hs")
         return [
             (f"map_{i}", file_path)
             for i, file_path in enumerate(self.input_paths)
@@ -109,48 +108,41 @@ class ResumePlan(PipelineResumePlan):
         - Otherwise, combine histograms from partials
         - Otherwise, return an empty histogram
         """
+        hp_nside = hp.order2nside(healpix_order)
         file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
-        if file_io.does_file_or_directory_exist(file_name):
-            # Look for the single combined histogram file
-            with open(file_name, "rb") as file_handle:
-                full_histogram = frombuffer(file_handle.read(), dtype=np.int64)
-        else:
-            # Read the histogram from partial binaries
-            full_histogram = self.read_histogram_from_partials(healpix_order)
-        if len(full_histogram) != hp.order2npix(healpix_order):
+        if not file_io.does_file_or_directory_exist(file_name):
+            # Combining coverage maps from partials
+            full_map = healsparse.HealSparseMap.make_empty(hp_nside, hp_nside, np.int64, sentinel=0)
+            histogram_files = self._get_partial_filenames()
+
+            for file in histogram_files:
+                sub_map = healsparse.HealSparseMap.read(file)
+                if sub_map.nside_sparse != hp_nside:
+                    raise ValueError("The histogram partials have inconsistent sizes.")
+                full_map[sub_map.valid_pixels] += sub_map[sub_map.valid_pixels]
+
+            full_map.write(file_name, clobber=False)
+
+        hp_map = healsparse.HealSparseMap.read(file_name)
+
+        if hp_map.nside_sparse != hp_nside:
             raise ValueError(
                 "The histogram from the previous execution is incompatible with "
                 + "the highest healpix order. To start the importing pipeline "
                 + "from scratch with the current order set `resume` to False."
             )
-        return full_histogram
+
+        return hp_map.generate_healpix_map(dtype=np.int64, sentinel=0)
 
     def _get_partial_filenames(self):
         remaining_map_files = self.get_remaining_map_keys()
         if len(remaining_map_files) > 0:
             raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
-        histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.binary")
+        histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.hs")
         return histogram_files
 
-    def read_histogram_from_partials(self, healpix_order):
-        """Combines the histogram partials to get the full histogram."""
-        histogram_files = self._get_partial_filenames()
-        full_histogram = pixel_math.empty_histogram(healpix_order)
-        # Read the partial histograms and make sure they are all the same size
-        for index, file_name in enumerate(histogram_files):
-            with open(file_name, "rb") as file_handle:
-                partial = frombuffer(file_handle.read(), dtype=np.int64)
-                if index == 0:
-                    full_histogram = partial
-                elif len(partial) != len(full_histogram):
-                    raise ValueError("The histogram partials have inconsistent sizes.")
-                else:
-                    full_histogram = np.add(full_histogram, partial)
-        self._write_combined_histogram(full_histogram)
-        return full_histogram
-
     @classmethod
-    def write_partial_histogram(cls, tmp_path, mapping_key: str, histogram):
+    def write_partial_healsparse_map(cls, tmp_path, mapping_key: str, hp_map):
         """Write partial histogram to a special intermediate directory
 
         Args:
@@ -164,19 +156,8 @@ class ResumePlan(PipelineResumePlan):
             file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR),
             exist_ok=True,
         )
-        file_name = file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.binary")
-        with open(file_name, "wb+") as file_handle:
-            file_handle.write(histogram.data)
-
-    def _write_combined_histogram(self, histogram):
-        """Writes the full histogram to disk, removing the pre-existing partials."""
-        file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
-        with open(file_name, "wb+") as file_handle:
-            file_handle.write(histogram.data)
-        file_io.remove_directory(
-            file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
-            ignore_errors=True,
-        )
+        file_name = file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.hs")
+        hp_map.write(file_name, clobber=False)
 
     def get_remaining_split_keys(self):
         """Gather remaining keys, dropping successful split tasks from done file names.

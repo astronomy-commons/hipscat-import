@@ -97,7 +97,7 @@ def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
     assert len(map_files) == 2
 
 
-def test_read_write_histogram(tmp_path):
+def test_read_write_histogram(tmp_path, small_sky_healsparse_map):
     """Test that we can read what we write into a histogram file."""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
 
@@ -111,7 +111,9 @@ def test_read_write_histogram(tmp_path):
     remaining_keys = plan.get_remaining_map_keys()
     assert remaining_keys == [("map_0", "foo1")]
 
-    ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
+    ResumePlan.write_partial_healsparse_map(
+        tmp_path=tmp_path, mapping_key="map_0", hp_map=small_sky_healsparse_map
+    )
 
     remaining_keys = plan.get_remaining_map_keys()
     assert len(remaining_keys) == 0
@@ -125,7 +127,7 @@ def never_fails():
 
 
 @pytest.mark.dask
-def test_some_map_task_failures(tmp_path, dask_client):
+def test_some_map_task_failures(tmp_path, dask_client, small_sky_healsparse_map):
     """Test that we only consider map stage successful if all partial files are written"""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
 
@@ -135,10 +137,9 @@ def test_some_map_task_failures(tmp_path, dask_client):
     with pytest.raises(RuntimeError, match="map stages"):
         plan.wait_for_mapping(futures)
 
-    expected = hist.empty_histogram(0)
-    expected[11] = 131
-
-    ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
+    ResumePlan.write_partial_healsparse_map(
+        tmp_path=tmp_path, mapping_key="map_0", hp_map=small_sky_healsparse_map
+    )
 
     ## Method succeeds, *and* partial histogram is present.
     futures = [dask_client.submit(never_fails)]

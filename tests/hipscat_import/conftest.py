@@ -4,6 +4,7 @@ import os
 import re
 
 import healpy as hp
+import healsparse
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -165,6 +166,23 @@ def mixed_schema_csv_parquet(test_data_dir):
 @pytest.fixture
 def resume_dir(test_data_dir):
     return os.path.join(test_data_dir, "resume")
+
+
+@pytest.fixture
+def small_sky_healsparse_map():
+    sub_map = healsparse.HealSparseMap.make_empty(hp.order2nside(0), hp.order2nside(0), np.int64, sentinel=0)
+    sub_map[11] = 131
+    return sub_map
+
+
+@pytest.fixture
+def empty_healsparse_order0():
+    return healsparse.HealSparseMap.make_empty(hp.order2nside(0), hp.order2nside(0), np.int64, sentinel=0)
+
+
+@pytest.fixture
+def empty_healsparse_order1():
+    return healsparse.HealSparseMap.make_empty(hp.order2nside(1), hp.order2nside(1), np.int64, sentinel=0)
 
 
 @pytest.fixture

@@ -3,7 +3,6 @@
 import os
 import shutil
 
-import hipscat.pixel_math as hist
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -36,6 +35,8 @@ def test_resume_dask_runner(
     small_sky_parts_dir,
     resume_dir,
     tmp_path,
+    small_sky_healsparse_map,
+    empty_healsparse_order0,
     assert_parquet_file_ids,
 ):
     """Test execution in the presence of some resume files."""
@@ -49,15 +50,12 @@ def test_resume_dask_runner(
     ## Now set up our resume files to match previous work.
     resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
     plan = ResumePlan(tmp_path=resume_tmp, progress_bar=False)
-    histogram = hist.empty_histogram(0)
-    histogram[11] = 131
-    empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
-        ResumePlan.write_partial_histogram(
+        ResumePlan.write_partial_healsparse_map(
             tmp_path=resume_tmp,
             mapping_key=f"map_{file_index}",
-            histogram=histogram if file_index == 0 else empty,
+            hp_map=small_sky_healsparse_map if file_index == 0 else empty_healsparse_order0,
         )
 
     ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
@@ -139,6 +137,8 @@ def test_resume_dask_runner_diff_pixel_order(
     small_sky_parts_dir,
     resume_dir,
     tmp_path,
+    small_sky_healsparse_map,
+    empty_healsparse_order0,
     assert_parquet_file_ids,
 ):
     """Test execution in the presence of histogram files that are not compatible
@@ -154,15 +154,12 @@ def test_resume_dask_runner_diff_pixel_order(
     ## Now set up our resume files to match previous work.
     resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
     ResumePlan(tmp_path=resume_tmp, progress_bar=False)
-    histogram = hist.empty_histogram(0)
-    histogram[11] = 131
-    empty = hist.empty_histogram(0)
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
-        ResumePlan.write_partial_histogram(
+        ResumePlan.write_partial_healsparse_map(
             tmp_path=resume_tmp,
             mapping_key=f"map_{file_index}",
-            histogram=histogram if file_index == 0 else empty,
+            hp_map=small_sky_healsparse_map if file_index == 0 else empty_healsparse_order0,
         )
 
     ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
@@ -173,7 +170,7 @@ def test_resume_dask_runner_diff_pixel_order(
     )
 
     with pytest.warns(UserWarning, match="resuming prior progress"):
-        with pytest.raises(ValueError, match="incompatible with the highest healpix order"):
+        with pytest.raises(ValueError, match="partials have inconsistent sizes."):
             args = ImportArguments(
                 output_artifact_name="resume_catalog",
                 input_path=small_sky_parts_dir,
@@ -225,22 +222,20 @@ def test_resume_dask_runner_diff_pixel_order(
 def test_resume_dask_runner_histograms_diff_size(
     dask_client,
     small_sky_parts_dir,
+    empty_healsparse_order0,
+    empty_healsparse_order1,
     tmp_path,
 ):
     """Tests that the pipeline errors if the partial histograms have different sizes."""
     resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
     ResumePlan(tmp_path=resume_tmp, progress_bar=False)
 
-    # We'll create mock partial histograms of size 0 and 2
-    histogram = hist.empty_histogram(0)
-    wrong_histogram = hist.empty_histogram(2)
-
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
-        ResumePlan.write_partial_histogram(
+        ResumePlan.write_partial_healsparse_map(
             tmp_path=resume_tmp,
             mapping_key=f"map_{file_index}",
-            histogram=histogram if file_index % 2 == 0 else wrong_histogram,
+            hp_map=empty_healsparse_order0 if file_index % 2 == 0 else empty_healsparse_order1,
         )
 
     with pytest.warns(UserWarning, match="resuming prior progress"):

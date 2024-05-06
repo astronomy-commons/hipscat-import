@@ -3,6 +3,7 @@
 from typing import Any, Dict, Union
 
 import healpy as hp
+import healsparse
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -93,8 +94,9 @@ def map_to_pixels(
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
         FileNotFoundError: if the file does not exist, or is a directory
     """
-    histo = pixel_math.empty_histogram(highest_order)
-
+    sparse_map = healsparse.HealSparseMap.make_empty(
+        hp.order2nside(highest_order), hp.order2nside(highest_order), np.int64, sentinel=0
+    )
     if use_hipscat_index:
         read_columns = [HIPSCAT_ID_COLUMN]
     else:
@@ -105,8 +107,12 @@ def map_to_pixels(
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
         mapped_pixel = mapped_pixel.astype(np.int64)
-        histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-    ResumePlan.write_partial_histogram(tmp_path=resume_path, mapping_key=mapping_key, histogram=histo)
+        sparse_map[mapped_pixel] += count_at_pixel.astype(np.int64)
+    ResumePlan.write_partial_healsparse_map(
+        tmp_path=resume_path,
+        mapping_key=mapping_key,
+        hp_map=sparse_map,
+    )
 
 
 def split_pixels(

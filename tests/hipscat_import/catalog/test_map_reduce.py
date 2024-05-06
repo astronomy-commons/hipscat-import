@@ -4,13 +4,13 @@ import os
 from io import StringIO
 
 import healpy as hp
+import healsparse
 import hipscat.pixel_math as hist
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pyarrow as pa
 import pytest
-from numpy import frombuffer
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.file_readers import get_file_reader
@@ -74,9 +74,8 @@ def test_read_bad_fileformat(blank_data_file):
 
 def read_partial_histogram(tmp_path, mapping_key):
     """Helper to read in the former result of a map operation."""
-    histogram_file = os.path.join(tmp_path, "histograms", f"{mapping_key}.binary")
-    with open(histogram_file, "rb") as file_handle:
-        return frombuffer(file_handle.read(), dtype=np.int64)
+    partial_map = healsparse.HealSparseMap.read(os.path.join(tmp_path, "histograms", f"{mapping_key}.hs"))
+    return partial_map.generate_healpix_map(dtype=np.int64, sentinel=0)
 
 
 def test_read_single_fits(tmp_path, formats_fits):
