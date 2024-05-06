@@ -112,7 +112,7 @@ class ResumePlan(PipelineResumePlan):
         file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
         if not file_io.does_file_or_directory_exist(file_name):
             # Combining coverage maps from partials
-            full_map = healsparse.HealSparseMap.make_empty(hp_nside, hp_nside, np.int64, sentinel=0)
+            full_map = healsparse.HealSparseMap.make_empty(hp_nside, hp_nside, np.int32, sentinel=0)
             histogram_files = self._get_partial_filenames()
 
             for file in histogram_files:
@@ -132,7 +132,7 @@ class ResumePlan(PipelineResumePlan):
                 + "from scratch with the current order set `resume` to False."
             )
 
-        return hp_map.generate_healpix_map(dtype=np.int64, sentinel=0)
+        return hp_map.generate_healpix_map(dtype=np.int32, sentinel=0)
 
     def _get_partial_filenames(self):
         remaining_map_files = self.get_remaining_map_keys()

@@ -95,7 +95,7 @@ def map_to_pixels(
         FileNotFoundError: if the file does not exist, or is a directory
     """
     sparse_map = healsparse.HealSparseMap.make_empty(
-        hp.order2nside(highest_order), hp.order2nside(highest_order), np.int64, sentinel=0
+        hp.order2nside(highest_order), hp.order2nside(highest_order), np.int32, sentinel=0
     )
     if use_hipscat_index:
         read_columns = [HIPSCAT_ID_COLUMN]
@@ -106,8 +106,8 @@ def map_to_pixels(
         input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index, read_columns
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
-        mapped_pixel = mapped_pixel.astype(np.int64)
-        sparse_map[mapped_pixel] += count_at_pixel.astype(np.int64)
+        mapped_pixel = mapped_pixel.astype(np.int32)
+        sparse_map[mapped_pixel] += count_at_pixel.astype(np.int32)
     ResumePlan.write_partial_healsparse_map(
         tmp_path=resume_path,
         mapping_key=mapping_key,
