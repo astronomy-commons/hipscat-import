@@ -3,7 +3,6 @@
 import os
 import shutil
 
-import hipscat.pixel_math as hist
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -15,6 +14,7 @@ import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
 from hipscat_import.catalog.file_readers import CsvReader
 from hipscat_import.catalog.resume_plan import ResumePlan
+from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
 def test_empty_args():
@@ -49,16 +49,17 @@ def test_resume_dask_runner(
     ## Now set up our resume files to match previous work.
     resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
     plan = ResumePlan(tmp_path=resume_tmp, progress_bar=False)
-    histogram = hist.empty_histogram(0)
-    histogram[11] = 131
-    empty = hist.empty_histogram(0)
+    histogram = SparseHistogram.make_from_counts([11], [131], 0)
+    empty = SparseHistogram.make_empty(0)
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
-        ResumePlan.write_partial_histogram(
-            tmp_path=resume_tmp,
-            mapping_key=f"map_{file_index}",
-            histogram=histogram if file_index == 0 else empty,
+        histogram_file = ResumePlan.partial_histogram_file(
+            tmp_path=resume_tmp, mapping_key=f"map_{file_index}"
         )
+        if file_index == 0:
+            histogram.to_file(histogram_file)
+        else:
+            empty.to_file(histogram_file)
 
     ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
 
@@ -154,18 +155,11 @@ def test_resume_dask_runner_diff_pixel_order(
     ## Now set up our resume files to match previous work.
     resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
     ResumePlan(tmp_path=resume_tmp, progress_bar=False)
-    histogram = hist.empty_histogram(0)
-    histogram[11] = 131
-    empty = hist.empty_histogram(0)
+    SparseHistogram.make_from_counts([11], [131], 0).to_file(
+        os.path.join(resume_tmp, "mapping_histogram.npz")
+    )
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
-        ResumePlan.write_partial_histogram(
-            tmp_path=resume_tmp,
-            mapping_key=f"map_{file_index}",
-            histogram=histogram if file_index == 0 else empty,
-        )
-
-    ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
 
     shutil.copytree(
         os.path.join(resume_dir, "Norder=0"),
@@ -232,16 +226,19 @@ def test_resume_dask_runner_histograms_diff_size(
     ResumePlan(tmp_path=resume_tmp, progress_bar=False)
 
     # We'll create mock partial histograms of size 0 and 2
-    histogram = hist.empty_histogram(0)
-    wrong_histogram = hist.empty_histogram(2)
+    histogram = SparseHistogram.make_empty(0)
+    wrong_histogram = SparseHistogram.make_empty(2)
 
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
-        ResumePlan.write_partial_histogram(
-            tmp_path=resume_tmp,
-            mapping_key=f"map_{file_index}",
-            histogram=histogram if file_index % 2 == 0 else wrong_histogram,
+
+        histogram_file = ResumePlan.partial_histogram_file(
+            tmp_path=resume_tmp, mapping_key=f"map_{file_index}"
         )
+        if file_index == 2:
+            histogram.to_file(histogram_file)
+        else:
+            wrong_histogram.to_file(histogram_file)
 
     with pytest.warns(UserWarning, match="resuming prior progress"):
         with pytest.raises(ValueError, match="histogram partials have inconsistent sizes"):
