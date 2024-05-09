@@ -241,7 +241,7 @@ def test_resume_dask_runner_histograms_diff_size(
             wrong_histogram.to_file(histogram_file)
 
     with pytest.warns(UserWarning, match="resuming prior progress"):
-        with pytest.raises(ValueError, match="histogram partials have inconsistent sizes"):
+        with pytest.raises(ValueError, match="histogram partials have incompatible sizes"):
             args = ImportArguments(
                 output_artifact_name="resume_catalog",
                 input_path=small_sky_parts_dir,

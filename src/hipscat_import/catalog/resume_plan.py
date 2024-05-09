@@ -108,13 +108,23 @@ class ResumePlan(PipelineResumePlan):
         - Otherwise, return an empty histogram
         """
         file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
-        if file_io.does_file_or_directory_exist(file_name):
-            # Look for the single combined histogram file
-            sparse_histogram = SparseHistogram.from_file(file_name)
-        else:
-            # Read the histogram from partial binaries
-            sparse_histogram = self.read_histogram_from_partials(healpix_order)
-        full_histogram = sparse_histogram.to_array()
+        if not file_io.does_file_or_directory_exist(file_name):
+            # Read the histogram from partial histograms and combine.
+            remaining_map_files = self.get_remaining_map_keys()
+            if len(remaining_map_files) > 0:
+                raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
+            histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.npz")
+            aggregate_histogram = SparseHistogram.make_empty(healpix_order)
+            for partial_file_name in histogram_files:
+                aggregate_histogram.add(SparseHistogram.from_file(partial_file_name))
+
+            aggregate_histogram.to_file(file_name)
+            file_io.remove_directory(
+                file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
+                ignore_errors=True,
+            )
+
+        full_histogram = SparseHistogram.from_file(file_name).to_array()
 
         if len(full_histogram) != hp.order2npix(healpix_order):
             raise ValueError(
@@ -122,24 +132,6 @@ class ResumePlan(PipelineResumePlan):
                 + "the highest healpix order. To start the importing pipeline "
                 + "from scratch with the current order set `resume` to False."
             )
-        return full_histogram
-
-    def _get_partial_filenames(self):
-        remaining_map_files = self.get_remaining_map_keys()
-        if len(remaining_map_files) > 0:
-            raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
-        histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.npz")
-        return histogram_files
-
-    def read_histogram_from_partials(self, healpix_order):
-        """Combines the histogram partials to get the full histogram."""
-        histogram_files = self._get_partial_filenames()
-        full_histogram = SparseHistogram.make_empty(healpix_order)
-        # Read the partial histograms and make sure they are all the same size
-        for file_name in histogram_files:
-            partial = SparseHistogram.from_file(file_name)
-            full_histogram.add(partial)
-        self._write_combined_histogram(full_histogram)
         return full_histogram
 
     @classmethod
@@ -157,15 +149,6 @@ class ResumePlan(PipelineResumePlan):
             exist_ok=True,
         )
         return file_io.append_paths_to_pointer(tmp_path, cls.HISTOGRAMS_DIR, f"{mapping_key}.npz")
-
-    def _write_combined_histogram(self, histogram):
-        """Writes the full histogram to disk, removing the pre-existing partials."""
-        file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
-        histogram.to_file(file_name)
-        file_io.remove_directory(
-            file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
-            ignore_errors=True,
-        )
 
     def get_remaining_split_keys(self):
         """Gather remaining keys, dropping successful split tasks from done file names.

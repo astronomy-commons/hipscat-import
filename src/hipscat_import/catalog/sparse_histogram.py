@@ -2,13 +2,17 @@
 
 import healpy as hp
 import numpy as np
-from scipy.sparse import csc_array, load_npz, save_npz
+from scipy.sparse import csc_array, load_npz, save_npz, sparray
 
 
 class SparseHistogram:
     """Wrapper around scipy's sparse array."""
 
     def __init__(self, sparse_array):
+        if not isinstance(sparse_array, sparray):
+            raise ValueError("The sparse array must be a scipy sparse array.")
+        if sparse_array.format != "csc":
+            raise ValueError("The sparse array must be a Compressed Sparse Column array.")
         self.sparse_array = sparse_array
 
     def add(self, other):
@@ -17,8 +21,13 @@ class SparseHistogram:
         Args:
             other (SparseHistogram): the wrapper containing the addend
         """
+        if not isinstance(other, SparseHistogram):
+            raise ValueError("Both addends should be SparseHistogram.")
         if self.sparse_array.shape != other.sparse_array.shape:
-            raise ValueError("The histogram partials have inconsistent sizes.")
+            raise ValueError(
+                "The histogram partials have incompatible sizes due to different healpix orders. "
+                + "To start the pipeline from scratch with the current order set `resume` to False."
+            )
         self.sparse_array += other.sparse_array
 
     def to_array(self):
