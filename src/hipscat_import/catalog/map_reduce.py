@@ -13,6 +13,7 @@ from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healp
 
 from hipscat_import.catalog.file_readers import InputReader
 from hipscat_import.catalog.resume_plan import ResumePlan
+from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 
 # pylint: disable=too-many-locals,too-many-arguments
@@ -93,7 +94,7 @@ def map_to_pixels(
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
         FileNotFoundError: if the file does not exist, or is a directory
     """
-    histo = pixel_math.empty_histogram(highest_order)
+    histo = SparseHistogram.make_empty(highest_order)
 
     if use_hipscat_index:
         read_columns = [HIPSCAT_ID_COLUMN]
@@ -104,9 +105,11 @@ def map_to_pixels(
         input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index, read_columns
     ):
         mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
-        mapped_pixel = mapped_pixel.astype(np.int64)
-        histo[mapped_pixel] += count_at_pixel.astype(np.int64)
-    ResumePlan.write_partial_histogram(tmp_path=resume_path, mapping_key=mapping_key, histogram=histo)
+
+        partial = SparseHistogram.make_from_counts(mapped_pixel, count_at_pixel, healpix_order=highest_order)
+        histo.add(partial)
+
+    histo.to_file(ResumePlan.partial_histogram_file(tmp_path=resume_path, mapping_key=mapping_key))
 
 
 def split_pixels(

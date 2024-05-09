@@ -1,11 +1,11 @@
 """Test catalog resume logic"""
 
-import hipscat.pixel_math as hist
 import numpy.testing as npt
 import pytest
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.catalog.resume_plan import ResumePlan
+from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
 def test_mapping_done(tmp_path):
@@ -105,18 +105,16 @@ def test_read_write_histogram(tmp_path):
     with pytest.raises(RuntimeError, match="map stages"):
         result = plan.read_histogram(0)
 
-    expected = hist.empty_histogram(0)
-    expected[11] = 131
-
     remaining_keys = plan.get_remaining_map_keys()
     assert remaining_keys == [("map_0", "foo1")]
 
-    ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
+    histogram = SparseHistogram.make_from_counts([11], [131], 0)
+    histogram.to_file(ResumePlan.partial_histogram_file(tmp_path=tmp_path, mapping_key="map_0"))
 
     remaining_keys = plan.get_remaining_map_keys()
     assert len(remaining_keys) == 0
     result = plan.read_histogram(0)
-    npt.assert_array_equal(result, expected)
+    npt.assert_array_equal(result, histogram.to_array())
 
 
 def never_fails():
@@ -135,10 +133,8 @@ def test_some_map_task_failures(tmp_path, dask_client):
     with pytest.raises(RuntimeError, match="map stages"):
         plan.wait_for_mapping(futures)
 
-    expected = hist.empty_histogram(0)
-    expected[11] = 131
-
-    ResumePlan.write_partial_histogram(tmp_path=tmp_path, mapping_key="map_0", histogram=expected)
+    histogram = SparseHistogram.make_from_counts([11], [131], 0)
+    histogram.to_file(ResumePlan.partial_histogram_file(tmp_path=tmp_path, mapping_key="map_0"))
 
     ## Method succeeds, *and* partial histogram is present.
     futures = [dask_client.submit(never_fails)]
