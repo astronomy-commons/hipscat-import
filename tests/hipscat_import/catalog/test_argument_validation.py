@@ -91,7 +91,7 @@ def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
         progress_bar=False,
     )
     assert args.input_path == small_sky_parts_dir
-    assert len(args.input_paths) == 5
+    assert len(args.input_paths) == 6
 
 
 def test_single_debug_file(formats_headers_csv, tmp_path):
