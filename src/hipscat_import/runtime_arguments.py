@@ -63,7 +63,7 @@ class RuntimeArguments:
             raise ValueError("output_path is required")
         if not self.output_artifact_name:
             raise ValueError("output_artifact_name is required")
-        if re.search(r"[^A-Za-z0-9_\-\\]", self.output_artifact_name):
+        if re.search(r"[^A-Za-z0-9\._\-\\]", self.output_artifact_name):
             raise ValueError("output_artifact_name contains invalid characters")
 
         if self.dask_n_workers <= 0:
