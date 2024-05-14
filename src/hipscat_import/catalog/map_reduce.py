@@ -163,7 +163,7 @@ def split_pixels(
                 filtered_data.to_parquet(output_file, index=True)
             else:
                 filtered_data.to_parquet(output_file, index=False)
-        del filtered_data, data_indexes
+            del filtered_data, data_indexes
 
     ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
 
