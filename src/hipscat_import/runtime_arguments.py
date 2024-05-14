@@ -63,7 +63,7 @@ class RuntimeArguments:
             raise ValueError("output_path is required")
         if not self.output_artifact_name:
             raise ValueError("output_artifact_name is required")
-        if re.search(r"[^A-Za-z0-9_\-\\]", self.output_artifact_name):
+        if re.search(r"[^A-Za-z0-9\._\-\\]", self.output_artifact_name):
             raise ValueError("output_artifact_name contains invalid characters")
 
         if self.dask_n_workers <= 0:
@@ -145,6 +145,7 @@ def find_input_paths(
     Raises:
         FileNotFoundError: if no files are found at the input_path and the provided list is empty.
     """
+    input_paths = []
     if input_path:
         if not file_io.does_file_or_directory_exist(input_path, storage_options=storage_options):
             raise FileNotFoundError("input_path not found on local storage")
