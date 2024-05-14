@@ -145,6 +145,7 @@ def find_input_paths(
     Raises:
         FileNotFoundError: if no files are found at the input_path and the provided list is empty.
     """
+    input_paths = []
     if input_path:
         if not file_io.does_file_or_directory_exist(input_path, storage_options=storage_options):
             raise FileNotFoundError("input_path not found on local storage")
