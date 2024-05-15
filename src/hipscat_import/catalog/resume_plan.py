@@ -26,6 +26,10 @@ class ResumePlan(PipelineResumePlan):
     """set of files (and job keys) that have yet to be split"""
     destination_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
     """Fully resolved map of destination pixels to constituent smaller pixels"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all sub-histograms from the mapping stage, and all
+    done marker files at the end of the pipeline."""
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"
@@ -119,10 +123,11 @@ class ResumePlan(PipelineResumePlan):
                 aggregate_histogram.add(SparseHistogram.from_file(partial_file_name))
 
             aggregate_histogram.to_file(file_name)
-            file_io.remove_directory(
-                file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
-                ignore_errors=True,
-            )
+            if self.delete_resume_log_files:
+                file_io.remove_directory(
+                    file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
+                    ignore_errors=True,
+                )
 
         full_histogram = SparseHistogram.from_file(file_name).to_array()
 

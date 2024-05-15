@@ -68,6 +68,13 @@ class ImportArguments(RuntimeArguments):
     """healpix order to use when mapping. will be
     ``highest_healpix_order`` unless a positive value is provided for
     ``constant_healpix_order``"""
+    delete_intermediate_parquet_files: bool = True
+    """should we delete the smaller intermediate parquet files generated in the
+    splitting stage, once the relevant reducing stage is complete?"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all sub-histograms from the mapping stage, and all
+    done marker files at the end of the pipeline."""
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
@@ -125,6 +132,7 @@ class ImportArguments(RuntimeArguments):
             progress_bar=self.progress_bar,
             input_paths=self.input_paths,
             tmp_path=self.resume_tmp,
+            delete_resume_log_files=self.delete_resume_log_files,
         )
 
     def to_catalog_info(self, total_rows) -> CatalogInfo:
