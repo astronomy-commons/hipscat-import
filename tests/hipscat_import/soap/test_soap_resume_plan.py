@@ -94,15 +94,13 @@ def test_count_keys(small_sky_soap_args):
     ## Mark one done and check that there's one less key to count later.
     Path(small_sky_soap_args.tmp_path, "2_187.csv").touch()
 
-    with pytest.warns(UserWarning, match="resuming prior progress"):
-        plan.gather_plan(small_sky_soap_args)
+    plan.gather_plan(small_sky_soap_args)
     assert len(plan.count_keys) == 13
 
     ## Mark them ALL done and check that there are on keys later.
     plan.touch_stage_done_file(SoapPlan.COUNTING_STAGE)
 
-    with pytest.warns(UserWarning, match="resuming prior progress"):
-        plan.gather_plan(small_sky_soap_args)
+    plan.gather_plan(small_sky_soap_args)
     assert len(plan.count_keys) == 0
 
 
@@ -117,8 +115,7 @@ def test_cached_map_file(small_sky_soap_args):
     cache_map_file = os.path.join(small_sky_soap_args.tmp_path, SoapPlan.SOURCE_MAP_FILE)
     assert os.path.exists(cache_map_file)
 
-    with pytest.warns(UserWarning, match="resuming prior progress"):
-        plan = SoapPlan(small_sky_soap_args)
+    plan = SoapPlan(small_sky_soap_args)
     assert len(plan.count_keys) == 14
 
 

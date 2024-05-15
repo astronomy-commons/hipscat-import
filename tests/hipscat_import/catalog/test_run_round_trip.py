@@ -34,7 +34,7 @@ def test_import_source_table(
     - will have larger partition info than the corresponding object catalog
     """
     args = ImportArguments(
-        output_artifact_name="small_sky_source_catalog",
+        output_artifact_name="small_sky_source_catalog.parquet",
         input_path=small_sky_source_dir,
         file_reader="csv",
         catalog_type="source",

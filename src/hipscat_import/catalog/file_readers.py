@@ -139,6 +139,7 @@ class CsvReader(InputReader):
         self.parquet_kwargs = parquet_kwargs
         self.kwargs = kwargs
 
+        schema_parquet = None
         if self.schema_file:
             if self.parquet_kwargs is None:
                 self.parquet_kwargs = {}
@@ -149,12 +150,12 @@ class CsvReader(InputReader):
 
         if self.column_names:
             self.kwargs["names"] = self.column_names
-        elif not self.header and self.schema_file:
+        elif not self.header and schema_parquet is not None:
             self.kwargs["names"] = schema_parquet.columns
 
         if self.type_map:
             self.kwargs["dtype"] = self.type_map
-        elif self.schema_file:
+        elif schema_parquet is not None:
             self.kwargs["dtype"] = schema_parquet.dtypes.to_dict()
 
     def read(self, input_file, read_columns=None):

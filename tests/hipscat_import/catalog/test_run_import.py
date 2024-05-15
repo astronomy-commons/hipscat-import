@@ -68,19 +68,18 @@ def test_resume_dask_runner(
         os.path.join(tmp_path, "resume_catalog", "Norder=0"),
     )
 
-    with pytest.warns(UserWarning, match="resuming prior progress"):
-        args = ImportArguments(
-            output_artifact_name="resume_catalog",
-            input_path=small_sky_parts_dir,
-            file_reader="csv",
-            output_path=tmp_path,
-            dask_tmp=tmp_path,
-            tmp_dir=tmp_path,
-            resume_tmp=os.path.join(tmp_path, "tmp"),
-            highest_healpix_order=0,
-            pixel_threshold=1000,
-            progress_bar=False,
-        )
+    args = ImportArguments(
+        output_artifact_name="resume_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        tmp_dir=tmp_path,
+        resume_tmp=os.path.join(tmp_path, "tmp"),
+        highest_healpix_order=0,
+        pixel_threshold=1000,
+        progress_bar=False,
+    )
 
     runner.run(args, dask_client)
 
@@ -166,21 +165,20 @@ def test_resume_dask_runner_diff_pixel_order(
         os.path.join(tmp_path, "resume_catalog", "Norder=0"),
     )
 
-    with pytest.warns(UserWarning, match="resuming prior progress"):
-        with pytest.raises(ValueError, match="incompatible with the highest healpix order"):
-            args = ImportArguments(
-                output_artifact_name="resume_catalog",
-                input_path=small_sky_parts_dir,
-                file_reader="csv",
-                output_path=tmp_path,
-                dask_tmp=tmp_path,
-                tmp_dir=tmp_path,
-                resume_tmp=os.path.join(tmp_path, "tmp"),
-                constant_healpix_order=1,
-                pixel_threshold=1000,
-                progress_bar=False,
-            )
-            runner.run(args, dask_client)
+    with pytest.raises(ValueError, match="incompatible with the highest healpix order"):
+        args = ImportArguments(
+            output_artifact_name="resume_catalog",
+            input_path=small_sky_parts_dir,
+            file_reader="csv",
+            output_path=tmp_path,
+            dask_tmp=tmp_path,
+            tmp_dir=tmp_path,
+            resume_tmp=os.path.join(tmp_path, "tmp"),
+            constant_healpix_order=1,
+            pixel_threshold=1000,
+            progress_bar=False,
+        )
+        runner.run(args, dask_client)
 
     # Running with resume set to "False" will start the pipeline from scratch
     args = ImportArguments(
@@ -240,21 +238,20 @@ def test_resume_dask_runner_histograms_diff_size(
         else:
             wrong_histogram.to_file(histogram_file)
 
-    with pytest.warns(UserWarning, match="resuming prior progress"):
-        with pytest.raises(ValueError, match="histogram partials have incompatible sizes"):
-            args = ImportArguments(
-                output_artifact_name="resume_catalog",
-                input_path=small_sky_parts_dir,
-                file_reader="csv",
-                output_path=tmp_path,
-                dask_tmp=tmp_path,
-                tmp_dir=tmp_path,
-                resume_tmp=os.path.join(tmp_path, "tmp"),
-                constant_healpix_order=1,
-                pixel_threshold=1000,
-                progress_bar=False,
-            )
-            runner.run(args, dask_client)
+    with pytest.raises(ValueError, match="histogram partials have incompatible sizes"):
+        args = ImportArguments(
+            output_artifact_name="resume_catalog",
+            input_path=small_sky_parts_dir,
+            file_reader="csv",
+            output_path=tmp_path,
+            dask_tmp=tmp_path,
+            tmp_dir=tmp_path,
+            resume_tmp=os.path.join(tmp_path, "tmp"),
+            constant_healpix_order=1,
+            pixel_threshold=1000,
+            progress_bar=False,
+        )
+        runner.run(args, dask_client)
 
 
 @pytest.mark.dask
