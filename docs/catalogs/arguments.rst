@@ -9,7 +9,7 @@ A minimal arguments block will look something like:
 
 .. code-block:: python
 
-    from hipscat_import.pipeline import ImportArguments
+    from hipscat_import.pipeline.catalog.arguments import ImportArguments
 
     args = ImportArguments(
         sort_columns="ObjectID",

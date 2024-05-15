@@ -114,9 +114,7 @@ class CsvReader(InputReader):
         column_names (list[str]): the names of columns if no header is available
         type_map (dict): the data types to use for columns
         parquet_kwargs (dict): additional keyword arguments to use when
-            reading the parquet schema metadata.
-        parquet_kwargs: additional keyword arguments passed to pandas.read_parquet,
-            if reading in a ``schema_file``.
+            reading the parquet schema metadata, passed to pandas.read_parquet.
             See https://pandas.pydata.org/docs/reference/api/pandas.read_parquet.html
         kwargs (dict): additional keyword arguments to use when reading
             the CSV files with pandas.read_csv.

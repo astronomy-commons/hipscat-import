@@ -40,13 +40,11 @@ create and activate a new environment.
 
 
 Once you have created a new environment, you can install this project for local
-development using the following commands:
+development using the following command:
 
 .. code-block:: console
 
-   >> pip install -e .'[dev]'
-   >> pre-commit install
-   >> conda install pandoc
+   >> source .setup_dev.sh
 
 
 Notes:
@@ -60,29 +58,6 @@ Notes:
    into documentation for ReadTheDocs works as expected. For more information, see
    the Python Project Template documentation on
    `Sphinx and Python Notebooks <https://lincc-ppt.readthedocs.io/en/stable/practices/sphinx.html#python-notebooks>`_.
-
-
-.. tip::
-    Installing on Mac
-
-    ``healpy`` is a very necessary dependency for hipscat libraries at this time, but
-    native prebuilt binaries for healpy on Apple Silicon Macs 
-    `do not yet exist <https://healpy.readthedocs.io/en/latest/install.html#binary-installation-with-pip-recommended-for-most-other-python-users>`_, 
-    so it's recommended to install via conda before proceeding to hipscat-import.
-
-    .. code-block:: console
-
-        >> conda config --add channels conda-forge
-        >> conda install healpy
-        >> git clone https://github.com/astronomy-commons/hipscat-import
-        >> cd hipscat-import
-        >> pip install -e .
-        
-    When installing dev dependencies, make sure to include the single quotes.
-
-    .. code-block:: console
-        
-        >> pip install -e '.[dev]'
 
 Testing
 -------------------------------------------------------------------------------
@@ -131,3 +106,9 @@ Optional - Release a new version
 Once your PR is merged you can create a new release to make your changes available. 
 GitHub's `instructions <https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository>`_ for doing so are here. 
 Use your best judgement when incrementing the version. i.e. is this a major, minor, or patch fix.
+
+Be kind
+-------------------------------------------------------------------------------
+
+You are expected to comply with the 
+`LINCC Frameworks Code of Conduct <https://lsstdiscoveryalliance.org/programs/lincc-frameworks/code-conduct/>`_`.
