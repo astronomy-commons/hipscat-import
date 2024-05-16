@@ -244,6 +244,85 @@ def test_import_constant_healpix_order(
     assert np.logical_and(ids >= 700, ids < 832).all()
 
 
+def assert_directory_contains(dir_name, expected_contents):
+    assert os.path.exists(dir_name)
+    actual_contents = os.listdir(dir_name)
+    actual_contents.sort()
+    npt.assert_array_equal(actual_contents, expected_contents)
+
+
+@pytest.mark.dask
+def test_import_keep_intermediate_files(
+    dask_client,
+    small_sky_parts_dir,
+    tmp_path,
+):
+    """Test that ALL intermediate files are still around on-disk after
+    successful import, when setting the appropriate flags.
+    """
+    temp = os.path.join(tmp_path, "intermediate_files")
+    os.makedirs(temp)
+    args = ImportArguments(
+        output_artifact_name="small_sky_object_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=tmp_path,
+        tmp_dir=temp,
+        dask_tmp=temp,
+        progress_bar=False,
+        delete_intermediate_parquet_files=False,
+        delete_resume_log_files=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+
+    ## Check that stage-level done files are still around.
+    base_intermediate_dir = os.path.join(temp, "small_sky_object_catalog", "intermediate")
+    expected_contents = [
+        "histograms",  # directory containing sub-histograms
+        "input_paths.txt",  # original input paths for subsequent comparison
+        "mapping_done",  # stage-level done file
+        "mapping_histogram.npz",  # concatenated histogram file
+        "order_0",  # all intermediate parquet files
+        "reducing",  # directory containing task-level done files
+        "reducing_done",  # stage-level done file
+        "splitting",  # directory containing task-level done files
+        "splitting_done",  # stage-level done file
+    ]
+    assert_directory_contains(base_intermediate_dir, expected_contents)
+
+    checking_dir = os.path.join(base_intermediate_dir, "histograms")
+    assert_directory_contains(
+        checking_dir, ["map_0.npz", "map_1.npz", "map_2.npz", "map_3.npz", "map_4.npz", "map_5.npz"]
+    )
+    checking_dir = os.path.join(base_intermediate_dir, "splitting")
+    assert_directory_contains(
+        checking_dir,
+        ["split_0_done", "split_1_done", "split_2_done", "split_3_done", "split_4_done", "split_5_done"],
+    )
+
+    checking_dir = os.path.join(base_intermediate_dir, "reducing")
+    assert_directory_contains(checking_dir, ["0_11_done"])
+
+    # Check that all of the intermediate parquet shards are still around.
+    checking_dir = os.path.join(base_intermediate_dir, "order_0", "dir_0", "pixel_11")
+    assert_directory_contains(
+        checking_dir,
+        [
+            "shard_split_0_0.parquet",
+            "shard_split_1_0.parquet",
+            "shard_split_2_0.parquet",
+            "shard_split_3_0.parquet",
+            "shard_split_4_0.parquet",
+        ],
+    )
+
+
 @pytest.mark.dask
 def test_import_lowest_healpix_order(
     dask_client,

@@ -98,6 +98,7 @@ def _reduce_pixels(args, destination_pixel_map, client):
                 add_hipscat_index=args.add_hipscat_index,
                 use_schema_file=args.use_schema_file,
                 use_hipscat_index=args.use_hipscat_index,
+                delete_input_files=args.delete_intermediate_parquet_files,
                 storage_options=args.output_storage_options,
             )
         )
@@ -182,5 +183,6 @@ def run(args, client):
         step_progress.update(1)
         io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
         step_progress.update(1)
-        args.resume_plan.clean_resume_files()
+        if args.resume_plan.delete_resume_log_files:
+            args.resume_plan.clean_resume_files()
         step_progress.update(1)
