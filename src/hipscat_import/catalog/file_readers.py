@@ -38,6 +38,7 @@ def get_file_reader(
             is available. for fits files, a list of columns to *keep*.
         skip_column_names (list[str]): for fits files, a list of columns to remove.
         type_map (dict): for CSV files, the data types to use for columns
+        kwargs: additional keyword arguments to pass to the underlying file reader.
     """
     if file_format == "csv":
         return CsvReader(
@@ -113,9 +114,11 @@ class CsvReader(InputReader):
         column_names (list[str]): the names of columns if no header is available
         type_map (dict): the data types to use for columns
         parquet_kwargs (dict): additional keyword arguments to use when
-            reading the parquet schema metadata.
+            reading the parquet schema metadata, passed to pandas.read_parquet.
+            See https://pandas.pydata.org/docs/reference/api/pandas.read_parquet.html
         kwargs (dict): additional keyword arguments to use when reading
-            the CSV files.
+            the CSV files with pandas.read_csv.
+            See https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
     """
 
     def __init__(
@@ -188,7 +191,12 @@ class AstropyEcsvReader(InputReader):
     """Reads astropy ascii .ecsv files.
 
     Note that this is NOT a chunked reader. Use caution when reading
-    large ECSV files with this reader."""
+    large ECSV files with this reader.
+
+    Attributes:
+        kwargs: keyword arguments passed to astropy ascii reader.
+            See https://docs.astropy.org/en/stable/api/astropy.io.ascii.read.html#astropy.io.ascii.read
+    """
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -228,6 +236,8 @@ class FitsReader(InputReader):
             one of `column_names` or `skip_column_names`
         skip_column_names (list[str]): list of column names to skip. only use
             one of `column_names` or `skip_column_names`
+        kwargs: keyword arguments passed along to astropy.Table.read.
+            See https://docs.astropy.org/en/stable/api/astropy.table.Table.html#astropy.table.Table.read
     """
 
     def __init__(self, chunksize=500_000, column_names=None, skip_column_names=None, **kwargs):
@@ -281,6 +291,8 @@ class ParquetReader(InputReader):
         chunksize (int): number of rows of the file to process at once.
             For large files, this can prevent loading the entire file
             into memory at once.
+        kwargs: arguments to pass along to pyarrow.parquet.ParquetFile.
+            See https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetFile.html
     """
 
     def __init__(self, chunksize=500_000, **kwargs):
