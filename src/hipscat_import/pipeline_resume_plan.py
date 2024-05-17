@@ -173,6 +173,7 @@ class PipelineResumePlan:
             ValueError: if the retrieved file set differs from `input_paths`.
         """
         unique_file_paths = set(input_paths)
+        unique_file_paths = [str(p) for p in unique_file_paths]
 
         original_input_paths = []
 
@@ -181,7 +182,7 @@ class PipelineResumePlan:
             with open(file_path, "r", encoding="utf-8") as file_handle:
                 contents = file_handle.readlines()
             contents = [path.strip() for path in contents]
-            original_input_paths = set(contents)
+            original_input_paths = list(set(contents))
         except FileNotFoundError:
             pass
 
