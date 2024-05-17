@@ -291,18 +291,24 @@ class ParquetReader(InputReader):
         chunksize (int): number of rows of the file to process at once.
             For large files, this can prevent loading the entire file
             into memory at once.
+        column_names (list[str] or None): Names of columns to use from the input dataset.
+            If None, use all columns.
         kwargs: arguments to pass along to pyarrow.parquet.ParquetFile.
             See https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetFile.html
     """
 
-    def __init__(self, chunksize=500_000, **kwargs):
+    def __init__(self, chunksize=500_000, column_names=None, **kwargs):
         self.chunksize = chunksize
+        self.column_names = column_names
         self.kwargs = kwargs
 
     def read(self, input_file, read_columns=None):
         self.regular_file_exists(input_file, **self.kwargs)
+        columns = read_columns or self.column_names
         parquet_file = pq.ParquetFile(input_file, **self.kwargs)
-        for smaller_table in parquet_file.iter_batches(batch_size=self.chunksize, use_pandas_metadata=True):
+        for smaller_table in parquet_file.iter_batches(
+            batch_size=self.chunksize, columns=columns, use_pandas_metadata=True
+        ):
             yield smaller_table.to_pandas()
 
     def provenance_info(self) -> dict:
