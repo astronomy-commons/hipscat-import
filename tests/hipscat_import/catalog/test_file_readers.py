@@ -255,6 +255,19 @@ def test_parquet_reader_provenance_info(tmp_path, basic_catalog_info):
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
 
 
+def test_parquet_reader_columns(parquet_shards_shard_44_0):
+    """Verify we can read a subset of columns."""
+    column_subset = ["id", "dec"]
+
+    # test column_names class property
+    for frame in ParquetReader(column_names=column_subset).read(parquet_shards_shard_44_0):
+        assert set(frame.columns) == set(column_subset)
+
+    # test read_columns kwarg
+    for frame in ParquetReader().read(parquet_shards_shard_44_0, read_columns=column_subset):
+        assert set(frame.columns) == set(column_subset)
+
+
 def test_read_fits(formats_fits):
     """Success case - fits file that exists being read as fits"""
     total_chunks = 0
