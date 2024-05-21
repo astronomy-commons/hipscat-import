@@ -78,13 +78,13 @@ class InputReader(abc.ABC):
             DataFrame containing chunk of file info.
         """
 
-    @abc.abstractmethod
     def provenance_info(self) -> dict:
         """Create dictionary of parameters for provenance tracking.
 
         Returns:
             dictionary with all argument_name -> argument_value as key -> value pairs.
         """
+        return {"input_reader_type": type(self).__name__, **vars(self)}
 
     def regular_file_exists(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **_kwargs):
         """Check that the `input_file` points to a single regular file
@@ -172,20 +172,6 @@ class CsvReader(InputReader):
         ) as reader:
             yield from reader
 
-    def provenance_info(self) -> dict:
-        str_kwargs = {}
-        if self.type_map:
-            str_kwargs = {key: str(value) for (key, value) in self.kwargs.items()}
-        provenance_info = {
-            "input_reader_type": "CsvReader",
-            "chunksize": self.chunksize,
-            "schema_file": self.schema_file,
-            "column_names": self.column_names,
-            "parquet_kwargs": self.parquet_kwargs,
-            "kwargs": str_kwargs,
-        }
-        return provenance_info
-
 
 class AstropyEcsvReader(InputReader):
     """Reads astropy ascii .ecsv files.
@@ -208,9 +194,6 @@ class AstropyEcsvReader(InputReader):
 
         astropy_table = ascii_reader.read(input_file, format="ecsv", **self.kwargs)
         yield astropy_table.to_pandas()
-
-    def provenance_info(self):
-        return {"input_reader_type": "AstropyEcsvReader"}
 
 
 class FitsReader(InputReader):
@@ -274,15 +257,6 @@ class FitsReader(InputReader):
 
             read_rows += self.chunksize
 
-    def provenance_info(self) -> dict:
-        provenance_info = {
-            "input_reader_type": "FitsReader",
-            "chunksize": self.chunksize,
-            "column_names": self.column_names,
-            "skip_column_names": self.skip_column_names,
-        }
-        return provenance_info
-
 
 class ParquetReader(InputReader):
     """Parquet reader for the most common Parquet reading arguments.
@@ -310,10 +284,3 @@ class ParquetReader(InputReader):
             batch_size=self.chunksize, columns=columns, use_pandas_metadata=True
         ):
             yield smaller_table.to_pandas()
-
-    def provenance_info(self) -> dict:
-        provenance_info = {
-            "input_reader_type": "ParquetReader",
-            "chunksize": self.chunksize,
-        }
-        return provenance_info
