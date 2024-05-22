@@ -110,7 +110,7 @@ class PipelineResumePlan:
         """Remove all intermediate files created in execution."""
         file_io.remove_directory(self.tmp_path, ignore_errors=True)
 
-    def wait_for_futures(self, futures, stage_name):
+    def wait_for_futures(self, futures, stage_name, fail_fast=False):
         """Wait for collected futures to complete.
 
         As each future completes, check the returned status.
@@ -118,6 +118,9 @@ class PipelineResumePlan:
         Args:
             futures(List[future]): collected futures
             stage_name(str): name of the stage (e.g. mapping, reducing)
+            fail_fast (bool): if True, we will re-raise the first exception
+                encountered and NOT continue. this may lead to unexpected
+                behavior for in-progress tasks.
         Raises:
             RuntimeError: if any future returns an error status.
         """
@@ -145,6 +148,8 @@ class PipelineResumePlan:
                     trace_strs.append(f'    File "{filename}", line {line_number}, in {method_name}')
                     stack_trace = stack_trace.tb_next
                 print("\n".join(trace_strs))
+                if fail_fast:
+                    raise exception
 
         if some_error:
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")

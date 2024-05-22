@@ -242,7 +242,7 @@ class ResumePlan(PipelineResumePlan):
 
     def wait_for_reducing(self, futures):
         """Wait for reducing futures to complete."""
-        self.wait_for_futures(futures, self.REDUCING_STAGE)
+        self.wait_for_futures(futures, self.REDUCING_STAGE, fail_fast=True)
         remaining_reduce_items = self.get_reduce_items()
         if len(remaining_reduce_items) > 0:
             raise RuntimeError(f"{len(remaining_reduce_items)} reduce stages did not complete successfully.")
