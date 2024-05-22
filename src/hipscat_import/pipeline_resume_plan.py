@@ -177,30 +177,30 @@ class PipelineResumePlan:
         Raises:
             ValueError: if the retrieved file set differs from `input_paths`.
         """
-        unique_file_paths = set(input_paths)
+        input_paths = set(input_paths)
+        input_paths = [str(p) for p in input_paths]
+        input_paths.sort()
 
         original_input_paths = []
 
-        file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
+        log_file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
         try:
-            with open(file_path, "r", encoding="utf-8") as file_handle:
+            with open(log_file_path, "r", encoding="utf-8") as file_handle:
                 contents = file_handle.readlines()
             contents = [path.strip() for path in contents]
-            original_input_paths = set(contents)
+            original_input_paths = list(set(contents))
+            original_input_paths.sort()
         except FileNotFoundError:
             pass
 
         if len(original_input_paths) == 0:
-            file_path = file_io.append_paths_to_pointer(self.tmp_path, self.ORIGINAL_INPUT_PATHS)
-            with open(file_path, "w", encoding="utf-8") as file_handle:
+            with open(log_file_path, "w", encoding="utf-8") as file_handle:
                 for path in input_paths:
                     file_handle.write(f"{path}\n")
         else:
-            if original_input_paths != unique_file_paths:
+            if original_input_paths != input_paths:
                 raise ValueError("Different file set from resumed pipeline execution.")
 
-        input_paths = list(unique_file_paths)
-        input_paths.sort()
         return input_paths
 
 

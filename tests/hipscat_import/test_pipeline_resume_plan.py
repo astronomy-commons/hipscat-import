@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+import numpy.testing as npt
 import pytest
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -156,3 +157,18 @@ def test_formatted_stage_name():
 
     formatted = PipelineResumePlan.get_formatted_stage_name("very long stage name")
     assert formatted == "Very long stage name"
+
+
+def test_check_original_input_paths(tmp_path, mixed_schema_csv_dir):
+    plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False, resume=False)
+
+    input_file_list = [
+        Path(mixed_schema_csv_dir) / "input_01.csv",
+        Path(mixed_schema_csv_dir) / "input_02.csv",
+    ]
+
+    checked_files = plan.check_original_input_paths(input_file_list)
+
+    round_trip_files = plan.check_original_input_paths(checked_files)
+
+    npt.assert_array_equal(checked_files, round_trip_files)
