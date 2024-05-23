@@ -6,7 +6,7 @@ import healpy as hp
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-from dask.distributed import print
+from dask.distributed import print as dask_print
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
@@ -115,8 +115,8 @@ def map_to_pixels(
 
         histo.to_file(ResumePlan.partial_histogram_file(tmp_path=resume_path, mapping_key=mapping_key))
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        print("Failed MAPPING stage with file ", input_file)
-        print(exception)
+        dask_print("Failed MAPPING stage with file ", input_file)
+        dask_print(exception)
         raise exception
 
 
@@ -176,8 +176,8 @@ def split_pixels(
 
         ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        print("Failed SPLITTING stage with file ", input_file)
-        print(exception)
+        dask_print("Failed SPLITTING stage with file ", input_file)
+        dask_print(exception)
         raise exception
 
 
@@ -292,11 +292,6 @@ def reduce_pixel_shards(
 
             # Adjust the schema to make sure that the _hipscat_index will
             # be saved as a uint64
-            if schema:
-                pandas_index_column = schema.get_field_index("__index_level_0__")
-                if pandas_index_column != -1:
-                    schema = schema.remove(pandas_index_column)
-                schema = schema.insert(0, pa.field(HIPSCAT_ID_COLUMN, pa.uint64()))
         elif use_hipscat_index:
             if dataframe.index.name != HIPSCAT_ID_COLUMN:
                 dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN)
@@ -307,11 +302,7 @@ def reduce_pixel_shards(
         dataframe["Npix"] = np.full(rows_written, fill_value=healpix_pixel.pixel, dtype=np.uint64)
 
         if schema:
-            schema = (
-                schema.append(pa.field("Norder", pa.uint8()))
-                .append(pa.field("Dir", pa.uint64()))
-                .append(pa.field("Npix", pa.uint64()))
-            )
+            schema = _modify_arrow_schema(schema, add_hipscat_index)
             dataframe.to_parquet(destination_file, schema=schema, storage_options=storage_options)
         else:
             dataframe.to_parquet(destination_file, storage_options=storage_options)
@@ -325,6 +316,21 @@ def reduce_pixel_shards(
 
         ResumePlan.reducing_key_done(tmp_path=resume_path, reducing_key=reducing_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        print("Failed REDUCING stage for shard: ", destination_pixel_order, destination_pixel_number)
-        print(exception)
+        dask_print("Failed REDUCING stage for shard: ", destination_pixel_order, destination_pixel_number)
+        dask_print(exception)
         raise exception
+
+
+def _modify_arrow_schema(schema, add_hipscat_index):
+    if add_hipscat_index:
+        pandas_index_column = schema.get_field_index("__index_level_0__")
+        if pandas_index_column != -1:
+            schema = schema.remove(pandas_index_column)
+        schema = schema.insert(0, pa.field(HIPSCAT_ID_COLUMN, pa.uint64()))
+    schema = (
+        schema.append(pa.field("Norder", pa.uint8()))
+        .append(pa.field("Dir", pa.uint64()))
+        .append(pa.field("Npix", pa.uint64()))
+    )
+
+    return schema

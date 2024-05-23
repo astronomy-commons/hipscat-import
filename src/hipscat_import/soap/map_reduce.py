@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-from dask.distributed import print
+from dask.distributed import print as dask_print
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import FilePointer, file_io, paths
 from hipscat.io.file_io.file_pointer import get_fs, strip_leading_slash_for_pyarrow
@@ -130,9 +130,10 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
 
         _write_count_results(soap_args.tmp_path, source_pixel, results)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        print("Failed COUNTING stage for shard: ", source_pixel)
-        print(exception)
+        dask_print("Failed COUNTING stage for shard: ", source_pixel)
+        dask_print(exception)
         raise exception
+
 
 def combine_partial_results(input_path, output_path, output_storage_options) -> int:
     """Combine many partial CSVs into single partition join info.
@@ -223,7 +224,9 @@ def reduce_joins(
         # Write all of the shards into a single parquet file, one row-group-per-shard.
         starting_catalog_path = FilePointer(str(soap_args.catalog_path))
         destination_dir = paths.pixel_directory(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-        file_io.make_directory(destination_dir, exist_ok=True, storage_options=soap_args.output_storage_options)
+        file_io.make_directory(
+            destination_dir, exist_ok=True, storage_options=soap_args.output_storage_options
+        )
 
         output_file = paths.pixel_catalog_file(starting_catalog_path, object_pixel.order, object_pixel.pixel)
         file_system, output_file = get_fs(
@@ -240,6 +243,6 @@ def reduce_joins(
 
         SoapPlan.reducing_key_done(tmp_path=soap_args.tmp_path, reducing_key=object_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        print("Failed REDUCING stage for shard: ", object_pixel)
-        print(exception)
+        dask_print("Failed REDUCING stage for shard: ", object_pixel)
+        dask_print(exception)
         raise exception

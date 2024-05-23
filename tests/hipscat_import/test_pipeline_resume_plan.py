@@ -98,7 +98,7 @@ def test_safe_to_resume(tmp_path):
 
 
 @pytest.mark.dask
-def test_wait_for_futures(tmp_path, dask_client, capsys):
+def test_wait_for_futures(tmp_path, dask_client):
     """Test that we can wait around for futures to complete.
 
     Additionally test that relevant parts of the traceback are printed to stdout."""
@@ -120,7 +120,7 @@ def test_wait_for_futures(tmp_path, dask_client, capsys):
 
 
 @pytest.mark.dask
-def test_wait_for_futures_fail_fast(tmp_path, dask_client, capsys):
+def test_wait_for_futures_fail_fast(tmp_path, dask_client):
     """Test that we can wait around for futures to complete.
 
     Additionally test that relevant parts of the traceback are printed to stdout."""
