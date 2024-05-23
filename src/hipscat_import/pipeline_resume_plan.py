@@ -134,22 +134,8 @@ class PipelineResumePlan:
         ):
             if future.status == "error":
                 some_error = True
-                exception = future.exception()
-                trace_strs = [
-                    f"{stage_name} task {future.key} failed with message:",
-                    f"  {type(exception).__name__}: {exception}",
-                    "  Traceback (most recent call last):",
-                ]
-                stack_trace = exception.__traceback__
-                while stack_trace is not None:
-                    filename = stack_trace.tb_frame.f_code.co_filename
-                    method_name = stack_trace.tb_frame.f_code.co_name
-                    line_number = stack_trace.tb_lineno
-                    trace_strs.append(f'    File "{filename}", line {line_number}, in {method_name}')
-                    stack_trace = stack_trace.tb_next
-                print("\n".join(trace_strs))
                 if fail_fast:
-                    raise exception
+                    raise future.exception()
 
         if some_error:
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")

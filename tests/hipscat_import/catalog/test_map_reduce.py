@@ -58,7 +58,7 @@ def test_read_directory(test_data_dir):
         )
 
 
-def test_read_bad_fileformat(blank_data_file):
+def test_read_bad_fileformat(blank_data_file, capsys):
     """Unsupported file format"""
     with pytest.raises(NotImplementedError):
         mr.map_to_pixels(
@@ -70,6 +70,8 @@ def test_read_bad_fileformat(blank_data_file):
             resume_path="",
             mapping_key="map_0",
         )
+    captured = capsys.readouterr()
+    assert "No file reader implemented" in captured.out
 
 
 def read_partial_histogram(tmp_path, mapping_key):

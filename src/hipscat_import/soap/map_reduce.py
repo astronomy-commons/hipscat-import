@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
+from dask.distributed import print
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import FilePointer, file_io, paths
 from hipscat.io.file_io.file_pointer import get_fs, strip_leading_slash_for_pyarrow
@@ -94,40 +95,44 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
         object_pixels(List[HealpixPixel]): set of tuples of order and pixel for the partitions
             of the object catalog to be joined.
     """
-    source_path = paths.pixel_catalog_file(
-        catalog_base_dir=file_io.get_file_pointer_from_path(soap_args.source_catalog_dir),
-        pixel_order=source_pixel.order,
-        pixel_number=source_pixel.pixel,
-    )
-    if soap_args.write_leaf_files and soap_args.source_object_id_column != soap_args.source_id_column:
-        read_columns = [soap_args.source_object_id_column, soap_args.source_id_column]
-    else:
-        read_columns = [soap_args.source_object_id_column]
-    source_data = file_io.load_parquet_to_pandas(
-        source_path, columns=read_columns, storage_options=soap_args.source_storage_options
-    ).set_index(soap_args.source_object_id_column)
-
-    remaining_sources = len(source_data)
-    results = []
-
-    for object_pixel in object_pixels:
-        if remaining_sources < 1:
-            break
-        join_count = _count_joins_for_object(
-            source_data,
-            source_pixel,
-            object_pixel,
-            soap_args,
+    try:
+        source_path = paths.pixel_catalog_file(
+            catalog_base_dir=file_io.get_file_pointer_from_path(soap_args.source_catalog_dir),
+            pixel_order=source_pixel.order,
+            pixel_number=source_pixel.pixel,
         )
-        results.append([object_pixel.order, object_pixel.pixel, join_count])
-        remaining_sources -= join_count
+        if soap_args.write_leaf_files and soap_args.source_object_id_column != soap_args.source_id_column:
+            read_columns = [soap_args.source_object_id_column, soap_args.source_id_column]
+        else:
+            read_columns = [soap_args.source_object_id_column]
+        source_data = file_io.load_parquet_to_pandas(
+            source_path, columns=read_columns, storage_options=soap_args.source_storage_options
+        ).set_index(soap_args.source_object_id_column)
 
-    ## mark that some sources were not joined
-    if remaining_sources > 0:
-        results.append([-1, -1, remaining_sources])
+        remaining_sources = len(source_data)
+        results = []
 
-    _write_count_results(soap_args.tmp_path, source_pixel, results)
+        for object_pixel in object_pixels:
+            if remaining_sources < 1:
+                break
+            join_count = _count_joins_for_object(
+                source_data,
+                source_pixel,
+                object_pixel,
+                soap_args,
+            )
+            results.append([object_pixel.order, object_pixel.pixel, join_count])
+            remaining_sources -= join_count
 
+        ## mark that some sources were not joined
+        if remaining_sources > 0:
+            results.append([-1, -1, remaining_sources])
+
+        _write_count_results(soap_args.tmp_path, source_pixel, results)
+    except Exception as exception:  # pylint: disable=broad-exception-caught
+        print("Failed COUNTING stage for shard: ", source_pixel)
+        print(exception)
+        raise exception
 
 def combine_partial_results(input_path, output_path, output_storage_options) -> int:
     """Combine many partial CSVs into single partition join info.
@@ -187,49 +192,54 @@ def reduce_joins(
 ):
     """Reduce join tables into one parquet file per object-pixel, with one row-group
     inside per source pixel."""
-    pixel_dir = get_pixel_cache_directory(soap_args.tmp_path, object_pixel)
-    # If there's no directory, this implies there were no matches to this object pixel
-    # earlier in the pipeline. Move on.
-    if not file_io.does_file_or_directory_exist(pixel_dir):
-        return
-    # Find all of the constituent files / source pixels. Create a list of PyArrow Tables from those
-    # parquet files. We need to know the schema before we create the ParquetWriter.
-    shard_file_list = file_io.find_files_matching_path(pixel_dir, "source*.parquet")
+    try:
+        pixel_dir = get_pixel_cache_directory(soap_args.tmp_path, object_pixel)
+        # If there's no directory, this implies there were no matches to this object pixel
+        # earlier in the pipeline. Move on.
+        if not file_io.does_file_or_directory_exist(pixel_dir):
+            return
+        # Find all of the constituent files / source pixels. Create a list of PyArrow Tables from those
+        # parquet files. We need to know the schema before we create the ParquetWriter.
+        shard_file_list = file_io.find_files_matching_path(pixel_dir, "source*.parquet")
 
-    if len(shard_file_list) == 0:
-        return
+        if len(shard_file_list) == 0:
+            return
 
-    ## We want to order the row groups in a "breadth-first" sorting. Determine our sorting
-    ## via the metadata, then read the tables in using that sorting.
-    healpix_pixels = []
-    for shard_file_name in shard_file_list:
-        healpix_pixels.append(
-            get_healpix_pixel_from_metadata(pq.read_metadata(shard_file_name), "join_Norder", "join_Npix")
+        ## We want to order the row groups in a "breadth-first" sorting. Determine our sorting
+        ## via the metadata, then read the tables in using that sorting.
+        healpix_pixels = []
+        for shard_file_name in shard_file_list:
+            healpix_pixels.append(
+                get_healpix_pixel_from_metadata(pq.read_metadata(shard_file_name), "join_Norder", "join_Npix")
+            )
+
+        argsort = get_pixel_argsort(healpix_pixels)
+        shard_file_list = np.array(shard_file_list)[argsort]
+
+        shards = []
+        for shard_file_name in shard_file_list:
+            shards.append(pq.read_table(shard_file_name))
+
+        # Write all of the shards into a single parquet file, one row-group-per-shard.
+        starting_catalog_path = FilePointer(str(soap_args.catalog_path))
+        destination_dir = paths.pixel_directory(starting_catalog_path, object_pixel.order, object_pixel.pixel)
+        file_io.make_directory(destination_dir, exist_ok=True, storage_options=soap_args.output_storage_options)
+
+        output_file = paths.pixel_catalog_file(starting_catalog_path, object_pixel.order, object_pixel.pixel)
+        file_system, output_file = get_fs(
+            file_pointer=output_file, storage_options=soap_args.output_storage_options
         )
+        output_file = strip_leading_slash_for_pyarrow(output_file, protocol=file_system.protocol)
+        with pq.ParquetWriter(output_file, shards[0].schema, filesystem=file_system) as writer:
+            for table in shards:
+                writer.write_table(table)
 
-    argsort = get_pixel_argsort(healpix_pixels)
-    shard_file_list = np.array(shard_file_list)[argsort]
+        # Delete the intermediate shards.
+        if delete_input_files:
+            file_io.remove_directory(pixel_dir, ignore_errors=True)
 
-    shards = []
-    for shard_file_name in shard_file_list:
-        shards.append(pq.read_table(shard_file_name))
-
-    # Write all of the shards into a single parquet file, one row-group-per-shard.
-    starting_catalog_path = FilePointer(str(soap_args.catalog_path))
-    destination_dir = paths.pixel_directory(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-    file_io.make_directory(destination_dir, exist_ok=True, storage_options=soap_args.output_storage_options)
-
-    output_file = paths.pixel_catalog_file(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-    file_system, output_file = get_fs(
-        file_pointer=output_file, storage_options=soap_args.output_storage_options
-    )
-    output_file = strip_leading_slash_for_pyarrow(output_file, protocol=file_system.protocol)
-    with pq.ParquetWriter(output_file, shards[0].schema, filesystem=file_system) as writer:
-        for table in shards:
-            writer.write_table(table)
-
-    # Delete the intermediate shards.
-    if delete_input_files:
-        file_io.remove_directory(pixel_dir, ignore_errors=True)
-
-    SoapPlan.reducing_key_done(tmp_path=soap_args.tmp_path, reducing_key=object_key)
+        SoapPlan.reducing_key_done(tmp_path=soap_args.tmp_path, reducing_key=object_key)
+    except Exception as exception:  # pylint: disable=broad-exception-caught
+        print("Failed REDUCING stage for shard: ", object_pixel)
+        print(exception)
+        raise exception
