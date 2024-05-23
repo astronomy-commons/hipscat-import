@@ -159,3 +159,19 @@ def test_reduce_joins(small_sky_soap_args, soap_intermediate_dir, small_sky_soap
         for row_index in range(14)
     ]
     assert ordered_pixels == list(small_sky_soap_maps.keys())
+
+
+def test_reduce_joins_missing_files(small_sky_soap_args, soap_intermediate_dir, capsys):
+    """Use some previously-computed intermediate files to reduce the joined
+    leaf parquet files into a single parquet file."""
+    temp_path = os.path.join(small_sky_soap_args.tmp_path, "resume", "intermediate")
+    shutil.copytree(
+        soap_intermediate_dir,
+        temp_path,
+    )
+    small_sky_soap_args.tmp_path = temp_path
+
+    with pytest.raises(FileNotFoundError):
+        reduce_joins(small_sky_soap_args, HealpixPixel(0, 11), object_key="0_11")
+    captured = capsys.readouterr()
+    assert "No such file or directory" in captured.out
