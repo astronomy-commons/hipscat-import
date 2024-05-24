@@ -98,7 +98,7 @@ def test_safe_to_resume(tmp_path):
 
 
 @pytest.mark.dask
-def test_wait_for_futures(tmp_path, dask_client, capsys):
+def test_wait_for_futures(tmp_path, dask_client):
     """Test that we can wait around for futures to complete.
 
     Additionally test that relevant parts of the traceback are printed to stdout."""
@@ -118,13 +118,9 @@ def test_wait_for_futures(tmp_path, dask_client, capsys):
     with pytest.raises(RuntimeError, match="Some test stages failed"):
         plan.wait_for_futures(futures, "test")
 
-    captured = capsys.readouterr()
-    assert "RuntimeError: we are at odds with evens" in captured.out
-    assert "error_on_even" in captured.out
-
 
 @pytest.mark.dask
-def test_wait_for_futures_fail_fast(tmp_path, dask_client, capsys):
+def test_wait_for_futures_fail_fast(tmp_path, dask_client):
     """Test that we can wait around for futures to complete.
 
     Additionally test that relevant parts of the traceback are printed to stdout."""
@@ -138,10 +134,6 @@ def test_wait_for_futures_fail_fast(tmp_path, dask_client, capsys):
     futures = [dask_client.submit(error_on_even, 3), dask_client.submit(error_on_even, 4)]
     with pytest.raises(RuntimeError, match="we are at odds with evens"):
         plan.wait_for_futures(futures, "test", fail_fast=True)
-
-    captured = capsys.readouterr()
-    assert "we are at odds with evens" in captured.out
-    assert "error_on_even" in captured.out
 
 
 def test_formatted_stage_name():

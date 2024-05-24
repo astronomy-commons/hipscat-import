@@ -58,7 +58,7 @@ def test_read_directory(test_data_dir):
         )
 
 
-def test_read_bad_fileformat(blank_data_file):
+def test_read_bad_fileformat(blank_data_file, capsys):
     """Unsupported file format"""
     with pytest.raises(NotImplementedError):
         mr.map_to_pixels(
@@ -70,6 +70,8 @@ def test_read_bad_fileformat(blank_data_file):
             resume_path="",
             mapping_key="map_0",
         )
+    captured = capsys.readouterr()
+    assert "No file reader implemented" in captured.out
 
 
 def read_partial_histogram(tmp_path, mapping_key):
@@ -244,6 +246,27 @@ def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
     expected[44:] = filled_pixels[:]
     npt.assert_array_equal(result, expected)
     assert (result == expected).all()
+
+
+def test_split_pixels_bad_format(blank_data_file, tmp_path, capsys):
+    """Test loading the a file with non-default headers"""
+    alignment = np.full(12, None)
+    alignment[11] = (0, 11, 131)
+    with pytest.raises(NotImplementedError):
+        mr.split_pixels(
+            input_file=blank_data_file,
+            file_reader=None,
+            highest_order=0,
+            ra_column="ra_mean",
+            dec_column="dec_mean",
+            splitting_key="0",
+            cache_shard_path=tmp_path,
+            resume_path=tmp_path,
+            alignment=alignment,
+        )
+    captured = capsys.readouterr()
+    assert "No file reader implemented" in captured.out
+    os.makedirs(os.path.join(tmp_path, "splitting"))
 
 
 def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_path):
