@@ -2,6 +2,7 @@
 
 import os
 import re
+from pathlib import Path
 
 import healpy as hp
 import numpy as np
@@ -52,7 +53,7 @@ TEST_DIR = os.path.dirname(__file__)
 
 @pytest.fixture
 def test_data_dir():
-    return os.path.join(TEST_DIR, "data")
+    return Path(TEST_DIR) / "data"
 
 
 @pytest.fixture
@@ -118,6 +119,11 @@ def formats_fits(test_data_dir):
 @pytest.fixture
 def formats_pandasindex(test_data_dir):
     return os.path.join(test_data_dir, "test_formats", "pandasindex.parquet")
+
+
+@pytest.fixture
+def indexed_files_dir(test_data_dir):
+    return test_data_dir / "indexed_files"
 
 
 @pytest.fixture

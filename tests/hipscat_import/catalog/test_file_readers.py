@@ -10,7 +10,13 @@ import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.catalog import CatalogInfo
 
-from hipscat_import.catalog.file_readers import CsvReader, FitsReader, ParquetReader, get_file_reader
+from hipscat_import.catalog.file_readers import (
+    CsvReader,
+    FitsReader,
+    IndexedCsvReader,
+    ParquetReader,
+    get_file_reader,
+)
 
 
 # pylint: disable=redefined-outer-name
@@ -225,6 +231,32 @@ def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
     catalog_base_dir = os.path.join(tmp_path, "test_catalog")
     os.makedirs(catalog_base_dir)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
+
+
+def test_indexed_csv_reader(indexed_files_dir):
+    # Chunksize covers all the inputs.
+    total_chunks = 0
+    for frame in IndexedCsvReader(chunksize=10_000).read(indexed_files_dir / "csv_list_single.txt"):
+        total_chunks += 1
+        assert len(frame) == 131
+
+    assert total_chunks == 1
+
+    # Chunksize requires splitting into just a few batches.
+    total_chunks = 0
+    for frame in IndexedCsvReader(chunksize=60).read(indexed_files_dir / "csv_list_single.txt"):
+        total_chunks += 1
+        assert len(frame) < 60
+
+    assert total_chunks == 3
+
+    # Requesting a very small chunksize. This will split up reads on the CSV.
+    total_chunks = 0
+    for frame in IndexedCsvReader(chunksize=5).read(indexed_files_dir / "csv_list_single.txt"):
+        total_chunks += 1
+        assert len(frame) <= 5
+
+    assert total_chunks == 29
 
 
 def test_parquet_reader(parquet_shards_shard_44_0):
