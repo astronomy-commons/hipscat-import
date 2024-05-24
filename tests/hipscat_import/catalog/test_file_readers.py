@@ -14,6 +14,7 @@ from hipscat_import.catalog.file_readers import (
     CsvReader,
     FitsReader,
     IndexedCsvReader,
+    IndexedParquetReader,
     ParquetReader,
     get_file_reader,
 )
@@ -276,6 +277,34 @@ def test_parquet_reader_chunked(parquet_shards_shard_44_0):
         total_chunks += 1
         assert len(frame) == 1
     assert total_chunks == 7
+
+
+def test_indexed_parquet_reader(indexed_files_dir):
+    # Chunksize covers all the inputs.
+    total_chunks = 0
+    for frame in get_file_reader("indexed_parquet", chunksize=10_000).read(
+        indexed_files_dir / "parquet_list_single.txt"
+    ):
+        total_chunks += 1
+        assert len(frame) == 131
+
+    assert total_chunks == 1
+
+    # Chunksize requires splitting into just a few batches.
+    total_chunks = 0
+    for frame in IndexedParquetReader(chunksize=60).read(indexed_files_dir / "parquet_list_single.txt"):
+        total_chunks += 1
+        assert len(frame) < 60
+
+    assert total_chunks == 3
+
+    # Requesting a very small chunksize. This will split up reads on the CSV.
+    total_chunks = 0
+    for frame in IndexedParquetReader(chunksize=5).read(indexed_files_dir / "parquet_list_single.txt"):
+        total_chunks += 1
+        assert len(frame) <= 5
+
+    assert total_chunks == 29
 
 
 def test_parquet_reader_provenance_info(tmp_path, basic_catalog_info):
