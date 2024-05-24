@@ -225,4 +225,3 @@ def print_task_failure(custom_message, exception):
     except Exception:  # pylint: disable=broad-exception-caught
         pass
     dask_print(exception)
-    raise exception
