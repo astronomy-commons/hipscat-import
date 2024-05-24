@@ -5,7 +5,6 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-from dask.distributed import print as dask_print
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import FilePointer, file_io, paths
 from hipscat.io.file_io.file_pointer import get_fs, strip_leading_slash_for_pyarrow
@@ -13,7 +12,7 @@ from hipscat.io.parquet_metadata import get_healpix_pixel_from_metadata
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.healpix_pixel_function import get_pixel_argsort
 
-from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
+from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print_task_failure
 from hipscat_import.soap.arguments import SoapArguments
 from hipscat_import.soap.resume_plan import SoapPlan
 
@@ -130,8 +129,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
 
         _write_count_results(soap_args.tmp_path, source_pixel, results)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        dask_print("Failed COUNTING stage for shard: ", source_pixel)
-        dask_print(exception)
+        print_task_failure(f"Failed COUNTING stage for shard: {source_pixel}", exception)
         raise exception
 
 
@@ -243,6 +241,5 @@ def reduce_joins(
 
         SoapPlan.reducing_key_done(tmp_path=soap_args.tmp_path, reducing_key=object_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        dask_print("Failed REDUCING stage for shard: ", object_pixel)
-        dask_print(exception)
+        print_task_failure(f"Failed REDUCING stage for shard: {object_pixel}", exception)
         raise exception

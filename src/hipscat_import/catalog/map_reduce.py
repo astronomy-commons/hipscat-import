@@ -6,7 +6,6 @@ import healpy as hp
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-from dask.distributed import print as dask_print
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
@@ -15,7 +14,7 @@ from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healp
 from hipscat_import.catalog.file_readers import InputReader
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
-from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
+from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print_task_failure
 
 # pylint: disable=too-many-locals,too-many-arguments
 
@@ -115,8 +114,7 @@ def map_to_pixels(
 
         histo.to_file(ResumePlan.partial_histogram_file(tmp_path=resume_path, mapping_key=mapping_key))
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        dask_print("Failed MAPPING stage with file ", input_file)
-        dask_print(exception)
+        print_task_failure(f"Failed MAPPING stage with file {input_file}", exception)
         raise exception
 
 
@@ -176,8 +174,7 @@ def split_pixels(
 
         ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        dask_print("Failed SPLITTING stage with file ", input_file)
-        dask_print(exception)
+        print_task_failure(f"Failed SPLITTING stage with file {input_file}", exception)
         raise exception
 
 
@@ -316,8 +313,10 @@ def reduce_pixel_shards(
 
         ResumePlan.reducing_key_done(tmp_path=resume_path, reducing_key=reducing_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        dask_print("Failed REDUCING stage for shard: ", destination_pixel_order, destination_pixel_number)
-        dask_print(exception)
+        print_task_failure(
+            f"Failed REDUCING stage for shard: {destination_pixel_order} {destination_pixel_number}",
+            exception,
+        )
         raise exception
 
 

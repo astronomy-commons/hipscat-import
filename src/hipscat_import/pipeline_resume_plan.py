@@ -6,7 +6,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from dask.distributed import as_completed
+from dask.distributed import as_completed, get_worker
+from dask.distributed import print as dask_print
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from tqdm.auto import tqdm
@@ -206,3 +207,22 @@ def get_pixel_cache_directory(cache_path, pixel: HealpixPixel):
     return file_io.append_paths_to_pointer(
         cache_path, f"order_{pixel.order}", f"dir_{pixel.dir}", f"pixel_{pixel.pixel}"
     )
+
+
+def print_task_failure(custom_message, exception):
+    """Use dask's distributed print feature to print the exception message to the task's logs
+    and to the controller job's logs.
+
+    Optionally print the worker address if a worker is found.
+
+    Args:
+        custom_message (str): some custom message for the task that might help with debugging
+        exception (Exception): error raised in execution of the task.
+    """
+    dask_print(custom_message)
+    try:
+        dask_print("  worker address:", get_worker().address)
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
+    dask_print(exception)
+    raise exception
