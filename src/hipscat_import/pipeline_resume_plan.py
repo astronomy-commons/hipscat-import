@@ -6,7 +6,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from dask.distributed import as_completed
+from dask.distributed import as_completed, get_worker
+from dask.distributed import print as dask_print
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from tqdm.auto import tqdm
@@ -134,22 +135,8 @@ class PipelineResumePlan:
         ):
             if future.status == "error":
                 some_error = True
-                exception = future.exception()
-                trace_strs = [
-                    f"{stage_name} task {future.key} failed with message:",
-                    f"  {type(exception).__name__}: {exception}",
-                    "  Traceback (most recent call last):",
-                ]
-                stack_trace = exception.__traceback__
-                while stack_trace is not None:
-                    filename = stack_trace.tb_frame.f_code.co_filename
-                    method_name = stack_trace.tb_frame.f_code.co_name
-                    line_number = stack_trace.tb_lineno
-                    trace_strs.append(f'    File "{filename}", line {line_number}, in {method_name}')
-                    stack_trace = stack_trace.tb_next
-                print("\n".join(trace_strs))
                 if fail_fast:
-                    raise exception
+                    raise future.exception()
 
         if some_error:
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")
@@ -220,3 +207,21 @@ def get_pixel_cache_directory(cache_path, pixel: HealpixPixel):
     return file_io.append_paths_to_pointer(
         cache_path, f"order_{pixel.order}", f"dir_{pixel.dir}", f"pixel_{pixel.pixel}"
     )
+
+
+def print_task_failure(custom_message, exception):
+    """Use dask's distributed print feature to print the exception message to the task's logs
+    and to the controller job's logs.
+
+    Optionally print the worker address if a worker is found.
+
+    Args:
+        custom_message (str): some custom message for the task that might help with debugging
+        exception (Exception): error raised in execution of the task.
+    """
+    dask_print(custom_message)
+    try:
+        dask_print("  worker address:", get_worker().address)
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
+    dask_print(exception)
