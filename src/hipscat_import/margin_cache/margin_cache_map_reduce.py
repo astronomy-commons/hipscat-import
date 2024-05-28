@@ -1,5 +1,6 @@
 import healpy as hp
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset as ds
 from hipscat import pixel_math
@@ -8,13 +9,15 @@ from hipscat.io import file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
+from hipscat_import.margin_cache.margin_cache_resume_plan import MarginCachePlan
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 
 
 def map_pixel_shards(
     partition_file,
+    mapping_key,
     input_storage_options,
-    margin_pairs,
+    margin_pair_file,
     margin_threshold,
     output_path,
     margin_order,
@@ -32,6 +35,7 @@ def map_pixel_shards(
         nest=True,
     )
 
+    margin_pairs = pd.read_csv(margin_pair_file)
     constrained_data = data.reset_index().merge(margin_pairs, on="margin_pixel")
 
     if len(constrained_data):
@@ -42,6 +46,8 @@ def map_pixel_shards(
             ra_column=ra_column,
             dec_column=dec_column,
         )
+
+    MarginCachePlan.mapping_key_done(output_path, mapping_key)
 
 
 def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
@@ -102,6 +108,7 @@ def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
 
 def reduce_margin_shards(
     intermediate_directory,
+    reducing_key,
     output_path,
     output_storage_options,
     partition_order,
@@ -134,3 +141,5 @@ def reduce_margin_shards(
 
             full_df.to_parquet(margin_cache_file_path, schema=schema, storage_options=output_storage_options)
             file_io.remove_directory(shard_dir)
+
+    MarginCachePlan.reducing_key_done(intermediate_directory, reducing_key)

@@ -77,6 +77,7 @@ def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
     shard_dir = paths.pixel_directory(partition_dir, 1, 21)
 
     os.makedirs(shard_dir)
+    os.makedirs(os.path.join(intermediate_dir, "reducing"))
 
     first_shard_path = paths.pixel_catalog_file(partition_dir, 1, 0)
     second_shard_path = paths.pixel_catalog_file(partition_dir, 1, 1)
@@ -118,6 +119,7 @@ def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
 
     margin_cache_map_reduce.reduce_margin_shards(
         intermediate_dir,
+        "1_21",
         tmp_path,
         None,
         1,
