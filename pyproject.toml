@@ -20,11 +20,12 @@ dependencies = [
     "healpy",
     "hipscat >=0.3.0",
     "ipykernel", # Support for Jupyter notebooks
+    "numpy",
     "pandas",
     "pyarrow",
     "pyyaml",
+    "scipy",
     "tqdm",
-    "numpy",
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
