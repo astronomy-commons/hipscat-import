@@ -1,11 +1,12 @@
 import warnings
-from dataclasses import dataclass
-from typing import Any, Dict, Union
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Union
 
 import healpy as hp
 from hipscat.catalog import Catalog
 from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
 from hipscat.io.validation import is_valid_catalog
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -29,6 +30,9 @@ class MarginCacheArguments(RuntimeArguments):
     """the path to the hipscat-formatted input catalog."""
     input_storage_options: Union[Dict[Any, Any], None] = None
     """optional dictionary of abstract filesystem credentials for the INPUT."""
+    debug_filter_pixel_list: List[HealpixPixel] = field(default_factory=list)
+    """debug setting. if provided, we will first filter the catalog to the pixels
+    provided. this can be useful for creating a margin over a subset of a catalog."""
 
     def __post_init__(self):
         self._check_arguments()
@@ -43,6 +47,10 @@ class MarginCacheArguments(RuntimeArguments):
         self.catalog = Catalog.read_from_hipscat(
             self.input_catalog_path, storage_options=self.input_storage_options
         )
+        if len(self.debug_filter_pixel_list) > 0:
+            self.catalog = self.catalog.filter_from_pixel_list(self.debug_filter_pixel_list)
+            if len(self.catalog.get_healpix_pixels()) == 0:
+                raise ValueError("debug_filter_pixel_list has created empty catalog")
 
         highest_order = self.catalog.partition_info.get_highest_order()
         margin_pixel_k = highest_order + 1

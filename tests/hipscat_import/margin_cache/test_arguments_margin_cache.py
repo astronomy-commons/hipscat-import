@@ -1,10 +1,9 @@
 """Tests of margin cache generation arguments"""
 
 import pytest
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
-
-# pylint: disable=protected-access
 
 
 def test_empty_required(tmp_path):
@@ -61,6 +60,42 @@ def test_margin_order_invalid(small_sky_source_catalog, tmp_path):
             output_path=tmp_path,
             output_artifact_name="catalog_cache",
             margin_order=2,
+        )
+
+
+def test_debug_filter_pixel_list(small_sky_source_catalog, tmp_path):
+    """Ensure we can generate catalog with a filtereed list of pixels, and
+    that we raise an exception when the filter results in an empty catalog."""
+    args = MarginCacheArguments(
+        margin_threshold=5.0,
+        input_catalog_path=small_sky_source_catalog,
+        output_path=tmp_path,
+        output_artifact_name="catalog_cache",
+        margin_order=4,
+        debug_filter_pixel_list=[HealpixPixel(0, 11)],
+    )
+
+    assert len(args.catalog.get_healpix_pixels()) == 13
+
+    args = MarginCacheArguments(
+        margin_threshold=5.0,
+        input_catalog_path=small_sky_source_catalog,
+        output_path=tmp_path,
+        output_artifact_name="catalog_cache",
+        margin_order=4,
+        debug_filter_pixel_list=[HealpixPixel(1, 44)],
+    )
+
+    assert len(args.catalog.get_healpix_pixels()) == 4
+
+    with pytest.raises(ValueError, match="debug_filter_pixel_list"):
+        MarginCacheArguments(
+            margin_threshold=5.0,
+            input_catalog_path=small_sky_source_catalog,
+            output_path=tmp_path,
+            output_artifact_name="catalog_cache",
+            margin_order=4,
+            debug_filter_pixel_list=[HealpixPixel(0, 5)],
         )
 
 
