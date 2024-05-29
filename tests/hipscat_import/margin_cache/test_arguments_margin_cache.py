@@ -1,6 +1,7 @@
 """Tests of margin cache generation arguments"""
 
 import pytest
+from hipscat.io import write_metadata
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
@@ -134,7 +135,12 @@ def test_provenance_info(small_sky_source_catalog, tmp_path):
         output_path=tmp_path,
         output_artifact_name="catalog_cache",
         margin_order=4,
+        debug_filter_pixel_list=[HealpixPixel(1, 44)],
     )
 
     runtime_args = args.provenance_info()["runtime_args"]
     assert "margin_threshold" in runtime_args
+
+    write_metadata.write_provenance_info(
+        catalog_base_dir=args.catalog_path, dataset_info=args.to_catalog_info(20_000), tool_args=runtime_args
+    )

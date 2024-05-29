@@ -52,7 +52,7 @@ class MarginCacheArguments(RuntimeArguments):
             if len(self.catalog.get_healpix_pixels()) == 0:
                 raise ValueError("debug_filter_pixel_list has created empty catalog")
 
-        highest_order = self.catalog.partition_info.get_highest_order()
+        highest_order = int(self.catalog.partition_info.get_highest_order())
         margin_pixel_k = highest_order + 1
         if self.margin_order > -1:
             if self.margin_order < margin_pixel_k:
@@ -87,4 +87,5 @@ class MarginCacheArguments(RuntimeArguments):
             "input_catalog_path": self.input_catalog_path,
             "margin_threshold": self.margin_threshold,
             "margin_order": self.margin_order,
+            "debug_filter_pixel_list": self.debug_filter_pixel_list,
         }
