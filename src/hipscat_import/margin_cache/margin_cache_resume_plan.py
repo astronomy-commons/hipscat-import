@@ -7,7 +7,7 @@ from typing import List
 
 import pandas as pd
 from hipscat import pixel_math
-from hipscat.io import file_io, paths
+from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from tqdm.auto import tqdm
 

@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
