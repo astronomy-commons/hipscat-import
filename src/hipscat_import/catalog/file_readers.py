@@ -84,6 +84,9 @@ class InputReader(abc.ABC):
         Returns:
             dictionary with all argument_name -> argument_value as key -> value pairs.
         """
+        all_args = vars(self)
+        if "kwargs" in all_args and "storage_options" in all_args["kwargs"]:
+            all_args["kwargs"]["storage_options"] = "REDACTED"
         return {"input_reader_type": type(self).__name__, **vars(self)}
 
     def regular_file_exists(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **_kwargs):
