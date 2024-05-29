@@ -81,6 +81,10 @@ class InputReader(abc.ABC):
     def provenance_info(self) -> dict:
         """Create dictionary of parameters for provenance tracking.
 
+        If any `storage_options` have been provided as kwargs, we will replace the
+        value with ``REDACTED`` for the purpose of writing to provenance info, as it
+        may contain user names or API keys.
+
         Returns:
             dictionary with all argument_name -> argument_value as key -> value pairs.
         """
