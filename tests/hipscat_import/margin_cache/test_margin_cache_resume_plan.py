@@ -1,13 +1,11 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 from hipscat_import.margin_cache.margin_cache_resume_plan import (
     MarginCachePlan,
-    _create_margin_directory,
     _find_partition_margin_pixel_pairs,
 )
 
@@ -138,14 +136,3 @@ def test_partition_margin_pixel_pairs_negative(small_sky_margin_args):
     npt.assert_array_equal(margin_pairs.iloc[-10:]["margin_pixel"], expected)
     assert len(margin_pairs) == 536
 
-
-def test_create_margin_directory(small_sky_margin_args):
-    """Ensure create_margin_directory works on main partition_pixels"""
-    _create_margin_directory(
-        stats=small_sky_margin_args.catalog.partition_info.get_healpix_pixels(),
-        output_path=small_sky_margin_args.catalog_path,
-        storage_options=None,
-    )
-
-    output = file_io.append_paths_to_pointer(small_sky_margin_args.catalog_path, "Norder=0", "Dir=0")
-    assert file_io.does_file_or_directory_exist(output)

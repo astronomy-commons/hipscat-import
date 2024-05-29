@@ -70,8 +70,27 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
     validate_result_dataframe(path, 360)
 
 
-@pytest.mark.dask
-def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
+def test_map_pixel_shards_error(tmp_path, capsys):
+    """Test error behavior on reduce stage. e.g. by not creating the original
+    catalog parquet files."""
+    with pytest.raises(FileNotFoundError):
+        margin_cache_map_reduce.map_pixel_shards(
+            paths.pixel_catalog_file(tmp_path, 1, 0),
+            mapping_key="1_21",
+            input_storage_options=None,
+            margin_pair_file="",
+            margin_threshold=10,
+            output_path=tmp_path,
+            margin_order=4,
+            ra_column="ra",
+            dec_column="dec",
+        )
+
+    captured = capsys.readouterr()
+    assert "No such file or directory" in captured.out
+
+
+def test_reduce_margin_shards(tmp_path):
     intermediate_dir = os.path.join(tmp_path, "intermediate")
     partition_dir = get_pixel_cache_directory(intermediate_dir, HealpixPixel(1, 21))
     shard_dir = paths.pixel_directory(partition_dir, 1, 21)
@@ -132,3 +151,34 @@ def test_reduce_margin_shards(tmp_path, basic_data_shard_df):
 
     validate_result_dataframe(result_path, 720)
     assert not os.path.exists(shard_dir)
+
+
+def test_reduce_margin_shards_error(tmp_path, basic_data_shard_df, capsys):
+    """Test error behavior on reduce stage. e.g. by not creating the original
+    catalog metadata."""
+    intermediate_dir = os.path.join(tmp_path, "intermediate")
+    partition_dir = get_pixel_cache_directory(intermediate_dir, HealpixPixel(1, 21))
+    shard_dir = paths.pixel_directory(partition_dir, 1, 21)
+    os.makedirs(shard_dir)
+    os.makedirs(os.path.join(intermediate_dir, "reducing"))
+
+    # Don't write anything at the metadata path!
+    schema_path = os.path.join(tmp_path, "metadata.parquet")
+
+    basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, 1, 0))
+    basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, 1, 1))
+
+    with pytest.raises(FileNotFoundError):
+        margin_cache_map_reduce.reduce_margin_shards(
+            intermediate_dir,
+            "1_21",
+            tmp_path,
+            None,
+            1,
+            21,
+            original_catalog_metadata=schema_path,
+            input_storage_options=None,
+        )
+
+    captured = capsys.readouterr()
+    assert "No such file or directory" in captured.out
