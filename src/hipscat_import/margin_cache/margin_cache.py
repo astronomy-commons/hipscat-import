@@ -16,10 +16,7 @@ def generate_margin_cache(args, client):
         args (MarginCacheArguments): A valid `MarginCacheArguments` object.
         client (dask.distributed.Client): A dask distributed client object.
     """
-    partition_pixels = args.catalog.partition_info.get_healpix_pixels()
-    negative_pixels = args.catalog.generate_negative_tree_pixels()
-    combined_pixels = partition_pixels + negative_pixels
-    resume_plan = MarginCachePlan(args, combined_pixels=combined_pixels, partition_pixels=partition_pixels)
+    resume_plan = MarginCachePlan(args)
 
     if not resume_plan.is_mapping_done():
         futures = []
@@ -54,6 +51,7 @@ def generate_margin_cache(args, client):
                     partition_order=pix.order,
                     partition_pixel=pix.pixel,
                     original_catalog_metadata=paths.get_common_metadata_pointer(args.input_catalog_path),
+                    delete_intermediate_parquet_files=args.delete_intermediate_parquet_files,
                     input_storage_options=args.input_storage_options,
                 )
             )

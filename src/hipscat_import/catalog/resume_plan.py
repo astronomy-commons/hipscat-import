@@ -26,10 +26,6 @@ class ResumePlan(PipelineResumePlan):
     """set of files (and job keys) that have yet to be split"""
     destination_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
     """Fully resolved map of destination pixels to constituent smaller pixels"""
-    delete_resume_log_files: bool = True
-    """should we delete task-level done files once each stage is complete?
-    if False, we will keep all sub-histograms from the mapping stage, and all
-    done marker files at the end of the pipeline."""
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"

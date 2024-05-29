@@ -28,9 +28,15 @@ class SoapArguments(RuntimeArguments):
     resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run the pipeline where we left off"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all done marker files at the end of the pipeline."""
     write_leaf_files: bool = False
     """Should we also write out leaf parquet files (e.g. Norder/Dir/Npix.parquet)
     that represent the full association table"""
+    delete_intermediate_parquet_files: bool = True
+    """should we delete the smaller intermediate parquet files generated in the
+    mapping stage, once the relevant reducing stage is complete?"""
 
     compute_partition_size: int = 1_000_000_000
 

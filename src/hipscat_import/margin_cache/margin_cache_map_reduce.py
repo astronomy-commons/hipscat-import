@@ -118,6 +118,7 @@ def reduce_margin_shards(
     partition_order,
     partition_pixel,
     original_catalog_metadata,
+    delete_intermediate_parquet_files,
     input_storage_options,
 ):
     """Reduce all partition pixel directories into a single file"""
@@ -128,8 +129,6 @@ def reduce_margin_shards(
         if file_io.does_file_or_directory_exist(shard_dir):
             data = ds.dataset(shard_dir, format="parquet")
             full_df = data.to_table().to_pandas()
-            margin_cache_dir = paths.pixel_directory(output_path, partition_order, partition_pixel)
-            file_io.make_directory(margin_cache_dir, exist_ok=True, storage_options=output_storage_options)
 
             if len(full_df):
                 schema = file_io.read_parquet_metadata(
@@ -142,6 +141,11 @@ def reduce_margin_shards(
                     .append(pa.field("margin_Npix", pa.uint64()))
                 )
 
+                margin_cache_dir = paths.pixel_directory(output_path, partition_order, partition_pixel)
+                file_io.make_directory(
+                    margin_cache_dir, exist_ok=True, storage_options=output_storage_options
+                )
+
                 margin_cache_file_path = paths.pixel_catalog_file(
                     output_path, partition_order, partition_pixel
                 )
@@ -149,7 +153,8 @@ def reduce_margin_shards(
                 full_df.to_parquet(
                     margin_cache_file_path, schema=schema, storage_options=output_storage_options
                 )
-                file_io.remove_directory(shard_dir)
+                if delete_intermediate_parquet_files:
+                    file_io.remove_directory(shard_dir)
 
         MarginCachePlan.reducing_key_done(intermediate_directory, reducing_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught

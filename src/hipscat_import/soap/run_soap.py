@@ -43,6 +43,7 @@ def run(args, client):
                     soap_args=args,
                     object_pixel=object_pixel,
                     object_key=object_key,
+                    delete_input_files=args.delete_intermediate_parquet_files,
                 )
             )
 

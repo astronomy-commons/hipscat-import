@@ -24,6 +24,12 @@ class MarginCacheArguments(RuntimeArguments):
     order of healpix partitioning in the source catalog. if `margin_order` is left
     default or set to -1, then the `margin_order` will be set dynamically to the
     highest partition order plus 1."""
+    delete_intermediate_parquet_files: bool = True
+    """should we delete the smaller intermediate parquet files generated in the
+    splitting stage, once the relevant reducing stage is complete?"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all done marker files at the end of the pipeline."""
 
     input_catalog_path: str = ""
     """the path to the hipscat-formatted input catalog."""

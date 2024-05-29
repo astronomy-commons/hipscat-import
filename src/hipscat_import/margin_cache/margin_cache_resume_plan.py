@@ -27,16 +27,15 @@ class MarginCachePlan(PipelineResumePlan):
     REDUCING_STAGE = "reducing"
     MARGIN_PAIR_FILE = "margin_pair.csv"
 
-    def __init__(self, args: MarginCacheArguments, combined_pixels, partition_pixels):
+    def __init__(self, args: MarginCacheArguments):
         if not args.tmp_path:  # pragma: no cover (not reachable, but required for mypy)
             raise ValueError("tmp_path is required")
         super().__init__(
             resume=args.resume,
             progress_bar=args.progress_bar,
             tmp_path=args.tmp_path,
+            delete_resume_log_files=args.delete_resume_log_files,
         )
-        self.combined_pixels = combined_pixels
-        self.partition_pixels = partition_pixels
         self._gather_plan(args)
 
     def _gather_plan(self, args):
@@ -52,6 +51,9 @@ class MarginCachePlan(PipelineResumePlan):
                 raise ValueError("mapping must be complete before reducing")
             step_progress.update(1)
 
+            self.partition_pixels = args.catalog.partition_info.get_healpix_pixels()
+            negative_pixels = args.catalog.generate_negative_tree_pixels()
+            self.combined_pixels = self.partition_pixels + negative_pixels
             self.margin_pair_file = file_io.append_paths_to_pointer(self.tmp_path, self.MARGIN_PAIR_FILE)
             if not file_io.does_file_or_directory_exist(self.margin_pair_file):
                 margin_pairs = _find_partition_margin_pixel_pairs(self.combined_pixels, args.margin_order)

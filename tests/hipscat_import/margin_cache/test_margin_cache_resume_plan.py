@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from hipscat.catalog import Catalog
 
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 from hipscat_import.margin_cache.margin_cache_resume_plan import (
@@ -13,10 +13,10 @@ from hipscat_import.margin_cache.margin_cache_resume_plan import (
 
 
 @pytest.fixture
-def small_sky_margin_args(tmp_path, small_sky_source_catalog):
+def small_sky_margin_args(tmp_path, small_sky_object_catalog):
     return MarginCacheArguments(
         margin_threshold=5.0,
-        input_catalog_path=small_sky_source_catalog,
+        input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,
         output_artifact_name="catalog_cache",
         progress_bar=False,
@@ -28,8 +28,7 @@ def test_done_checks(small_sky_margin_args):
     """Verify that done files imply correct pipeline execution order:
     mapping > reducing
     """
-    pixels = [HealpixPixel(0, 11)]
-    plan = MarginCachePlan(small_sky_margin_args, pixels, pixels)
+    plan = MarginCachePlan(small_sky_margin_args)
     plan.touch_stage_done_file(MarginCachePlan.REDUCING_STAGE)
 
     with pytest.raises(ValueError, match="before reducing"):
@@ -42,7 +41,7 @@ def test_done_checks(small_sky_margin_args):
 
     plan.clean_resume_files()
 
-    plan = MarginCachePlan(small_sky_margin_args, pixels, pixels)
+    plan = MarginCachePlan(small_sky_margin_args)
     plan.touch_stage_done_file(MarginCachePlan.MAPPING_STAGE)
     plan._gather_plan(small_sky_margin_args)
 
@@ -58,23 +57,15 @@ def never_fails():
 @pytest.mark.dask
 def test_some_map_task_failures(small_sky_margin_args, dask_client):
     """Test that we only consider map stage successful if all done files are written"""
-    pixels = [HealpixPixel(0, 10), HealpixPixel(0, 11)]
-    plan = MarginCachePlan(small_sky_margin_args, pixels, pixels)
+    plan = MarginCachePlan(small_sky_margin_args)
 
     ## Method doesn't FAIL, but it doesn't write out the done file either.
     ## Since the intermediate files aren't found, we throw an error.
     futures = [dask_client.submit(never_fails)]
-    with pytest.raises(RuntimeError, match="2 mapping stages"):
+    with pytest.raises(RuntimeError, match="1 mapping stages"):
         plan.wait_for_mapping(futures)
 
     MarginCachePlan.touch_key_done_file(plan.tmp_path, MarginCachePlan.MAPPING_STAGE, "0_11")
-
-    ## Method succeeds, but only *ONE* done file is present.
-    futures = [dask_client.submit(never_fails)]
-    with pytest.raises(RuntimeError, match="1 mapping stage"):
-        plan.wait_for_mapping(futures)
-
-    MarginCachePlan.touch_key_done_file(plan.tmp_path, MarginCachePlan.MAPPING_STAGE, "0_10")
 
     ## Method succeeds, *and* done files are present.
     futures = [dask_client.submit(never_fails)]
@@ -84,34 +75,33 @@ def test_some_map_task_failures(small_sky_margin_args, dask_client):
 @pytest.mark.dask
 def test_some_reducing_task_failures(small_sky_margin_args, dask_client):
     """Test that we only consider reduce stage successful if all done files are written"""
-    pixels = [HealpixPixel(0, 10), HealpixPixel(0, 11)]
-    plan = MarginCachePlan(small_sky_margin_args, pixels, pixels)
+    plan = MarginCachePlan(small_sky_margin_args)
 
     ## Method doesn't FAIL, but it doesn't write out the done file either.
     ## Since the intermediate files aren't found, we throw an error.
     futures = [dask_client.submit(never_fails)]
-    with pytest.raises(RuntimeError, match="2 reducing stages"):
+    with pytest.raises(RuntimeError, match="12 reducing stages"):
         plan.wait_for_reducing(futures)
 
     MarginCachePlan.touch_key_done_file(plan.tmp_path, MarginCachePlan.REDUCING_STAGE, "0_11")
 
     ## Method succeeds, but only *ONE* done file is present.
     futures = [dask_client.submit(never_fails)]
-    with pytest.raises(RuntimeError, match="1 reducing stage"):
+    with pytest.raises(RuntimeError, match="11 reducing stages"):
         plan.wait_for_reducing(futures)
 
-    MarginCachePlan.touch_key_done_file(plan.tmp_path, MarginCachePlan.REDUCING_STAGE, "0_10")
+    for partition in range(0, 12):
+        MarginCachePlan.touch_key_done_file(plan.tmp_path, MarginCachePlan.REDUCING_STAGE, f"0_{partition}")
 
     ## Method succeeds, *and* done files are present.
     futures = [dask_client.submit(never_fails)]
     plan.wait_for_reducing(futures)
 
 
-def test_partition_margin_pixel_pairs(small_sky_margin_args):
+def test_partition_margin_pixel_pairs(small_sky_source_catalog):
     """Ensure partition_margin_pixel_pairs can generate main partition pixels."""
-    margin_pairs = _find_partition_margin_pixel_pairs(
-        small_sky_margin_args.catalog.partition_info.get_healpix_pixels(), small_sky_margin_args.margin_order
-    )
+    source_catalog = Catalog.read_from_hipscat(small_sky_source_catalog)
+    margin_pairs = _find_partition_margin_pixel_pairs(source_catalog.get_healpix_pixels(), 3)
 
     expected = np.array([725, 733, 757, 765, 727, 735, 759, 767, 469, 192])
 
@@ -119,13 +109,15 @@ def test_partition_margin_pixel_pairs(small_sky_margin_args):
     assert len(margin_pairs) == 196
 
 
-def test_partition_margin_pixel_pairs_negative(small_sky_margin_args):
+def test_partition_margin_pixel_pairs_negative(small_sky_source_catalog):
     """Ensure partition_margin_pixel_pairs can generate negative tree pixels."""
-    partition_stats = small_sky_margin_args.catalog.partition_info.get_healpix_pixels()
-    negative_pixels = small_sky_margin_args.catalog.generate_negative_tree_pixels()
+    source_catalog = Catalog.read_from_hipscat(small_sky_source_catalog)
+
+    partition_stats = source_catalog.get_healpix_pixels()
+    negative_pixels = source_catalog.generate_negative_tree_pixels()
     combined_pixels = partition_stats + negative_pixels
 
-    margin_pairs = _find_partition_margin_pixel_pairs(combined_pixels, small_sky_margin_args.margin_order)
+    margin_pairs = _find_partition_margin_pixel_pairs(combined_pixels, 3)
 
     expected_order = 0
     expected_pixel = 10
