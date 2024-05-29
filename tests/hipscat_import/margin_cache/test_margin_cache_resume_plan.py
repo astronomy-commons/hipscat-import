@@ -135,4 +135,3 @@ def test_partition_margin_pixel_pairs_negative(small_sky_margin_args):
     assert margin_pairs.iloc[-1]["partition_pixel"] == expected_pixel
     npt.assert_array_equal(margin_pairs.iloc[-10:]["margin_pixel"], expected)
     assert len(margin_pairs) == 536
-

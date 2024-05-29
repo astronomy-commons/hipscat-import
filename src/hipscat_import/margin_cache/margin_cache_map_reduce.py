@@ -10,7 +10,6 @@ from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 from hipscat_import.margin_cache.margin_cache_resume_plan import MarginCachePlan
-from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print_task_failure
 
 
