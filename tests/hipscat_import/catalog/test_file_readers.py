@@ -220,11 +220,19 @@ def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
             "empty": "Int64",
             "numeric": int,
         },
+        storage_options={"user_name": "user_pii", "user_key": "SECRETS!"},
     )
     provenance_info = reader.provenance_info()
-    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
+    catalog_base_dir = tmp_path / "test_catalog"
     os.makedirs(catalog_base_dir)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
+
+    with open(catalog_base_dir / "provenance_info.json", "r", encoding="utf-8") as file:
+        data = file.read()
+        assert "test_catalog" in data
+        assert "REDACTED" in data
+        assert "user_pii" not in data
+        assert "SECRETS" not in data
 
 
 def test_parquet_reader(parquet_shards_shard_44_0):
