@@ -53,8 +53,6 @@ def map_pixel_shards(
         print_task_failure(f"Failed MAPPING stage for pixel: {mapping_key}", exception)
         raise exception
 
-    MarginCachePlan.mapping_key_done(output_path, mapping_key)
-
 
 def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
     """Do boundary checking for the cached partition and then output remaining data."""
