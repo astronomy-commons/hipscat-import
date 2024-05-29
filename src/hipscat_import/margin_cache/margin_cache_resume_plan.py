@@ -66,7 +66,6 @@ class MarginCachePlan(PipelineResumePlan):
                 file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
                 exist_ok=True,
             )
-            _create_margin_directory(self.combined_pixels, args.catalog_path, args.output_storage_options)
 
             step_progress.update(1)
 
@@ -138,15 +137,21 @@ class MarginCachePlan(PipelineResumePlan):
         self.touch_stage_done_file(self.REDUCING_STAGE)
 
 
-def _find_partition_margin_pixel_pairs(stats, margin_order):
+def _find_partition_margin_pixel_pairs(combined_pixels, margin_order):
     """Creates a DataFrame filled with many-to-many connections between
-    the catalog partition pixels and the margin pixels at `margin_order`.
+    the catalog partition pixels and the negative margin pixels at `margin_order`.
+
+    Args:
+        combined_pixels (List[HealpixPixel]): union of catalog partition pixels
+            and the negative tree pixels for the catalog
+        margin_order (int): the order of healpixels that will be used to constrain
+            the margin data before doing more precise boundary checking.
     """
     norders = []
     part_pix = []
     margin_pix = []
 
-    for healpixel in stats:
+    for healpixel in combined_pixels:
         order = healpixel.order
         pix = healpixel.pixel
 
@@ -164,13 +169,3 @@ def _find_partition_margin_pixel_pairs(stats, margin_order):
         columns=["partition_order", "partition_pixel", "margin_pixel"],
     )
     return margin_pairs_df
-
-
-def _create_margin_directory(stats, output_path, storage_options):
-    """Creates directories for all the catalog partitions."""
-    for healpixel in stats:
-        order = healpixel.order
-        pix = healpixel.pixel
-
-        destination_dir = paths.pixel_directory(output_path, order, pix)
-        file_io.make_directory(destination_dir, exist_ok=True, storage_options=storage_options)
