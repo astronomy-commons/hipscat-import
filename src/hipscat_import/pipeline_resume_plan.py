@@ -25,6 +25,10 @@ class PipelineResumePlan:
     progress_bar: bool = True
     """if true, a tqdm progress bar will be displayed for user
     feedback of planning progress"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all sub-histograms from the mapping stage, and all
+    done marker files at the end of the pipeline."""
 
     ORIGINAL_INPUT_PATHS = "input_paths.txt"
 
@@ -109,7 +113,8 @@ class PipelineResumePlan:
 
     def clean_resume_files(self):
         """Remove all intermediate files created in execution."""
-        file_io.remove_directory(self.tmp_path, ignore_errors=True)
+        if self.delete_resume_log_files:
+            file_io.remove_directory(self.tmp_path, ignore_errors=True)
 
     def wait_for_futures(self, futures, stage_name, fail_fast=False):
         """Wait for collected futures to complete.
