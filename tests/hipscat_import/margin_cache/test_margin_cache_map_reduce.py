@@ -78,6 +78,7 @@ def test_map_pixel_shards_error(tmp_path, capsys):
             paths.pixel_catalog_file(tmp_path, 1, 0),
             mapping_key="1_21",
             input_storage_options=None,
+            original_catalog_metadata="",
             margin_pair_file="",
             margin_threshold=10,
             output_path=tmp_path,
