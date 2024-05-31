@@ -78,6 +78,7 @@ def test_map_pixel_shards_error(tmp_path, capsys):
             paths.pixel_catalog_file(tmp_path, 1, 0),
             mapping_key="1_21",
             input_storage_options=None,
+            original_catalog_metadata="",
             margin_pair_file="",
             margin_threshold=10,
             output_path=tmp_path,
@@ -144,6 +145,25 @@ def test_reduce_margin_shards(tmp_path):
         1,
         21,
         original_catalog_metadata=schema_path,
+        delete_intermediate_parquet_files=False,
+        input_storage_options=None,
+    )
+
+    result_path = paths.pixel_catalog_file(tmp_path, 1, 21)
+
+    validate_result_dataframe(result_path, 720)
+    assert os.path.exists(shard_dir)
+
+    # Run again with delete_intermediate_parquet_files. shard_dir doesn't exist at the end.
+    margin_cache_map_reduce.reduce_margin_shards(
+        intermediate_dir,
+        "1_21",
+        tmp_path,
+        None,
+        1,
+        21,
+        original_catalog_metadata=schema_path,
+        delete_intermediate_parquet_files=True,
         input_storage_options=None,
     )
 
@@ -177,6 +197,7 @@ def test_reduce_margin_shards_error(tmp_path, basic_data_shard_df, capsys):
             1,
             21,
             original_catalog_metadata=schema_path,
+            delete_intermediate_parquet_files=True,
             input_storage_options=None,
         )
 

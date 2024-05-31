@@ -183,6 +183,5 @@ def run(args, client):
         step_progress.update(1)
         io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
         step_progress.update(1)
-        if args.resume_plan.delete_resume_log_files:
-            args.resume_plan.clean_resume_files()
+        args.resume_plan.clean_resume_files()
         step_progress.update(1)
