@@ -17,6 +17,7 @@ def map_pixel_shards(
     partition_file,
     mapping_key,
     input_storage_options,
+    original_catalog_metadata,
     margin_pair_file,
     margin_threshold,
     output_path,
@@ -26,7 +27,12 @@ def map_pixel_shards(
 ):
     """Creates margin cache shards from a source partition file."""
     try:
-        data = file_io.load_parquet_to_pandas(partition_file, storage_options=input_storage_options)
+        schema = file_io.read_parquet_metadata(
+            original_catalog_metadata, storage_options=input_storage_options
+        ).schema.to_arrow_schema()
+        data = file_io.load_parquet_to_pandas(
+            partition_file, schema=schema, storage_options=input_storage_options
+        )
 
         data["margin_pixel"] = hp.ang2pix(
             2**margin_order,
@@ -127,20 +133,19 @@ def reduce_margin_shards(
             intermediate_directory, HealpixPixel(partition_order, partition_pixel)
         )
         if file_io.does_file_or_directory_exist(shard_dir):
-            data = ds.dataset(shard_dir, format="parquet")
+            schema = file_io.read_parquet_metadata(
+                original_catalog_metadata, storage_options=input_storage_options
+            ).schema.to_arrow_schema()
+
+            schema = (
+                schema.append(pa.field("margin_Norder", pa.uint8()))
+                .append(pa.field("margin_Dir", pa.uint64()))
+                .append(pa.field("margin_Npix", pa.uint64()))
+            )
+            data = ds.dataset(shard_dir, format="parquet", schema=schema)
             full_df = data.to_table().to_pandas()
 
             if len(full_df):
-                schema = file_io.read_parquet_metadata(
-                    original_catalog_metadata, storage_options=input_storage_options
-                ).schema.to_arrow_schema()
-
-                schema = (
-                    schema.append(pa.field("margin_Norder", pa.uint8()))
-                    .append(pa.field("margin_Dir", pa.uint64()))
-                    .append(pa.field("margin_Npix", pa.uint64()))
-                )
-
                 margin_cache_dir = paths.pixel_directory(output_path, partition_order, partition_pixel)
                 file_io.make_directory(
                     margin_cache_dir, exist_ok=True, storage_options=output_storage_options
