@@ -1,6 +1,7 @@
 """Tests of map reduce operations"""
 
 import os
+import pickle
 from io import StringIO
 
 import healpy as hp
@@ -13,7 +14,16 @@ import pytest
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.file_readers import get_file_reader
+from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
+
+
+def pickle_file_reader(tmp_path, file_reader) -> str:
+    """Utility method to pickle a file reader, and return path to pickle."""
+    pickled_reader_file = os.path.join(tmp_path, "reader.pickle")
+    with open(pickled_reader_file, "ab") as pickle_file:
+        pickle.dump(file_reader, pickle_file)
+    return pickled_reader_file
 
 
 def test_read_empty_filename():
@@ -21,7 +31,7 @@ def test_read_empty_filename():
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
             input_file="",
-            file_reader=get_file_reader("parquet"),
+            pickled_reader_file="",
             highest_order=10,
             ra_column="ra",
             dec_column="dec",
@@ -30,12 +40,12 @@ def test_read_empty_filename():
         )
 
 
-def test_read_wrong_fileformat(small_sky_file0):
+def test_read_wrong_fileformat(small_sky_file0, tmp_path):
     """CSV file attempting to be read as parquet"""
     with pytest.raises(pa.lib.ArrowInvalid):
         mr.map_to_pixels(
             input_file=small_sky_file0,
-            file_reader=get_file_reader("parquet"),
+            pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("parquet")),
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
@@ -44,12 +54,12 @@ def test_read_wrong_fileformat(small_sky_file0):
         )
 
 
-def test_read_directory(test_data_dir):
+def test_read_directory(test_data_dir, tmp_path):
     """Provide directory, not file"""
     with pytest.raises(FileNotFoundError):
         mr.map_to_pixels(
             input_file=test_data_dir,
-            file_reader=get_file_reader("parquet"),
+            pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("parquet")),
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
@@ -58,12 +68,12 @@ def test_read_directory(test_data_dir):
         )
 
 
-def test_read_bad_fileformat(blank_data_file, capsys):
+def test_read_bad_fileformat(blank_data_file, capsys, tmp_path):
     """Unsupported file format"""
     with pytest.raises(NotImplementedError):
         mr.map_to_pixels(
             input_file=blank_data_file,
-            file_reader=None,
+            pickled_reader_file=pickle_file_reader(tmp_path, None),
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
@@ -86,7 +96,7 @@ def test_read_single_fits(tmp_path, formats_fits):
     os.makedirs(os.path.join(tmp_path, "histograms"))
     mr.map_to_pixels(
         input_file=formats_fits,
-        file_reader=get_file_reader("fits"),
+        pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("fits")),
         highest_order=0,
         ra_column="ra",
         dec_column="dec",
@@ -101,12 +111,12 @@ def test_read_single_fits(tmp_path, formats_fits):
     npt.assert_array_equal(result, expected)
 
 
-def test_map_headers_wrong(formats_headers_csv):
+def test_map_headers_wrong(formats_headers_csv, tmp_path):
     """Test loading the a file with non-default headers (without specifying right headers)"""
     with pytest.raises(ValueError, match="columns expected but not found"):
         mr.map_to_pixels(
             input_file=formats_headers_csv,
-            file_reader=get_file_reader("csv"),
+            pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
             highest_order=0,
             ra_column="ra",
             dec_column="dec",
@@ -120,7 +130,7 @@ def test_map_headers(tmp_path, formats_headers_csv):
     os.makedirs(os.path.join(tmp_path, "histograms"))
     mr.map_to_pixels(
         input_file=formats_headers_csv,
-        file_reader=get_file_reader("csv"),
+        pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
         highest_order=0,
         ra_column="ra_mean",
         dec_column="dec_mean",
@@ -143,7 +153,7 @@ def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
     input_file = os.path.join(formats_dir, "hipscat_index.csv")
     mr.map_to_pixels(
         input_file=input_file,
-        file_reader=get_file_reader("csv"),
+        pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
         highest_order=0,
         ra_column="NOPE",
         dec_column="NOPE",
@@ -161,7 +171,7 @@ def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
     with pytest.raises(ValueError, match="columns expected but not found"):
         mr.map_to_pixels(
             input_file=small_sky_single_file,
-            file_reader=get_file_reader("csv"),
+            pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
             highest_order=0,
             ra_column="NOPE",
             dec_column="NOPE",
@@ -177,9 +187,12 @@ def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parque
     input_file = os.path.join(mixed_schema_csv_dir, "input_01.csv")
     mr.map_to_pixels(
         input_file=input_file,
-        file_reader=get_file_reader(
-            "csv",
-            schema_file=mixed_schema_csv_parquet,
+        pickled_reader_file=pickle_file_reader(
+            tmp_path,
+            get_file_reader(
+                "csv",
+                schema_file=mixed_schema_csv_parquet,
+            ),
         ),
         highest_order=0,
         ra_column="ra",
@@ -203,7 +216,7 @@ def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     os.makedirs(os.path.join(tmp_path, "histograms"))
     mr.map_to_pixels(
         input_file=small_sky_single_file,
-        file_reader=get_file_reader("csv"),
+        pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
         highest_order=0,
         ra_column="ra",
         dec_column="dec",
@@ -229,7 +242,7 @@ def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
     os.makedirs(os.path.join(tmp_path, "histograms"))
     mr.map_to_pixels(
         input_file=small_sky_file0,
-        file_reader=get_file_reader("csv"),
+        pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
         highest_order=1,
         ra_column="ra",
         dec_column="dec",
@@ -249,41 +262,42 @@ def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
 
 
 def test_split_pixels_bad_format(blank_data_file, tmp_path, capsys):
-    """Test loading the a file with non-default headers"""
+    """Test error behavior, e.g. when alignment file is missing."""
     alignment = np.full(12, None)
     alignment[11] = (0, 11, 131)
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(FileNotFoundError):
         mr.split_pixels(
             input_file=blank_data_file,
-            file_reader=None,
+            pickled_reader_file="",
             highest_order=0,
             ra_column="ra_mean",
             dec_column="dec_mean",
             splitting_key="0",
             cache_shard_path=tmp_path,
             resume_path=tmp_path,
-            alignment=alignment,
+            alignment_file="",
         )
     captured = capsys.readouterr()
-    assert "No file reader implemented" in captured.out
+    assert "No such file or directory" in captured.out
     os.makedirs(os.path.join(tmp_path, "splitting"))
 
 
 def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_path):
-    """Test loading the a file with non-default headers"""
-    os.makedirs(os.path.join(tmp_path, "splitting"))
-    alignment = np.full(12, None)
-    alignment[11] = (0, 11, 131)
+    """Test loading a file with non-default headers"""
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
+    raw_histogram = np.full(12, 0)
+    raw_histogram[11] = 131
+    alignment_file = plan.get_alignment_file(raw_histogram, -1, 0, 0, 1_000)
     mr.split_pixels(
         input_file=formats_headers_csv,
-        file_reader=get_file_reader("csv"),
+        pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
         highest_order=0,
         ra_column="ra_mean",
         dec_column="dec_mean",
         splitting_key="0",
         cache_shard_path=tmp_path,
         resume_path=tmp_path,
-        alignment=alignment,
+        alignment_file=alignment_file,
     )
 
     file_name = os.path.join(tmp_path, "order_0", "dir_0", "pixel_11", "shard_0_0.parquet")
