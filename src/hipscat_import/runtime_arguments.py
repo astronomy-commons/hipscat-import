@@ -32,8 +32,12 @@ class RuntimeArguments:
     the pipeline where we left off. If False, we start the import from scratch,
     overwriting any content of the output directory."""
     progress_bar: bool = True
-    """if true, a tqdm progress bar will be displayed for user
+    """if true, a progress bar will be displayed for user
     feedback of map reduce progress"""
+    simple_progress_bar: bool = False
+    """if displaying a progress bar, use a text-only simple progress
+    bar instead of widget. this can be useful in some environments when running
+    in a notebook where ipywidgets cannot be used (see `progress_bar` argument)"""
     dask_tmp: str = ""
     """directory for dask worker space. this should be local to
     the execution of the pipeline, for speed of reads and writes"""

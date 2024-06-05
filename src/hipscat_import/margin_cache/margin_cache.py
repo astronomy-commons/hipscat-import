@@ -1,6 +1,5 @@
 from hipscat.catalog import PartitionInfo
 from hipscat.io import file_io, parquet_metadata, paths, write_metadata
-from tqdm.auto import tqdm
 
 import hipscat_import.margin_cache.margin_cache_map_reduce as mcmr
 from hipscat_import.margin_cache.margin_cache_resume_plan import MarginCachePlan
@@ -59,7 +58,7 @@ def generate_margin_cache(args, client):
             )
         resume_plan.wait_for_reducing(futures)
 
-    with tqdm(total=4, desc="Finishing", disable=not args.progress_bar) as step_progress:
+    with resume_plan.print_progress(total=4, stage_name="Finishing") as step_progress:
         parquet_metadata.write_parquet_metadata(
             args.catalog_path, storage_options=args.output_storage_options
         )

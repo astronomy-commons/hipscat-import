@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy.testing as npt
 import pytest
 
-from hipscat_import.pipeline_resume_plan import PipelineResumePlan
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan, get_formatted_stage_name
 
 
 def test_done_key(tmp_path):
@@ -138,16 +138,16 @@ def test_wait_for_futures_fail_fast(tmp_path, dask_client):
 
 def test_formatted_stage_name():
     """Test that we make pretty stage names for presenting in progress bars"""
-    formatted = PipelineResumePlan.get_formatted_stage_name(None)
+    formatted = get_formatted_stage_name(None)
     assert formatted == "Progress  "
 
-    formatted = PipelineResumePlan.get_formatted_stage_name("")
+    formatted = get_formatted_stage_name("")
     assert formatted == "Progress  "
 
-    formatted = PipelineResumePlan.get_formatted_stage_name("stage")
+    formatted = get_formatted_stage_name("stage")
     assert formatted == "Stage     "
 
-    formatted = PipelineResumePlan.get_formatted_stage_name("very long stage name")
+    formatted = get_formatted_stage_name("very long stage name")
     assert formatted == "Very long stage name"
 
 

@@ -11,7 +11,6 @@ from hipscat.catalog import Catalog
 from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_tree import PixelAlignment, align_trees
-from tqdm.auto import tqdm
 
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 from hipscat_import.soap.arguments import SoapArguments
@@ -39,6 +38,7 @@ class SoapPlan(PipelineResumePlan):
         super().__init__(
             resume=args.resume,
             progress_bar=args.progress_bar,
+            simple_progress_bar=args.simple_progress_bar,
             tmp_path=args.tmp_path,
             delete_resume_log_files=args.delete_resume_log_files,
         )
@@ -46,9 +46,7 @@ class SoapPlan(PipelineResumePlan):
 
     def gather_plan(self, args):
         """Initialize the plan."""
-        with tqdm(
-            total=3, desc=self.get_formatted_stage_name("Planning"), disable=not self.progress_bar
-        ) as step_progress:
+        with self.print_progress(total=3, stage_name="Planning") as step_progress:
             ## Make sure it's safe to use existing resume state.
             super().safe_to_resume()
             step_progress.update(1)
