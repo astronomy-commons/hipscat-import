@@ -120,6 +120,28 @@ def test_wait_for_futures(tmp_path, dask_client):
 
 
 @pytest.mark.dask
+def test_wait_for_futures_progress(tmp_path, dask_client, capsys):
+    """Test that we can wait around for futures to complete.
+
+    Additionally test that relevant parts of the traceback are printed to stdout."""
+    plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=True, simple_progress_bar=True, resume=False)
+
+    def error_on_even(argument):
+        """Silly little method used to test futures that fail under predictable conditions"""
+        if argument % 2 == 0:
+            raise RuntimeError("we are at odds with evens")
+
+    ## Everything is fine if we're all odd, but use a silly name so it's
+    ## clear that the stage name is present, and well-formatted.
+    futures = [dask_client.submit(error_on_even, 1)]
+    plan.wait_for_futures(futures, "teeeest")
+
+    captured = capsys.readouterr()
+    assert "Teeeest" in captured.err
+    assert "100%" in captured.err
+
+
+@pytest.mark.dask
 def test_wait_for_futures_fail_fast(tmp_path, dask_client):
     """Test that we can wait around for futures to complete.
 
