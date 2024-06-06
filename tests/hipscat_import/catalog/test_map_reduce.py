@@ -21,7 +21,7 @@ from hipscat_import.catalog.sparse_histogram import SparseHistogram
 def pickle_file_reader(tmp_path, file_reader) -> str:
     """Utility method to pickle a file reader, and return path to pickle."""
     pickled_reader_file = os.path.join(tmp_path, "reader.pickle")
-    with open(pickled_reader_file, "ab") as pickle_file:
+    with open(pickled_reader_file, "wb") as pickle_file:
         pickle.dump(file_reader, pickle_file)
     return pickled_reader_file
 

@@ -27,8 +27,8 @@ class ResumePlan(PipelineResumePlan):
     """list of files (and job keys) that have yet to be mapped"""
     split_keys: List[Tuple[str, str]] = field(default_factory=list)
     """set of files (and job keys) that have yet to be split"""
-    destination_pixel_map: Optional[List[Tuple[HealpixPixel, List[HealpixPixel], str]]] = None
-    """Fully resolved map of destination pixels to constituent smaller pixels"""
+    destination_pixel_map: Optional[List[Tuple[int, int, int]]] = None
+    """Destination pixels and their expected final count"""
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"
@@ -241,7 +241,7 @@ class ResumePlan(PipelineResumePlan):
                     lowest_order=lowest_healpix_order,
                     threshold=pixel_threshold,
                 )
-            with open(file_name, "ab") as pickle_file:
+            with open(file_name, "wb") as pickle_file:
                 pickle.dump(alignment, pickle_file)
 
         if self.destination_pixel_map is None:
@@ -250,7 +250,7 @@ class ResumePlan(PipelineResumePlan):
             non_none_elements = alignment[alignment != np.array(None)]
             self.destination_pixel_map = np.unique(non_none_elements)
             self.destination_pixel_map = [
-                (pix, order, count) for (pix, order, count) in self.destination_pixel_map if int(count) > 0
+                (order, pix, count) for (order, pix, count) in self.destination_pixel_map if int(count) > 0
             ]
 
         return file_name
@@ -280,9 +280,9 @@ class ResumePlan(PipelineResumePlan):
         if self.destination_pixel_map is None:
             raise RuntimeError("destination pixel map not provided for progress tracking.")
         reduce_items = [
-            (HealpixPixel(hp_pixel, hp_order), row_count, f"{hp_pixel}_{hp_order}")
-            for hp_pixel, hp_order, row_count in self.destination_pixel_map
-            if f"{hp_pixel}_{hp_order}" not in reduced_keys
+            (HealpixPixel(hp_order, hp_pixel), row_count, f"{hp_order}_{hp_pixel}")
+            for hp_order, hp_pixel, row_count in self.destination_pixel_map
+            if f"{hp_order}_{hp_pixel}" not in reduced_keys
         ]
         return reduce_items
 
@@ -290,7 +290,7 @@ class ResumePlan(PipelineResumePlan):
         """Create HealpixPixel list of all destination pixels."""
         if self.destination_pixel_map is None:
             raise RuntimeError("destination pixel map not known.")
-        return [HealpixPixel(hp_pixel, hp_order) for hp_pixel, hp_order, _ in self.destination_pixel_map]
+        return [HealpixPixel(hp_order, hp_pixel) for hp_order, hp_pixel, _ in self.destination_pixel_map]
 
     def is_reducing_done(self) -> bool:
         """Are there partitions left to reduce?"""

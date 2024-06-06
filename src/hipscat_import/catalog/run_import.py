@@ -26,7 +26,7 @@ def run(args, client):
         raise ValueError("args must be type ImportArguments")
 
     pickled_reader_file = os.path.join(args.resume_plan.tmp_path, "reader.pickle")
-    with open(pickled_reader_file, "ab") as pickle_file:
+    with open(pickled_reader_file, "wb") as pickle_file:
         pickle.dump(args.file_reader, pickle_file)
 
     if not args.resume_plan.is_mapping_done():
