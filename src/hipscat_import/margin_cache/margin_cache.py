@@ -17,6 +17,7 @@ def generate_margin_cache(args, client):
         client (dask.distributed.Client): A dask distributed client object.
     """
     resume_plan = MarginCachePlan(args)
+    original_catalog_metadata = paths.get_common_metadata_pointer(args.input_catalog_path)
 
     if not resume_plan.is_mapping_done():
         futures = []
@@ -28,6 +29,7 @@ def generate_margin_cache(args, client):
                     partition_file=partition_file,
                     mapping_key=mapping_key,
                     input_storage_options=args.input_storage_options,
+                    original_catalog_metadata=original_catalog_metadata,
                     margin_pair_file=resume_plan.margin_pair_file,
                     margin_threshold=args.margin_threshold,
                     output_path=args.tmp_path,
@@ -50,7 +52,7 @@ def generate_margin_cache(args, client):
                     output_storage_options=args.output_storage_options,
                     partition_order=pix.order,
                     partition_pixel=pix.pixel,
-                    original_catalog_metadata=paths.get_common_metadata_pointer(args.input_catalog_path),
+                    original_catalog_metadata=original_catalog_metadata,
                     delete_intermediate_parquet_files=args.delete_intermediate_parquet_files,
                     input_storage_options=args.input_storage_options,
                 )
