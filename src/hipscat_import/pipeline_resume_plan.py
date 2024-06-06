@@ -10,7 +10,6 @@ from dask.distributed import as_completed, get_worker
 from dask.distributed import print as dask_print
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-
 from tqdm.auto import tqdm as auto_tqdm
 from tqdm.std import tqdm as std_tqdm
 
