@@ -284,11 +284,13 @@ def test_import_keep_intermediate_files(
     ## Check that stage-level done files are still around.
     base_intermediate_dir = os.path.join(temp, "small_sky_object_catalog", "intermediate")
     expected_contents = [
+        "alignment.pickle",
         "histograms",  # directory containing sub-histograms
         "input_paths.txt",  # original input paths for subsequent comparison
         "mapping_done",  # stage-level done file
         "mapping_histogram.npz",  # concatenated histogram file
         "order_0",  # all intermediate parquet files
+        "reader.pickle",  # pickled InputReader
         "reducing",  # directory containing task-level done files
         "reducing_done",  # stage-level done file
         "splitting",  # directory containing task-level done files
@@ -362,6 +364,16 @@ def test_import_lowest_healpix_order(
     assert np.logical_and(ids >= 700, ids < 832).all()
 
 
+class StarrReader(CsvReader):
+    """Shallow subclass"""
+
+    def read(self, input_file, read_columns=None):
+        files = glob.glob(f"{input_file}/*.starr")
+        files.sort()
+        for file in files:
+            return super().read(file, read_columns)
+
+
 @pytest.mark.dask
 def test_import_starr_file(
     dask_client,
@@ -373,15 +385,6 @@ def test_import_starr_file(
     - tests that we can run pipeline with a totally unknown file type, so long
       as a valid InputReader implementation is provided.
     """
-
-    class StarrReader(CsvReader):
-        """Shallow subclass"""
-
-        def read(self, input_file, read_columns=None):
-            files = glob.glob(f"{input_file}/*.starr")
-            files.sort()
-            for file in files:
-                return super().read(file, read_columns)
 
     args = ImportArguments(
         output_artifact_name="starr",
