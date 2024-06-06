@@ -83,6 +83,9 @@ class MarginCacheArguments(RuntimeArguments):
             "catalog_name": self.output_artifact_name,
             "total_rows": total_rows,
             "catalog_type": "margin",
+            "epoch": self.catalog.catalog_info.epoch,
+            "ra_column": self.catalog.catalog_info.ra_column,
+            "dec_column": self.catalog.catalog_info.dec_column,
             "primary_catalog": self.input_catalog_path,
             "margin_threshold": self.margin_threshold,
         }
