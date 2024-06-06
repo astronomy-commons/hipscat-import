@@ -125,6 +125,9 @@ def test_to_catalog_info(small_sky_source_catalog, tmp_path):
     catalog_info = args.to_catalog_info(total_rows=10)
     assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
+    assert catalog_info.epoch == "J2000"
+    assert catalog_info.ra_column == "source_ra"
+    assert catalog_info.dec_column == "source_dec"
 
 
 def test_provenance_info(small_sky_source_catalog, tmp_path):
