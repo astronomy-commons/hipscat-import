@@ -185,9 +185,15 @@ def test_get_reduce_items(tmp_path):
     with pytest.raises(RuntimeError, match="destination pixel map"):
         remaining_reduce_items = plan.get_reduce_items()
 
+    with pytest.raises(RuntimeError, match="destination pixel map"):
+        remaining_reduce_items = plan.get_destination_pixels()
+
     plan.destination_pixel_map = destination_pixel_map
     remaining_reduce_items = plan.get_reduce_items()
     assert len(remaining_reduce_items) == 1
+
+    all_pixels = plan.get_destination_pixels()
+    assert len(all_pixels) == 1
 
     ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key="0_11")
     remaining_reduce_items = plan.get_reduce_items()
