@@ -4,6 +4,8 @@ import abc
 from typing import Any, Dict, Union
 
 import pandas as pd
+import pyarrow
+import pyarrow.dataset
 import pyarrow.parquet as pq
 from astropy.io import ascii as ascii_reader
 from astropy.table import Table
@@ -349,32 +351,61 @@ class ParquetReader(InputReader):
             yield smaller_table.to_pandas()
 
 
-class IndexedParquetReader(ParquetReader):
+class IndexedParquetReader(InputReader):
     """Reads an index file, containing paths to parquet files to be read and batched
 
-    See ParquetReader for additional configuration for reading parquet files.
+    Attributes:
+        chunksize (int): maximum number of rows to process at once.
+            Large files will be processed in chunks. Small files will be concatenated.
+            Also passed to pyarrow.dataset.Dataset.to_batches as `batch_size`.
+        batch_readahead (int): number of batches to read ahead.
+            Passed to pyarrow.dataset.Dataset.to_batches.
+        fragment_readahead (int): number of fragments to read ahead.
+            Passed to pyarrow.dataset.Dataset.to_batches.
+        use_threads (bool): whether to use multiple threads for reading.
+            Passed to pyarrow.dataset.Dataset.to_batches.
+        column_names (list[str] or None): Names of columns to use from the input dataset.
+            If None, use all columns.
+        kwargs: additional arguments to pass along to InputReader.read_index_file.
     """
 
+    def __init__(
+        self,
+        chunksize=500_000,
+        batch_readahead=16,
+        fragment_readahead=4,
+        use_threads=True,
+        column_names=None,
+        **kwargs,
+    ):
+        self.chunksize = chunksize
+        self.batch_readahead = batch_readahead
+        self.fragment_readahead = fragment_readahead
+        self.use_threads = use_threads
+        self.column_names = column_names
+        self.kwargs = kwargs
+
     def read(self, input_file, read_columns=None):
+        columns = read_columns or self.column_names
         file_names = self.read_index_file(input_file=input_file, **self.kwargs)
+        input_dataset = pyarrow.dataset.dataset(file_names)
 
-        batch_size = 0
-        batch_frames = []
-        for file in file_names:
-            for single_frame in super().read(file, read_columns=read_columns):
-                if batch_size + len(single_frame) >= self.chunksize:
-                    # We've hit our chunksize, send the batch off to the task.
-                    if len(batch_frames) == 0:
-                        yield single_frame
-                        batch_size = 0
-                    else:
-                        yield pd.concat(batch_frames, ignore_index=True)
-                        batch_frames = []
-                        batch_frames.append(single_frame)
-                        batch_size = len(single_frame)
-                else:
-                    batch_frames.append(single_frame)
-                    batch_size += len(single_frame)
+        batches, nrows = [], 0
+        for batch in input_dataset.to_batches(
+            batch_size=self.chunksize,
+            batch_readahead=self.batch_readahead,
+            fragment_readahead=self.fragment_readahead,
+            use_threads=self.use_threads,
+            columns=columns,
+        ):
+            if nrows + batch.num_rows > self.chunksize:
+                # We've hit the chunksize so load to a DataFrame and yield.
+                # There should always be at least one batch in here since batch_size == self.chunksize above.
+                yield pyarrow.Table.from_batches(batches).to_pandas()
+                batches, nrows = [], 0
 
-        if len(batch_frames) > 0:
-            yield pd.concat(batch_frames, ignore_index=True)
+            batches.append(batch)
+            nrows += batch.num_rows
+
+        if len(batches) > 0:
+            yield pyarrow.Table.from_batches(batches).to_pandas()
