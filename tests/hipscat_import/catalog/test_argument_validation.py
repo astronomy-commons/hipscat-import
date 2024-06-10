@@ -78,7 +78,7 @@ def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     )
     assert args.input_path == blank_data_dir
     assert len(args.input_paths) == 1
-    assert blank_data_file in args.input_paths[0]
+    assert str(blank_data_file) in args.input_paths[0]
 
 
 def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
