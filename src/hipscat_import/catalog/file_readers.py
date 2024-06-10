@@ -388,7 +388,7 @@ class IndexedParquetReader(InputReader):
     def read(self, input_file, read_columns=None):
         columns = read_columns or self.column_names
         file_names = self.read_index_file(input_file=input_file, **self.kwargs)
-        input_dataset = pyarrow.dataset.dataset(file_names)
+        (_, input_dataset) = file_io.read_parquet_dataset(file_names, **self.kwargs)
 
         batches, nrows = [], 0
         for batch in input_dataset.to_batches(
