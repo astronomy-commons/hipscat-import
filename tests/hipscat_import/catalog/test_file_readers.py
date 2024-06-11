@@ -1,7 +1,5 @@
 """Test dataframe-generating file readers"""
 
-import os
-
 import hipscat.io.write_metadata as io
 import numpy as np
 import pandas as pd
@@ -224,7 +222,7 @@ def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
     )
     provenance_info = reader.provenance_info()
     catalog_base_dir = tmp_path / "test_catalog"
-    os.makedirs(catalog_base_dir)
+    catalog_base_dir.mkdir(parents=True)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
 
     with open(catalog_base_dir / "provenance_info.json", "r", encoding="utf-8") as file:
@@ -259,7 +257,7 @@ def test_parquet_reader_provenance_info(tmp_path, basic_catalog_info):
     reader = ParquetReader(chunksize=1)
     provenance_info = reader.provenance_info()
     catalog_base_dir = tmp_path / "test_catalog"
-    os.makedirs(catalog_base_dir)
+    catalog_base_dir.mkdir(parents=True)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
 
 
@@ -310,5 +308,5 @@ def test_fits_reader_provenance_info(tmp_path, basic_catalog_info):
     reader = FitsReader()
     provenance_info = reader.provenance_info()
     catalog_base_dir = tmp_path / "test_catalog"
-    os.makedirs(catalog_base_dir)
+    catalog_base_dir.mkdir(parents=True)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)

@@ -93,10 +93,10 @@ def test_count_joins_missing(small_sky_source_catalog, tmp_path):
 def test_combine_results(tmp_path):
     """Test combining many CSVs into a single one"""
     input_path = tmp_path / "input"
-    os.makedirs(input_path, exist_ok=True)
+    input_path.mkdir(parents=True)
 
     output_path = tmp_path / "output"
-    os.makedirs(output_path, exist_ok=True)
+    output_path.mkdir(parents=True)
 
     join_info = pd.DataFrame(
         data=[

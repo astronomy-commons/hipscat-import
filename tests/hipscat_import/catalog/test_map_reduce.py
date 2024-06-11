@@ -93,7 +93,7 @@ def read_partial_histogram(tmp_path, mapping_key):
 
 def test_read_single_fits(tmp_path, formats_fits):
     """Success case - fits file that exists being read as fits"""
-    os.makedirs(tmp_path / "histograms")
+    (tmp_path / "histograms").mkdir(parents=True)
     mr.map_to_pixels(
         input_file=formats_fits,
         pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("fits")),
@@ -127,7 +127,7 @@ def test_map_headers_wrong(formats_headers_csv, tmp_path):
 
 def test_map_headers(tmp_path, formats_headers_csv):
     """Test loading the a file with non-default headers"""
-    os.makedirs(tmp_path / "histograms")
+    (tmp_path / "histograms").mkdir(parents=True)
     mr.map_to_pixels(
         input_file=formats_headers_csv,
         pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
@@ -149,7 +149,7 @@ def test_map_headers(tmp_path, formats_headers_csv):
 
 
 def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
-    os.makedirs(tmp_path / "histograms")
+    (tmp_path / "histograms").mkdir(parents=True)
     input_file = formats_dir / "hipscat_index.csv"
     mr.map_to_pixels(
         input_file=input_file,
@@ -183,7 +183,7 @@ def test_map_with_hipscat_index(tmp_path, formats_dir, small_sky_single_file):
 
 def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parquet):
     """Test loading the a file when using a parquet schema file for dtypes"""
-    os.makedirs(tmp_path / "histograms")
+    (tmp_path / "histograms").mkdir(parents=True)
     input_file = mixed_schema_csv_dir / "input_01.csv"
     mr.map_to_pixels(
         input_file=input_file,
@@ -213,7 +213,7 @@ def test_map_with_schema(tmp_path, mixed_schema_csv_dir, mixed_schema_csv_parque
 
 def test_map_small_sky_order0(tmp_path, small_sky_single_file):
     """Test loading the small sky catalog and partitioning each object into the same large bucket"""
-    os.makedirs(tmp_path / "histograms")
+    (tmp_path / "histograms").mkdir(parents=True)
     mr.map_to_pixels(
         input_file=small_sky_single_file,
         pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
@@ -239,7 +239,7 @@ def test_map_small_sky_part_order1(tmp_path, small_sky_file0):
     Test loading a small portion of the small sky catalog and
     partitioning objects into four smaller buckets
     """
-    os.makedirs(tmp_path / "histograms")
+    (tmp_path / "histograms").mkdir(parents=True)
     mr.map_to_pixels(
         input_file=small_sky_file0,
         pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
@@ -309,7 +309,7 @@ def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_
 
 def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     """Test reducing into one large pixel"""
-    os.makedirs(tmp_path / "reducing")
+    (tmp_path / "reducing").mkdir(parents=True)
     mr.reduce_pixel_shards(
         cache_shard_path=parquet_shards_dir,
         resume_path=tmp_path,
@@ -333,7 +333,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
 
 def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
     """Test reducing with or without a _hipscat_index field"""
-    os.makedirs(tmp_path / "reducing")
+    (tmp_path / "reducing").mkdir(parents=True)
     mr.reduce_pixel_shards(
         cache_shard_path=parquet_shards_dir,
         resume_path=tmp_path,
@@ -413,9 +413,9 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
     First, we take some time to set up these silly data points, then we test out
     reducing them into a single parquet file using a mix of reduction options.
     """
-    os.makedirs(tmp_path / "reducing")
+    (tmp_path / "reducing").mkdir(parents=True)
     shard_dir = tmp_path / "reduce_shards" / "order_0" / "dir_0" / "pixel_11"
-    os.makedirs(shard_dir)
+    shard_dir.mkdir(parents=True)
     output_file = tmp_path / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     file1_string = """source_id,object_id,time,ra,dec

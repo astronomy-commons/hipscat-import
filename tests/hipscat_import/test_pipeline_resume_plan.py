@@ -1,6 +1,5 @@
 """Test resume file operations"""
 
-import os
 from pathlib import Path
 
 import numpy.testing as npt
@@ -13,7 +12,7 @@ def test_done_key(tmp_path):
     """Verify expected behavior of marking stage progress via done files."""
     plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False)
     stage = "testing"
-    os.makedirs(tmp_path / stage)
+    (tmp_path / stage).mkdir(parents=True)
 
     keys = plan.read_done_keys(stage)
     assert len(keys) == 0

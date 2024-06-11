@@ -261,7 +261,7 @@ def test_import_keep_intermediate_files(
     successful import, when setting the appropriate flags.
     """
     temp = tmp_path / "intermediate_files"
-    os.makedirs(temp)
+    temp.mkdir(parents=True)
     args = ImportArguments(
         output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,

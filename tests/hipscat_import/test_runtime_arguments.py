@@ -1,7 +1,5 @@
 """Tests of argument validation"""
 
-import os
-
 import pytest
 
 from hipscat_import.runtime_arguments import RuntimeArguments
@@ -73,9 +71,9 @@ def test_tmp_path_creation(tmp_path):
     output_path = tmp_path / "unique_output_directory"
     temp_path = tmp_path / "unique_tmp_directory"
     dask_tmp_path = tmp_path / "unique_dask_directory"
-    os.makedirs(output_path, exist_ok=True)
-    os.makedirs(temp_path, exist_ok=True)
-    os.makedirs(dask_tmp_path, exist_ok=True)
+    output_path.mkdir(parents=True)
+    temp_path.mkdir(parents=True)
+    dask_tmp_path.mkdir(parents=True)
 
     ## If no tmp paths are given, use the output directory
     args = RuntimeArguments(
