@@ -2,6 +2,7 @@
 
 import os
 import shutil
+from pathlib import Path
 
 import numpy.testing as npt
 import pandas as pd
@@ -19,9 +20,7 @@ def test_count_joins(small_sky_soap_args, tmp_path, small_sky_soap_maps):
         count_joins(small_sky_soap_args, source, objects)
 
         result = pd.read_csv(
-            os.path.join(
-                tmp_path, "small_sky_association", "intermediate", f"{source.order}_{source.pixel}.csv"
-            )
+            tmp_path / "small_sky_association" / "intermediate" / f"{source.order}_{source.pixel}.csv"
         )
         assert len(result) == 1
         assert result["num_rows"].sum() > 0
@@ -32,16 +31,20 @@ def test_count_joins_with_leaf(small_sky_soap_args, small_sky_soap_maps):
     small_sky_soap_args.write_leaf_files = True
     small_sky_soap_args.source_id_column = "source_id"
 
-    intermediate_dir = small_sky_soap_args.tmp_path
+    intermediate_dir = Path(small_sky_soap_args.tmp_path)
     for source, objects in small_sky_soap_maps.items():
         count_joins(small_sky_soap_args, source, objects)
 
-        result = pd.read_csv(os.path.join(intermediate_dir, f"{source.order}_{source.pixel}.csv"))
+        result = pd.read_csv(intermediate_dir / f"{source.order}_{source.pixel}.csv")
         assert len(result) == 1
         assert result["num_rows"].sum() > 0
 
-        parquet_file_name = os.path.join(
-            intermediate_dir, "order_0", "dir_0", "pixel_11", f"source_{source.order}_{source.pixel}.parquet"
+        parquet_file_name = (
+            intermediate_dir
+            / "order_0"
+            / "dir_0"
+            / "pixel_11"
+            / f"source_{source.order}_{source.pixel}.parquet"
         )
         assert os.path.exists(parquet_file_name), f"file not found [{parquet_file_name}]"
 
@@ -69,9 +72,7 @@ def test_count_joins_missing(small_sky_source_catalog, tmp_path):
     source = HealpixPixel(2, 176)
     count_joins(args, source, [HealpixPixel(2, 177), HealpixPixel(2, 178)])
 
-    result_csv = os.path.join(
-        tmp_path, "small_sky_association", "intermediate", f"{source.order}_{source.pixel}.csv"
-    )
+    result_csv = tmp_path / "small_sky_association" / "intermediate" / f"{source.order}_{source.pixel}.csv"
 
     result = pd.read_csv(result_csv)
     assert len(result) == 3
@@ -91,11 +92,11 @@ def test_count_joins_missing(small_sky_source_catalog, tmp_path):
 
 def test_combine_results(tmp_path):
     """Test combining many CSVs into a single one"""
-    input_path = os.path.join(tmp_path, "input")
-    os.makedirs(input_path, exist_ok=True)
+    input_path = tmp_path / "input"
+    input_path.mkdir(parents=True)
 
-    output_path = os.path.join(tmp_path, "output")
-    os.makedirs(output_path, exist_ok=True)
+    output_path = tmp_path / "output"
+    output_path.mkdir(parents=True)
 
     join_info = pd.DataFrame(
         data=[
@@ -113,16 +114,16 @@ def test_combine_results(tmp_path):
             "num_rows",
         ],
     )
-    partitions_csv_file = os.path.join(input_path, "0_11.csv")
+    partitions_csv_file = input_path / "0_11.csv"
     join_info.to_csv(partitions_csv_file, index=False)
 
     total_num_rows = combine_partial_results(input_path, output_path, None)
     assert total_num_rows == 131
 
-    result = pd.read_csv(os.path.join(output_path, "partition_join_info.csv"))
+    result = pd.read_csv(output_path / "partition_join_info.csv")
     assert len(result) == 2
 
-    result = pd.read_csv(os.path.join(output_path, "unmatched_sources.csv"))
+    result = pd.read_csv(output_path / "unmatched_sources.csv")
     assert len(result) == 1
 
 

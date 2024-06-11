@@ -46,7 +46,7 @@ def test_to_pixel_shard_equator(tmp_path, basic_data_shard_df):
         dec_column="weird_dec",
     )
 
-    path = os.path.join(tmp_path, "order_1", "dir_0", "pixel_21", "Norder=1", "Dir=0", "Npix=0.parquet")
+    path = tmp_path / "order_1" / "dir_0" / "pixel_21" / "Norder=1" / "Dir=0" / "Npix=0.parquet"
 
     assert os.path.exists(path)
 
@@ -63,7 +63,7 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
         dec_column="weird_dec",
     )
 
-    path = os.path.join(tmp_path, "order_2", "dir_0", "pixel_15", "Norder=2", "Dir=0", "Npix=0.parquet")
+    path = tmp_path / "order_2" / "dir_0" / "pixel_15" / "Norder=2" / "Dir=0" / "Npix=0.parquet"
 
     assert os.path.exists(path)
 
@@ -92,12 +92,12 @@ def test_map_pixel_shards_error(tmp_path, capsys):
 
 
 def test_reduce_margin_shards(tmp_path):
-    intermediate_dir = os.path.join(tmp_path, "intermediate")
+    intermediate_dir = tmp_path / "intermediate"
     partition_dir = get_pixel_cache_directory(intermediate_dir, HealpixPixel(1, 21))
     shard_dir = paths.pixel_directory(partition_dir, 1, 21)
 
     os.makedirs(shard_dir)
-    os.makedirs(os.path.join(intermediate_dir, "reducing"))
+    os.makedirs(intermediate_dir / "reducing")
 
     first_shard_path = paths.pixel_catalog_file(partition_dir, 1, 0)
     second_shard_path = paths.pixel_catalog_file(partition_dir, 1, 1)
@@ -128,7 +128,7 @@ def test_reduce_margin_shards(tmp_path):
     )
 
     # Create a schema parquet file.
-    schema_path = os.path.join(tmp_path, "metadata.parquet")
+    schema_path = tmp_path / "metadata.parquet"
     schema_df = test_df.drop(columns=["margin_Norder", "margin_Dir", "margin_Npix"])
     schema_df.to_parquet(schema_path)
 
@@ -176,14 +176,14 @@ def test_reduce_margin_shards(tmp_path):
 def test_reduce_margin_shards_error(tmp_path, basic_data_shard_df, capsys):
     """Test error behavior on reduce stage. e.g. by not creating the original
     catalog metadata."""
-    intermediate_dir = os.path.join(tmp_path, "intermediate")
+    intermediate_dir = tmp_path / "intermediate"
     partition_dir = get_pixel_cache_directory(intermediate_dir, HealpixPixel(1, 21))
     shard_dir = paths.pixel_directory(partition_dir, 1, 21)
     os.makedirs(shard_dir)
-    os.makedirs(os.path.join(intermediate_dir, "reducing"))
+    os.makedirs(intermediate_dir / "reducing")
 
     # Don't write anything at the metadata path!
-    schema_path = os.path.join(tmp_path, "metadata.parquet")
+    schema_path = tmp_path / "metadata.parquet"
 
     basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, 1, 0))
     basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, 1, 1))
