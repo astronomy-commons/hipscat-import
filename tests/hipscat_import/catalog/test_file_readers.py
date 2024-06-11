@@ -1,7 +1,5 @@
 """Test dataframe-generating file readers"""
 
-import os
-
 import hipscat.io.write_metadata as io
 import numpy as np
 import pandas as pd
@@ -98,7 +96,7 @@ def test_csv_reader_parquet_metadata(small_sky_single_file, tmp_path):
             pa.field("dec_error", pa.float64()),
         ]
     )
-    schema_file = os.path.join(tmp_path, "metadata.parquet")
+    schema_file = tmp_path / "metadata.parquet"
     pq.write_metadata(
         small_sky_schema,
         schema_file,
@@ -194,7 +192,7 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
             pa.field("numeric", pa.int64()),
         ]
     )
-    schema_file = os.path.join(tmp_path, "metadata.parquet")
+    schema_file = tmp_path / "metadata.parquet"
     pq.write_metadata(parquet_schema_types, schema_file)
 
     frame = next(
@@ -227,11 +225,19 @@ def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
             "empty": "Int64",
             "numeric": int,
         },
+        storage_options={"user_name": "user_pii", "user_key": "SECRETS!"},
     )
     provenance_info = reader.provenance_info()
-    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
-    os.makedirs(catalog_base_dir)
+    catalog_base_dir = tmp_path / "test_catalog"
+    catalog_base_dir.mkdir(parents=True)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
+
+    with open(catalog_base_dir / "provenance_info.json", "r", encoding="utf-8") as file:
+        data = file.read()
+        assert "test_catalog" in data
+        assert "REDACTED" in data
+        assert "user_pii" not in data
+        assert "SECRETS" not in data
 
 
 def test_indexed_csv_reader(indexed_files_dir):
@@ -311,8 +317,8 @@ def test_parquet_reader_provenance_info(tmp_path, basic_catalog_info):
     """Test that we get some provenance info and it is parseable into JSON."""
     reader = ParquetReader(chunksize=1)
     provenance_info = reader.provenance_info()
-    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
-    os.makedirs(catalog_base_dir)
+    catalog_base_dir = tmp_path / "test_catalog"
+    catalog_base_dir.mkdir(parents=True)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
 
 
@@ -362,6 +368,6 @@ def test_fits_reader_provenance_info(tmp_path, basic_catalog_info):
     """Test that we get some provenance info and it is parseable into JSON."""
     reader = FitsReader()
     provenance_info = reader.provenance_info()
-    catalog_base_dir = os.path.join(tmp_path, "test_catalog")
-    os.makedirs(catalog_base_dir)
+    catalog_base_dir = tmp_path / "test_catalog"
+    catalog_base_dir.mkdir(parents=True)
     io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)

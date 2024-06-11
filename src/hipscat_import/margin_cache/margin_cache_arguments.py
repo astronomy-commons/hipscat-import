@@ -1,11 +1,12 @@
 import warnings
-from dataclasses import dataclass
-from typing import Any, Dict, Union
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Union
 
 import healpy as hp
 from hipscat.catalog import Catalog
 from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
 from hipscat.io.validation import is_valid_catalog
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -24,11 +25,20 @@ class MarginCacheArguments(RuntimeArguments):
     order of healpix partitioning in the source catalog. if `margin_order` is left
     default or set to -1, then the `margin_order` will be set dynamically to the
     highest partition order plus 1."""
+    delete_intermediate_parquet_files: bool = True
+    """should we delete the smaller intermediate parquet files generated in the
+    splitting stage, once the relevant reducing stage is complete?"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all done marker files at the end of the pipeline."""
 
     input_catalog_path: str = ""
     """the path to the hipscat-formatted input catalog."""
     input_storage_options: Union[Dict[Any, Any], None] = None
     """optional dictionary of abstract filesystem credentials for the INPUT."""
+    debug_filter_pixel_list: List[HealpixPixel] = field(default_factory=list)
+    """debug setting. if provided, we will first filter the catalog to the pixels
+    provided. this can be useful for creating a margin over a subset of a catalog."""
 
     def __post_init__(self):
         self._check_arguments()
@@ -43,8 +53,12 @@ class MarginCacheArguments(RuntimeArguments):
         self.catalog = Catalog.read_from_hipscat(
             self.input_catalog_path, storage_options=self.input_storage_options
         )
+        if len(self.debug_filter_pixel_list) > 0:
+            self.catalog = self.catalog.filter_from_pixel_list(self.debug_filter_pixel_list)
+            if len(self.catalog.get_healpix_pixels()) == 0:
+                raise ValueError("debug_filter_pixel_list has created empty catalog")
 
-        highest_order = self.catalog.partition_info.get_highest_order()
+        highest_order = int(self.catalog.partition_info.get_highest_order())
         margin_pixel_k = highest_order + 1
         if self.margin_order > -1:
             if self.margin_order < margin_pixel_k:
@@ -69,6 +83,9 @@ class MarginCacheArguments(RuntimeArguments):
             "catalog_name": self.output_artifact_name,
             "total_rows": total_rows,
             "catalog_type": "margin",
+            "epoch": self.catalog.catalog_info.epoch,
+            "ra_column": self.catalog.catalog_info.ra_column,
+            "dec_column": self.catalog.catalog_info.dec_column,
             "primary_catalog": self.input_catalog_path,
             "margin_threshold": self.margin_threshold,
         }
@@ -79,4 +96,5 @@ class MarginCacheArguments(RuntimeArguments):
             "input_catalog_path": self.input_catalog_path,
             "margin_threshold": self.margin_threshold,
             "margin_order": self.margin_order,
+            "debug_filter_pixel_list": self.debug_filter_pixel_list,
         }

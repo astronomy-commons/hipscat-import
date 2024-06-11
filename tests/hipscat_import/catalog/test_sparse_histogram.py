@@ -1,7 +1,5 @@
 """Test sparse histogram behavior."""
 
-import os
-
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -12,7 +10,7 @@ from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 def test_read_write_round_trip(tmp_path):
     """Test that we can read what we write into a histogram file."""
-    file_name = os.path.join(tmp_path, "round_trip.npz")
+    file_name = tmp_path / "round_trip.npz"
     histogram = SparseHistogram.make_from_counts([11], [131], 0)
     histogram.to_file(file_name)
 

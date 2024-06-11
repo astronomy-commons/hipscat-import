@@ -58,67 +58,67 @@ def test_data_dir():
 
 @pytest.fixture
 def small_sky_dir(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky")
+    return test_data_dir / "small_sky"
 
 
 @pytest.fixture
 def small_sky_single_file(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky", "catalog.csv")
+    return test_data_dir / "small_sky" / "catalog.csv"
 
 
 @pytest.fixture
 def small_sky_object_catalog(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky_object_catalog")
+    return test_data_dir / "small_sky_object_catalog"
 
 
 @pytest.fixture
 def small_sky_source_dir(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky_source")
+    return test_data_dir / "small_sky_source"
 
 
 @pytest.fixture
 def small_sky_source_catalog(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky_source_catalog")
+    return test_data_dir / "small_sky_source_catalog"
 
 
 @pytest.fixture
 def blank_data_dir(test_data_dir):
-    return os.path.join(test_data_dir, "blank")
+    return test_data_dir / "blank"
 
 
 @pytest.fixture
 def blank_data_file(test_data_dir):
-    return os.path.join(test_data_dir, "blank", "blank.csv")
+    return test_data_dir / "blank" / "blank.csv"
 
 
 @pytest.fixture
 def empty_data_dir(test_data_dir):
-    return os.path.join(test_data_dir, "empty")
+    return test_data_dir / "empty"
 
 
 @pytest.fixture
 def formats_dir(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats")
+    return test_data_dir / "test_formats"
 
 
 @pytest.fixture
 def formats_headers_csv(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats", "headers.csv")
+    return test_data_dir / "test_formats" / "headers.csv"
 
 
 @pytest.fixture
 def formats_pipe_csv(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats", "pipe_delimited.csv")
+    return test_data_dir / "test_formats" / "pipe_delimited.csv"
 
 
 @pytest.fixture
 def formats_fits(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats", "small_sky.fits")
+    return test_data_dir / "test_formats" / "small_sky.fits"
 
 
 @pytest.fixture
 def formats_pandasindex(test_data_dir):
-    return os.path.join(test_data_dir, "test_formats", "pandasindex.parquet")
+    return test_data_dir / "test_formats" / "pandasindex.parquet"
 
 
 @pytest.fixture
@@ -128,49 +128,42 @@ def indexed_files_dir(test_data_dir):
 
 @pytest.fixture
 def small_sky_parts_dir(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky_parts")
+    return test_data_dir / "small_sky_parts"
 
 
 @pytest.fixture
 def small_sky_file0(test_data_dir):
-    return os.path.join(test_data_dir, "small_sky_parts", "catalog_00_of_05.csv")
+    return test_data_dir / "small_sky_parts" / "catalog_00_of_05.csv"
 
 
 @pytest.fixture
 def parquet_shards_dir(test_data_dir):
-    return os.path.join(test_data_dir, "parquet_shards")
+    return test_data_dir / "parquet_shards"
 
 
 @pytest.fixture
 def soap_intermediate_dir(test_data_dir):
-    return os.path.join(test_data_dir, "soap_intermediate")
+    return test_data_dir / "soap_intermediate"
 
 
 @pytest.fixture
 def parquet_shards_shard_44_0(test_data_dir):
-    return os.path.join(
-        test_data_dir,
-        "parquet_shards",
-        "order_1",
-        "dir_0",
-        "pixel_44",
-        "shard_3_0.parquet",
-    )
+    return test_data_dir / "parquet_shards" / "order_1" / "dir_0" / "pixel_44" / "shard_3_0.parquet"
 
 
 @pytest.fixture
 def mixed_schema_csv_dir(test_data_dir):
-    return os.path.join(test_data_dir, "mixed_schema")
+    return test_data_dir / "mixed_schema"
 
 
 @pytest.fixture
 def mixed_schema_csv_parquet(test_data_dir):
-    return os.path.join(test_data_dir, "mixed_schema", "schema.parquet")
+    return test_data_dir / "mixed_schema" / "schema.parquet"
 
 
 @pytest.fixture
 def resume_dir(test_data_dir):
-    return os.path.join(test_data_dir, "resume")
+    return test_data_dir / "resume"
 
 
 @pytest.fixture

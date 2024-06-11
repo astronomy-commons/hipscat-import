@@ -2,7 +2,6 @@
 
 import numpy.testing as npt
 import pytest
-from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
@@ -180,17 +179,24 @@ def test_some_split_task_failures(tmp_path, dask_client):
 
 def test_get_reduce_items(tmp_path):
     """Test generation of remaining reduce items"""
-    destination_pixel_map = {HealpixPixel(0, 11): (131, [44, 45, 46])}
+    destination_pixel_map = [(0, 11, 131)]
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
 
     with pytest.raises(RuntimeError, match="destination pixel map"):
         remaining_reduce_items = plan.get_reduce_items()
 
-    remaining_reduce_items = plan.get_reduce_items(destination_pixel_map=destination_pixel_map)
+    with pytest.raises(RuntimeError, match="destination pixel map"):
+        remaining_reduce_items = plan.get_destination_pixels()
+
+    plan.destination_pixel_map = destination_pixel_map
+    remaining_reduce_items = plan.get_reduce_items()
     assert len(remaining_reduce_items) == 1
 
+    all_pixels = plan.get_destination_pixels()
+    assert len(all_pixels) == 1
+
     ResumePlan.reducing_key_done(tmp_path=tmp_path, reducing_key="0_11")
-    remaining_reduce_items = plan.get_reduce_items(destination_pixel_map=destination_pixel_map)
+    remaining_reduce_items = plan.get_reduce_items()
     assert len(remaining_reduce_items) == 0
 
 
@@ -199,8 +205,9 @@ def test_some_reduce_task_failures(tmp_path, dask_client):
     """Test that we only consider reduce stage successful if all done files are written"""
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
 
-    destination_pixel_map = {HealpixPixel(0, 11): (131, [44, 45, 46])}
-    remaining_reduce_items = plan.get_reduce_items(destination_pixel_map=destination_pixel_map)
+    destination_pixel_map = [(0, 11, 131)]
+    plan.destination_pixel_map = destination_pixel_map
+    remaining_reduce_items = plan.get_reduce_items()
     assert len(remaining_reduce_items) == 1
 
     ## Method doesn't FAIL, but it doesn't write out the done file either.
