@@ -673,3 +673,50 @@ def test_gaia_ecsv(
     assert schema.equals(expected_parquet_schema, check_metadata=False)
     schema = pds.dataset(args.catalog_path, format="parquet").schema
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+
+
+@pytest.mark.dask
+def test_import_indexed_csv(
+    dask_client,
+    indexed_files_dir,
+    tmp_path,
+):
+    """Use indexed-style CSV reads. There are two index files, and we expect
+    to have two batches worth of intermediate files."""
+    temp = tmp_path / "intermediate_files"
+    os.makedirs(temp)
+
+    args = ImportArguments(
+        output_artifact_name="indexed_csv",
+        input_file_list=[
+            indexed_files_dir / "csv_list_double_1_of_2.txt",
+            indexed_files_dir / "csv_list_double_2_of_2.txt",
+        ],
+        output_path=tmp_path,
+        file_reader="indexed_csv",
+        sort_columns="id",
+        tmp_dir=temp,
+        dask_tmp=temp,
+        highest_healpix_order=2,
+        delete_intermediate_parquet_files=False,
+        delete_resume_log_files=False,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert len(catalog.get_healpix_pixels()) == 1
+
+    # Check that there are TWO intermediate parquet file (two index files).
+    assert_directory_contains(
+        temp / "indexed_csv" / "intermediate" / "order_0" / "dir_0" / "pixel_11",
+        [
+            "shard_split_0_0.parquet",
+            "shard_split_1_0.parquet",
+        ],
+    )

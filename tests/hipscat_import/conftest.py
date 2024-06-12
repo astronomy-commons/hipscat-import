@@ -122,6 +122,11 @@ def formats_pandasindex(test_data_dir):
 
 
 @pytest.fixture
+def indexed_files_dir(test_data_dir):
+    return test_data_dir / "indexed_files"
+
+
+@pytest.fixture
 def small_sky_parts_dir(test_data_dir):
     return test_data_dir / "small_sky_parts"
 

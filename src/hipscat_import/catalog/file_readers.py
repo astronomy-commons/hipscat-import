@@ -3,6 +3,9 @@
 import abc
 from typing import Any, Dict, Union
 
+import pandas as pd
+import pyarrow
+import pyarrow.dataset
 import pyarrow.parquet as pq
 from astropy.io import ascii as ascii_reader
 from astropy.table import Table
@@ -30,8 +33,16 @@ def get_file_reader(
               includes `.csv.gz` and other compressed csv files
             - `fits`, flexible image transport system. often used for astropy tables.
             - `parquet`, compressed columnar data format
+            - `ecsv`, astropy's enhanced CSV
+            - `indexed_csv`, "index" style reader, that accepts a file with a list
+              of csv files that are appended in-memory
+            - `indexed_parquet`, "index" style reader, that accepts a file with a list
+              of parquet files that are appended in-memory
 
         chunksize (int): number of rows to read in a single iteration.
+            for single-file readers, large files are split into batches based on this value.
+            for index-style readers, we read files until we reach this chunksize and
+            create a single batch in-memory.
         schema_file (str): path to a parquet schema file. if provided, header names
             and column types will be pulled from the parquet schema metadata.
         column_names (list[str]): for CSV files, the names of columns if no header
@@ -59,7 +70,16 @@ def get_file_reader(
         )
     if file_format == "parquet":
         return ParquetReader(chunksize=chunksize, **kwargs)
-
+    if file_format == "indexed_csv":
+        return IndexedCsvReader(
+            chunksize=chunksize,
+            schema_file=schema_file,
+            column_names=column_names,
+            type_map=type_map,
+            **kwargs,
+        )
+    if file_format == "indexed_parquet":
+        return IndexedParquetReader(chunksize=chunksize, **kwargs)
     raise NotImplementedError(f"File Format: {file_format} not supported")
 
 
@@ -96,13 +116,27 @@ class InputReader(abc.ABC):
     def regular_file_exists(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **_kwargs):
         """Check that the `input_file` points to a single regular file
 
-        Raises
+        Raises:
             FileNotFoundError: if nothing exists at path, or directory found.
         """
         if not file_io.does_file_or_directory_exist(input_file, storage_options=storage_options):
             raise FileNotFoundError(f"File not found at path: {input_file}")
         if not file_io.is_regular_file(input_file, storage_options=storage_options):
             raise FileNotFoundError(f"Directory found at path - requires regular file: {input_file}")
+
+    def read_index_file(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **kwargs):
+        """Read an "indexed" file.
+
+        This should contain a list of paths to files to be read and batched.
+
+        Raises:
+            FileNotFoundError: if nothing exists at path, or directory found.
+        """
+        self.regular_file_exists(input_file, **kwargs)
+        file_names = file_io.load_text_file(input_file, storage_options=storage_options)
+        file_names = [f.strip() for f in file_names]
+        file_names = [f for f in file_names if f]
+        return file_names
 
 
 class CsvReader(InputReader):
@@ -178,6 +212,37 @@ class CsvReader(InputReader):
             **self.kwargs,
         ) as reader:
             yield from reader
+
+
+class IndexedCsvReader(CsvReader):
+    """Reads an index file, containing paths to CSV files to be read and batched
+
+    See CsvReader for additional configuration for reading CSV files.
+    """
+
+    def read(self, input_file, read_columns=None):
+        file_names = self.read_index_file(input_file=input_file, **self.kwargs)
+
+        batch_size = 0
+        batch_frames = []
+        for file in file_names:
+            for single_frame in super().read(file, read_columns=read_columns):
+                if batch_size + len(single_frame) >= self.chunksize:
+                    # We've hit our chunksize, send the batch off to the task.
+                    if len(batch_frames) == 0:
+                        yield single_frame
+                        batch_size = 0
+                    else:
+                        yield pd.concat(batch_frames, ignore_index=True)
+                        batch_frames = []
+                        batch_frames.append(single_frame)
+                        batch_size = len(single_frame)
+                else:
+                    batch_frames.append(single_frame)
+                    batch_size += len(single_frame)
+
+        if len(batch_frames) > 0:
+            yield pd.concat(batch_frames, ignore_index=True)
 
 
 class AstropyEcsvReader(InputReader):
@@ -291,3 +356,63 @@ class ParquetReader(InputReader):
             batch_size=self.chunksize, columns=columns, use_pandas_metadata=True
         ):
             yield smaller_table.to_pandas()
+
+
+class IndexedParquetReader(InputReader):
+    """Reads an index file, containing paths to parquet files to be read and batched
+
+    Attributes:
+        chunksize (int): maximum number of rows to process at once.
+            Large files will be processed in chunks. Small files will be concatenated.
+            Also passed to pyarrow.dataset.Dataset.to_batches as `batch_size`.
+        batch_readahead (int): number of batches to read ahead.
+            Passed to pyarrow.dataset.Dataset.to_batches.
+        fragment_readahead (int): number of fragments to read ahead.
+            Passed to pyarrow.dataset.Dataset.to_batches.
+        use_threads (bool): whether to use multiple threads for reading.
+            Passed to pyarrow.dataset.Dataset.to_batches.
+        column_names (list[str] or None): Names of columns to use from the input dataset.
+            If None, use all columns.
+        kwargs: additional arguments to pass along to InputReader.read_index_file.
+    """
+
+    def __init__(
+        self,
+        chunksize=500_000,
+        batch_readahead=16,
+        fragment_readahead=4,
+        use_threads=True,
+        column_names=None,
+        **kwargs,
+    ):
+        self.chunksize = chunksize
+        self.batch_readahead = batch_readahead
+        self.fragment_readahead = fragment_readahead
+        self.use_threads = use_threads
+        self.column_names = column_names
+        self.kwargs = kwargs
+
+    def read(self, input_file, read_columns=None):
+        columns = read_columns or self.column_names
+        file_names = self.read_index_file(input_file=input_file, **self.kwargs)
+        (_, input_dataset) = file_io.read_parquet_dataset(file_names, **self.kwargs)
+
+        batches, nrows = [], 0
+        for batch in input_dataset.to_batches(
+            batch_size=self.chunksize,
+            batch_readahead=self.batch_readahead,
+            fragment_readahead=self.fragment_readahead,
+            use_threads=self.use_threads,
+            columns=columns,
+        ):
+            if nrows + batch.num_rows > self.chunksize:
+                # We've hit the chunksize so load to a DataFrame and yield.
+                # There should always be at least one batch in here since batch_size == self.chunksize above.
+                yield pyarrow.Table.from_batches(batches).to_pandas()
+                batches, nrows = [], 0
+
+            batches.append(batch)
+            nrows += batch.num_rows
+
+        if len(batches) > 0:
+            yield pyarrow.Table.from_batches(batches).to_pandas()
