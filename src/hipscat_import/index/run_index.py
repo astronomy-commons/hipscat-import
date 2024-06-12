@@ -1,11 +1,10 @@
 """Create columnar index of hipscat table using dask for parallelization"""
 
 from hipscat.io import file_io, parquet_metadata, write_metadata
-from tqdm.auto import tqdm
 
 import hipscat_import.index.map_reduce as mr
 from hipscat_import.index.arguments import IndexArguments
-from hipscat_import.pipeline_resume_plan import PipelineResumePlan
+from hipscat_import.pipeline_resume_plan import print_progress
 
 
 def run(args, client):
@@ -17,8 +16,11 @@ def run(args, client):
     rows_written = mr.create_index(args, client)
 
     # All done - write out the metadata
-    with tqdm(
-        total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
+    with print_progress(
+        total=4,
+        stage_name="Finishing",
+        use_progress_bar=args.progress_bar,
+        simple_progress_bar=args.simple_progress_bar,
     ) as step_progress:
         index_catalog_info = args.to_catalog_info(int(rows_written))
         write_metadata.write_provenance_info(

@@ -10,7 +10,8 @@ from dask.distributed import as_completed, get_worker
 from dask.distributed import print as dask_print
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from tqdm.auto import tqdm
+from tqdm.auto import tqdm as auto_tqdm
+from tqdm.std import tqdm as std_tqdm
 
 
 @dataclass
@@ -25,6 +26,10 @@ class PipelineResumePlan:
     progress_bar: bool = True
     """if true, a tqdm progress bar will be displayed for user
     feedback of planning progress"""
+    simple_progress_bar: bool = False
+    """if displaying a progress bar, use a text-only simple progress
+    bar instead of widget. this can be useful in some environments when running
+    in a notebook where ipywidgets cannot be used (see `progress_bar` argument)"""
     delete_resume_log_files: bool = True
     """should we delete task-level done files once each stage is complete?
     if False, we will keep all sub-histograms from the mapping stage, and all
@@ -131,13 +136,7 @@ class PipelineResumePlan:
             RuntimeError: if any future returns an error status.
         """
         some_error = False
-        formatted_stage_name = self.get_formatted_stage_name(stage_name)
-        for future in tqdm(
-            as_completed(futures),
-            desc=formatted_stage_name,
-            total=len(futures),
-            disable=(not self.progress_bar),
-        ):
+        for future in self.print_progress(as_completed(futures), stage_name=stage_name, total=len(futures)):
             if future.status == "error":
                 some_error = True
                 if fail_fast:
@@ -146,18 +145,26 @@ class PipelineResumePlan:
         if some_error:
             raise RuntimeError(f"Some {stage_name} stages failed. See logs for details.")
 
-    @staticmethod
-    def get_formatted_stage_name(stage_name) -> str:
-        """Create a stage name of consistent minimum length. Ensures that the tqdm
-        progress bars can line up nicely when multiple stages must run.
+    def print_progress(self, iterable=None, total=None, stage_name=None):
+        """Create a progress bar that will provide user with task feedback.
+
+        This is a thin wrapper around the static ``print_progress`` method that uses
+        member variables for the caller's convenience.
 
         Args:
-            stage_name (str): name of the stage (e.g. mapping, reducing)
+            iterable (iterable): Optional. provides iterations to progress updates.
+            total (int): Optional. Expected iterations.
+            stage_name (str): name of the stage (e.g. mapping, reducing). this will
+                be further formatted with ``get_formatted_stage_name``, so the caller
+                doesn't need to worry about that.
         """
-        if stage_name is None or len(stage_name) == 0:
-            stage_name = "progress"
-
-        return f"{stage_name.capitalize(): <10}"
+        return print_progress(
+            iterable=iterable,
+            total=total,
+            stage_name=stage_name,
+            use_progress_bar=self.progress_bar,
+            simple_progress_bar=self.simple_progress_bar,
+        )
 
     def check_original_input_paths(self, input_paths):
         """Validate that we're operating on the same file set as the original pipeline,
@@ -230,3 +237,50 @@ def print_task_failure(custom_message, exception):
     except Exception:  # pylint: disable=broad-exception-caught
         pass
     dask_print(exception)
+
+
+def get_formatted_stage_name(stage_name) -> str:
+    """Create a stage name of consistent minimum length. Ensures that the tqdm
+    progress bars can line up nicely when multiple stages must run.
+
+    Args:
+        stage_name (str): name of the stage (e.g. mapping, reducing)
+    """
+    if stage_name is None or len(stage_name) == 0:
+        stage_name = "progress"
+
+    return f"{stage_name.capitalize(): <10}"
+
+
+def print_progress(
+    iterable=None, total=None, stage_name=None, use_progress_bar=True, simple_progress_bar=False
+):
+    """Create a progress bar that will provide user with task feedback.
+
+    Args:
+        iterable (iterable): Optional. provides iterations to progress updates.
+        total (int): Optional. Expected iterations.
+        stage_name (str): name of the stage (e.g. mapping, reducing). this will
+            be further formatted with ``get_formatted_stage_name``, so the caller
+            doesn't need to worry about that.
+        use_progress_bar (bool): should we display any progress. typically False
+            when no stdout is expected.
+        simple_progress_bar (bool): if displaying a progress bar, use a text-only
+            simple progress bar instead of widget. this can be useful when running
+            in a particular notebook where ipywidgets cannot be used
+            (only used when ``use_progress_bar`` is True)
+    """
+    if simple_progress_bar:
+        return std_tqdm(
+            iterable,
+            desc=get_formatted_stage_name(stage_name),
+            total=total,
+            disable=not use_progress_bar,
+        )
+
+    return auto_tqdm(
+        iterable,
+        desc=get_formatted_stage_name(stage_name),
+        total=total,
+        disable=not use_progress_bar,
+    )

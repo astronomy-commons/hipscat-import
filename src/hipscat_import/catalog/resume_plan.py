@@ -11,7 +11,6 @@ import numpy as np
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from tqdm.auto import tqdm
 
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -44,9 +43,7 @@ class ResumePlan(PipelineResumePlan):
 
     def gather_plan(self):
         """Initialize the plan."""
-        with tqdm(
-            total=5, desc=self.get_formatted_stage_name("Planning"), disable=not self.progress_bar
-        ) as step_progress:
+        with self.print_progress(total=5, stage_name="Planning") as step_progress:
             ## Make sure it's safe to use existing resume state.
             super().safe_to_resume()
             step_progress.update(1)

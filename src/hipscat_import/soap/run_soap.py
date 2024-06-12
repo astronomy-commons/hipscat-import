@@ -5,9 +5,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
 from hipscat.io import parquet_metadata, paths, write_metadata
-from tqdm.auto import tqdm
 
-from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 from hipscat_import.soap.arguments import SoapArguments
 from hipscat_import.soap.map_reduce import combine_partial_results, count_joins, reduce_joins
 from hipscat_import.soap.resume_plan import SoapPlan
@@ -50,9 +48,7 @@ def run(args, client):
         resume_plan.wait_for_reducing(futures)
 
     # All done - write out the metadata
-    with tqdm(
-        total=4, desc=PipelineResumePlan.get_formatted_stage_name("Finishing"), disable=not args.progress_bar
-    ) as step_progress:
+    with resume_plan.print_progress(total=4, stage_name="Finishing") as step_progress:
         if args.write_leaf_files:
             parquet_metadata.write_parquet_metadata(
                 args.catalog_path,

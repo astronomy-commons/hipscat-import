@@ -275,6 +275,12 @@ reporting to look like the following:
     Reducing : 100%|██████████| 10895/10895 [7:46:07<00:00,  2.57s/it]
     Finishing: 100%|██████████| 6/6 [08:03<00:00, 80.65s/it]
 
+``tqdm`` will try to make a guess about the type of output to provide: plain
+text as for a command line, or a pretty ipywidget. If it tries to use a pretty
+widget but your execution environment can't support the widget, you can 
+force the pipeline to use a simple progress bar with the ``simple_progress_bar``
+argument.
+
 For very long-running pipelines (e.g. multi-TB inputs), you can get an 
 email notification when the pipeline completes using the 
 ``completion_email_address`` argument. This will send a brief email, 
