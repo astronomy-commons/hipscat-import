@@ -1,7 +1,7 @@
 """Utility to hold all arguments required throughout verification pipeline"""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from hipscat.catalog import Catalog
 from hipscat.io.validation import is_valid_catalog
@@ -19,8 +19,13 @@ class VerificationArguments(RuntimeArguments):
     input_catalog: Optional[Catalog] = None
     """In-memory representation of a catalog. If not provided, it will be loaded
     from the input_catalog_path."""
+    input_storage_options: Union[Dict[Any, Any], None] = None
+    """optional dictionary of abstract filesystem credentials for the INPUT."""
 
     ## Verification options
+    fail_fast: bool = False
+    """Fail the pipeline at the first encountered issue. If False, we will
+    continue with errors, and log warnings."""
     field_distribution_cols: List[str] = field(default_factory=list)
     """List of fields to get the overall distribution for. e.g. ["ra", "dec"].
     Should be valid columns in the parquet files."""

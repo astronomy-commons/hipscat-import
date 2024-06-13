@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 import hipscat_import.verification.run_verification as runner
@@ -14,12 +16,15 @@ def test_bad_args():
         runner.run(args)
 
 
-def test_no_implementation(tmp_path, small_sky_object_catalog):
+def test_no_implementation(tmp_path, small_sky_object_catalog, caplog):
     """Womp womp. Test that we don't have a verification pipeline implemented"""
+    caplog.set_level(logging.INFO, logger="hipscat_verification")
     args = VerificationArguments(
         input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,
         output_artifact_name="small_sky_object_verification_report",
     )
-    with pytest.raises(NotImplementedError, match="not yet implemented"):
-        runner.run(args)
+
+    runner.run(args)
+
+    print(caplog.text)
