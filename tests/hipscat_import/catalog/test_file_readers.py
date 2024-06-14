@@ -360,8 +360,16 @@ def test_read_fits_columns(formats_fits):
     frame = next(FitsReader(column_names=["id", "ra", "dec"]).read(formats_fits))
     assert list(frame.columns) == ["id", "ra", "dec"]
 
+    frame = next(FitsReader(column_names=["id", "ra", "dec"]).read(formats_fits, read_columns=["ra", "dec"]))
+    assert list(frame.columns) == ["ra", "dec"]
+
     frame = next(FitsReader(skip_column_names=["ra_error", "dec_error"]).read(formats_fits))
     assert list(frame.columns) == ["id", "ra", "dec", "test_id"]
+
+    frame = next(
+        FitsReader(skip_column_names=["ra_error", "dec_error"]).read(formats_fits, read_columns=["ra", "dec"])
+    )
+    assert list(frame.columns) == ["ra", "dec"]
 
 
 def test_fits_reader_provenance_info(tmp_path, basic_catalog_info):
