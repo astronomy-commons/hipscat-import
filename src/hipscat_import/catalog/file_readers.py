@@ -306,7 +306,7 @@ class FitsReader(InputReader):
         table = Table.read(input_file, memmap=True, **self.kwargs)
         if read_columns:
             table.keep_columns(read_columns)
-        if self.column_names:
+        elif self.column_names:
             table.keep_columns(self.column_names)
         elif self.skip_column_names:
             table.remove_columns(self.skip_column_names)
