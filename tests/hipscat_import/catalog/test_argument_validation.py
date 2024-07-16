@@ -1,8 +1,10 @@
 """Tests of argument validation"""
 
 import pytest
+from hipscat.io import write_metadata
 
 from hipscat_import.catalog.arguments import ImportArguments, check_healpix_order_range
+from hipscat_import.catalog.file_readers import CsvReader
 
 # pylint: disable=protected-access
 
@@ -204,6 +206,38 @@ def test_provenance_info(blank_data_dir, tmp_path):
 
     runtime_args = args.provenance_info()["runtime_args"]
     assert "epoch" in runtime_args
+
+
+def test_write_provenance_info(formats_dir, tmp_path):
+    """Verify that provenance info can be written to JSON file."""
+    input_file = formats_dir / "gaia_minimum.csv"
+    schema_file = formats_dir / "gaia_minimum_schema.parquet"
+
+    args = ImportArguments(
+        output_artifact_name="gaia_minimum",
+        input_file_list=[input_file],
+        file_reader=CsvReader(
+            comment="#",
+            header=None,
+            schema_file=schema_file,
+        ),
+        ra_column="ra",
+        dec_column="dec",
+        sort_columns="solution_id",
+        use_schema_file=schema_file,
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    write_metadata.write_provenance_info(
+        catalog_base_dir=args.catalog_path,
+        dataset_info=args.to_catalog_info(0),
+        tool_args=args.provenance_info(),
+        storage_options=args.output_storage_options,
+    )
 
 
 def test_check_healpix_order_range():
