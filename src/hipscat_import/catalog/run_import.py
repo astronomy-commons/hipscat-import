@@ -47,6 +47,12 @@ def run(args, client):
 
     with args.resume_plan.print_progress(total=2, stage_name="Binning") as step_progress:
         raw_histogram = args.resume_plan.read_histogram(args.mapping_healpix_order)
+        total_rows = int(raw_histogram.sum())
+        if args.expected_total_rows > 0 and args.expected_total_rows != total_rows:
+            raise ValueError(
+                f"Number of rows ({total_rows}) does not match expectation ({args.expected_total_rows})"
+            )
+
         step_progress.update(1)
         alignment_file = args.resume_plan.get_alignment_file(
             raw_histogram,
@@ -54,6 +60,7 @@ def run(args, client):
             args.highest_healpix_order,
             args.lowest_healpix_order,
             args.pixel_threshold,
+            total_rows,
         )
 
         step_progress.update(1)
@@ -112,7 +119,7 @@ def run(args, client):
 
     # All done - write out the metadata
     with args.resume_plan.print_progress(total=5, stage_name="Finishing") as step_progress:
-        catalog_info = args.to_catalog_info(int(raw_histogram.sum()))
+        catalog_info = args.to_catalog_info(total_rows)
         io.write_provenance_info(
             catalog_base_dir=args.catalog_path,
             dataset_info=catalog_info,

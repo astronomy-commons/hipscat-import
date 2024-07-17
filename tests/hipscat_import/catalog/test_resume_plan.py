@@ -1,5 +1,6 @@
 """Test catalog resume logic"""
 
+import numpy as np
 import numpy.testing as npt
 import pytest
 
@@ -108,6 +109,20 @@ def test_read_write_histogram(tmp_path):
     assert len(remaining_keys) == 0
     result = plan.read_histogram(0)
     npt.assert_array_equal(result, histogram.to_array())
+
+
+def test_get_alignment_file(tmp_path):
+    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
+    raw_histogram = np.full(12, 0)
+    raw_histogram[11] = 131
+    alignment_file = plan.get_alignment_file(raw_histogram, -1, 0, 0, 1_000, 131)
+
+    alignment_file2 = plan.get_alignment_file(raw_histogram, -1, 0, 0, 1_000, 131)
+
+    assert alignment_file == alignment_file2
+
+    with pytest.raises(ValueError, match="does not match expectation"):
+        plan.get_alignment_file(raw_histogram, -1, 0, 0, 1_000, 130)
 
 
 def never_fails():

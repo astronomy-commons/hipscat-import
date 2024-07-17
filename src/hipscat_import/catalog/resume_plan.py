@@ -204,6 +204,7 @@ class ResumePlan(PipelineResumePlan):
         highest_healpix_order,
         lowest_healpix_order,
         pixel_threshold,
+        expected_total_rows,
     ) -> str:
         """Get a pointer to the existing alignment file for the pipeline, or
         generate a new alignment using provided arguments.
@@ -217,6 +218,7 @@ class ResumePlan(PipelineResumePlan):
             lowest_healpix_order (int): the lowest healpix order (e.g. 1-5). specifying a lowest order
                 constrains the partitioning to prevent spatially large pixels.
             threshold (int): the maximum number of objects allowed in a single pixel
+            expected_total_rows (int): number of expected rows found in the dataset.
 
         Returns:
             path to cached alignment file.
@@ -249,6 +251,11 @@ class ResumePlan(PipelineResumePlan):
             self.destination_pixel_map = [
                 (order, pix, count) for (order, pix, count) in self.destination_pixel_map if int(count) > 0
             ]
+        total_rows = sum(count for (_, _, count) in self.destination_pixel_map)
+        if total_rows != expected_total_rows:
+            raise ValueError(
+                f"Number of rows ({total_rows}) does not match expectation ({expected_total_rows})"
+            )
 
         return file_name
 

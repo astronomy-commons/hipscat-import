@@ -286,7 +286,7 @@ def test_split_pixels_headers(formats_headers_csv, assert_parquet_file_ids, tmp_
     plan = ResumePlan(tmp_path=tmp_path, progress_bar=False, input_paths=["foo1"])
     raw_histogram = np.full(12, 0)
     raw_histogram[11] = 131
-    alignment_file = plan.get_alignment_file(raw_histogram, -1, 0, 0, 1_000)
+    alignment_file = plan.get_alignment_file(raw_histogram, -1, 0, 0, 1_000, 131)
     mr.split_pixels(
         input_file=formats_headers_csv,
         pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
