@@ -4,8 +4,8 @@ import os
 import pickle
 from io import StringIO
 
-import hipscat.pixel_math.healpix_shim as hp
 import hipscat.pixel_math as hist
+import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
