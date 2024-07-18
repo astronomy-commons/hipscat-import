@@ -192,7 +192,7 @@ class CsvReader(InputReader):
         if self.column_names:
             self.kwargs["names"] = self.column_names
         elif not self.header and schema_parquet is not None:
-            self.kwargs["names"] = schema_parquet.columns
+            self.kwargs["names"] = list(schema_parquet.columns)
 
         if self.type_map:
             self.kwargs["dtype"] = self.type_map
