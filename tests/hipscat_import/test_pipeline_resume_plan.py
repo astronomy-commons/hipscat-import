@@ -1,19 +1,18 @@
 """Test resume file operations"""
 
-import os
 from pathlib import Path
 
 import numpy.testing as npt
 import pytest
 
-from hipscat_import.pipeline_resume_plan import PipelineResumePlan
+from hipscat_import.pipeline_resume_plan import PipelineResumePlan, get_formatted_stage_name
 
 
 def test_done_key(tmp_path):
     """Verify expected behavior of marking stage progress via done files."""
     plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=False)
     stage = "testing"
-    os.makedirs(os.path.join(tmp_path, stage))
+    (tmp_path / stage).mkdir(parents=True)
 
     keys = plan.read_done_keys(stage)
     assert len(keys) == 0
@@ -120,6 +119,28 @@ def test_wait_for_futures(tmp_path, dask_client):
 
 
 @pytest.mark.dask
+def test_wait_for_futures_progress(tmp_path, dask_client, capsys):
+    """Test that we can wait around for futures to complete.
+
+    Additionally test that relevant parts of the traceback are printed to stdout."""
+    plan = PipelineResumePlan(tmp_path=tmp_path, progress_bar=True, simple_progress_bar=True, resume=False)
+
+    def error_on_even(argument):
+        """Silly little method used to test futures that fail under predictable conditions"""
+        if argument % 2 == 0:
+            raise RuntimeError("we are at odds with evens")
+
+    ## Everything is fine if we're all odd, but use a silly name so it's
+    ## clear that the stage name is present, and well-formatted.
+    futures = [dask_client.submit(error_on_even, 1)]
+    plan.wait_for_futures(futures, "teeeest")
+
+    captured = capsys.readouterr()
+    assert "Teeeest" in captured.err
+    assert "100%" in captured.err
+
+
+@pytest.mark.dask
 def test_wait_for_futures_fail_fast(tmp_path, dask_client):
     """Test that we can wait around for futures to complete.
 
@@ -138,16 +159,16 @@ def test_wait_for_futures_fail_fast(tmp_path, dask_client):
 
 def test_formatted_stage_name():
     """Test that we make pretty stage names for presenting in progress bars"""
-    formatted = PipelineResumePlan.get_formatted_stage_name(None)
+    formatted = get_formatted_stage_name(None)
     assert formatted == "Progress  "
 
-    formatted = PipelineResumePlan.get_formatted_stage_name("")
+    formatted = get_formatted_stage_name("")
     assert formatted == "Progress  "
 
-    formatted = PipelineResumePlan.get_formatted_stage_name("stage")
+    formatted = get_formatted_stage_name("stage")
     assert formatted == "Stage     "
 
-    formatted = PipelineResumePlan.get_formatted_stage_name("very long stage name")
+    formatted = get_formatted_stage_name("very long stage name")
     assert formatted == "Very long stage name"
 
 

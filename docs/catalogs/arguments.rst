@@ -97,7 +97,6 @@ Reading input files
 
 Catalog import reads through a list of files and converts them into a hipscatted catalog.
 
-
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -129,9 +128,10 @@ along to the map/reduce stages. We've provided reference implementations for
 reading CSV, FITS, and Parquet input files, but you can subclass the reader 
 type to suit whatever input files you've got.
 
-You only need to provide the ``file_reader`` argument if you are using a custom file reader
+You only need to provide an object ``file_reader`` argument if you are using a custom file reader
 or passing parameters to the file reader. For example you might use ``file_reader=CsvReader(sep="\s+")``
-to parse a whitespace separated file.
+to parse a whitespace separated file. Otherwise, you can use a short string to 
+specify an existing file reader type e.g. ``file_reader="csv"``.
 
 You can find the full API documentation for 
 :py:class:`hipscat_import.catalog.file_readers.InputReader`
@@ -170,6 +170,36 @@ You can find the full API documentation for
 
 If you're reading from cloud storage, or otherwise have some filesystem credential
 dict, put those in ``input_storage_options``.
+
+Indexed batching strategy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have many small files (think 400k+ CSV files with a few rows each), you
+may benefit from "indexed" file readers. These allow you to explicitly create 
+batches for tasks by providing a set of index files, where each file is a 
+text file that contains only paths to data files.
+
+Benefits:
+
+1. If you have 400k+ input files, you don't want to create 400k+ dask tasks
+   to process these files.
+2. If the files are very small, batching them in this way allows the import 
+   process to *combine* several small files into a single chunk for processing.
+   This will result in fewer intermediate files during the ``splitting`` stage.
+3. If you have a parquet files over a slow networked file system, we support
+   pyarrow's readahead protocol through indexed readers.
+
+Warnings:
+
+1. If you have 20 dask workers in your pool, you may be tempted to create 
+   20 index files. This is not always an efficient use of resources! 
+   You'd be better served by 200 index files, so that:
+
+   a. dask can spread the load if some lists of files take longer to process
+      than others
+   b. if the pipeline dies after successfully processing 15 lists, when you 
+      retry the pipeline, you'll only be processing 5 lists with those same 20 
+      workers and many workers will be sitting idle.
 
 Which fields?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -244,6 +274,12 @@ reporting to look like the following:
     Splitting: 100%|██████████| 72/72 [72:50:03<00:00, 3641.71s/it]
     Reducing : 100%|██████████| 10895/10895 [7:46:07<00:00,  2.57s/it]
     Finishing: 100%|██████████| 6/6 [08:03<00:00, 80.65s/it]
+
+``tqdm`` will try to make a guess about the type of output to provide: plain
+text as for a command line, or a pretty ipywidget. If it tries to use a pretty
+widget but your execution environment can't support the widget, you can 
+force the pipeline to use a simple progress bar with the ``simple_progress_bar``
+argument.
 
 For very long-running pipelines (e.g. multi-TB inputs), you can get an 
 email notification when the pipeline completes using the 

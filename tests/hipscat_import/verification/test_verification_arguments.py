@@ -62,7 +62,7 @@ def test_catalog_object(tmp_path, small_sky_object_catalog):
         output_path=tmp_path,
         output_artifact_name="small_sky_object_verification_report",
     )
-    assert args.input_catalog_path == small_sky_object_catalog
+    assert args.input_catalog_path == str(small_sky_object_catalog)
     assert str(args.output_path) == tmp_path_str
     assert str(args.tmp_path).startswith(tmp_path_str)
 

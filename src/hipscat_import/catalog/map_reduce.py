@@ -1,5 +1,6 @@
 """Import a set of non-hipscat files using dask for parallelization"""
 
+import pickle
 from typing import Any, Dict, Union
 
 import healpy as hp
@@ -11,7 +12,6 @@ from hipscat.io import FilePointer, file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healpix
 
-from hipscat_import.catalog.file_readers import InputReader
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print_task_failure
@@ -35,7 +35,7 @@ def _has_named_index(dataframe):
 
 def _iterate_input_file(
     input_file: FilePointer,
-    file_reader: InputReader,
+    pickled_reader_file: str,
     highest_order,
     ra_column,
     dec_column,
@@ -43,6 +43,8 @@ def _iterate_input_file(
     read_columns=None,
 ):
     """Helper function to handle input file reading and healpix pixel calculation"""
+    with open(pickled_reader_file, "rb") as pickle_file:
+        file_reader = pickle.load(pickle_file)
     if not file_reader:
         raise NotImplementedError("No file reader implemented")
 
@@ -66,7 +68,7 @@ def _iterate_input_file(
 
 def map_to_pixels(
     input_file: FilePointer,
-    file_reader: InputReader,
+    pickled_reader_file: str,
     resume_path: FilePointer,
     mapping_key,
     highest_order,
@@ -103,7 +105,13 @@ def map_to_pixels(
             read_columns = [ra_column, dec_column]
 
         for _, _, mapped_pixels in _iterate_input_file(
-            input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index, read_columns
+            input_file,
+            pickled_reader_file,
+            highest_order,
+            ra_column,
+            dec_column,
+            use_hipscat_index,
+            read_columns,
         ):
             mapped_pixel, count_at_pixel = np.unique(mapped_pixels, return_counts=True)
 
@@ -120,14 +128,14 @@ def map_to_pixels(
 
 def split_pixels(
     input_file: FilePointer,
-    file_reader: InputReader,
+    pickled_reader_file: str,
     splitting_key,
     highest_order,
     ra_column,
     dec_column,
     cache_shard_path: FilePointer,
     resume_path: FilePointer,
-    alignment=None,
+    alignment_file=None,
     use_hipscat_index=False,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
@@ -149,8 +157,10 @@ def split_pixels(
         FileNotFoundError: if the file does not exist, or is a directory
     """
     try:
+        with open(alignment_file, "rb") as pickle_file:
+            alignment = pickle.load(pickle_file)
         for chunk_number, data, mapped_pixels in _iterate_input_file(
-            input_file, file_reader, highest_order, ra_column, dec_column, use_hipscat_index
+            input_file, pickled_reader_file, highest_order, ra_column, dec_column, use_hipscat_index
         ):
             aligned_pixels = alignment[mapped_pixels]
             unique_pixels, unique_inverse = np.unique(aligned_pixels, return_inverse=True)

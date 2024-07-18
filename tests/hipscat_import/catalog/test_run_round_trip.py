@@ -79,8 +79,8 @@ def test_import_mixed_schema_csv(
             Path(mixed_schema_csv_dir) / "input_01.csv",
             Path(mixed_schema_csv_dir) / "input_02.csv",
         ],
-        output_path=Path(tmp_path),
-        dask_tmp=Path(tmp_path),
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
         highest_healpix_order=1,
         file_reader=get_file_reader(
             "csv",
@@ -260,8 +260,8 @@ def test_import_keep_intermediate_files(
     """Test that ALL intermediate files are still around on-disk after
     successful import, when setting the appropriate flags.
     """
-    temp = os.path.join(tmp_path, "intermediate_files")
-    os.makedirs(temp)
+    temp = tmp_path / "intermediate_files"
+    temp.mkdir(parents=True)
     args = ImportArguments(
         output_artifact_name="small_sky_object_catalog",
         input_path=small_sky_parts_dir,
@@ -282,13 +282,15 @@ def test_import_keep_intermediate_files(
     assert catalog.catalog_path == args.catalog_path
 
     ## Check that stage-level done files are still around.
-    base_intermediate_dir = os.path.join(temp, "small_sky_object_catalog", "intermediate")
+    base_intermediate_dir = temp / "small_sky_object_catalog" / "intermediate"
     expected_contents = [
+        "alignment.pickle",
         "histograms",  # directory containing sub-histograms
         "input_paths.txt",  # original input paths for subsequent comparison
         "mapping_done",  # stage-level done file
         "mapping_histogram.npz",  # concatenated histogram file
         "order_0",  # all intermediate parquet files
+        "reader.pickle",  # pickled InputReader
         "reducing",  # directory containing task-level done files
         "reducing_done",  # stage-level done file
         "splitting",  # directory containing task-level done files
@@ -296,21 +298,21 @@ def test_import_keep_intermediate_files(
     ]
     assert_directory_contains(base_intermediate_dir, expected_contents)
 
-    checking_dir = os.path.join(base_intermediate_dir, "histograms")
+    checking_dir = base_intermediate_dir / "histograms"
     assert_directory_contains(
         checking_dir, ["map_0.npz", "map_1.npz", "map_2.npz", "map_3.npz", "map_4.npz", "map_5.npz"]
     )
-    checking_dir = os.path.join(base_intermediate_dir, "splitting")
+    checking_dir = base_intermediate_dir / "splitting"
     assert_directory_contains(
         checking_dir,
         ["split_0_done", "split_1_done", "split_2_done", "split_3_done", "split_4_done", "split_5_done"],
     )
 
-    checking_dir = os.path.join(base_intermediate_dir, "reducing")
+    checking_dir = base_intermediate_dir / "reducing"
     assert_directory_contains(checking_dir, ["0_11_done"])
 
     # Check that all of the intermediate parquet shards are still around.
-    checking_dir = os.path.join(base_intermediate_dir, "order_0", "dir_0", "pixel_11")
+    checking_dir = base_intermediate_dir / "order_0" / "dir_0" / "pixel_11"
     assert_directory_contains(
         checking_dir,
         [
@@ -362,6 +364,16 @@ def test_import_lowest_healpix_order(
     assert np.logical_and(ids >= 700, ids < 832).all()
 
 
+class StarrReader(CsvReader):
+    """Shallow subclass"""
+
+    def read(self, input_file, read_columns=None):
+        files = glob.glob(f"{input_file}/*.starr")
+        files.sort()
+        for file in files:
+            return super().read(file, read_columns)
+
+
 @pytest.mark.dask
 def test_import_starr_file(
     dask_client,
@@ -373,15 +385,6 @@ def test_import_starr_file(
     - tests that we can run pipeline with a totally unknown file type, so long
       as a valid InputReader implementation is provided.
     """
-
-    class StarrReader(CsvReader):
-        """Shallow subclass"""
-
-        def read(self, input_file, read_columns=None):
-            files = glob.glob(f"{input_file}/*.starr")
-            files.sort()
-            for file in files:
-                return super().read(file, read_columns)
 
     args = ImportArguments(
         output_artifact_name="starr",
@@ -421,7 +424,7 @@ def test_import_hipscat_index(
     ## First, let's just check the assumptions we have about our input file:
     ## - should have _hipscat_index as the indexed column
     ## - should NOT have any columns like "ra" or "dec"
-    input_file = os.path.join(formats_dir, "hipscat_index.parquet")
+    input_file = formats_dir / "hipscat_index.parquet"
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(input_file, "id", expected_ids)
@@ -472,7 +475,7 @@ def test_import_hipscat_index_no_pandas(
     tmp_path,
 ):
     """Test basic execution, using a previously-computed _hipscat_index column for spatial partitioning."""
-    input_file = os.path.join(formats_dir, "hipscat_index.csv")
+    input_file = formats_dir / "hipscat_index.csv"
     args = ImportArguments(
         output_artifact_name="using_hipscat_index",
         input_file_list=[input_file],
@@ -514,8 +517,8 @@ def test_import_gaia_minimum(
     tmp_path,
 ):
     """Test end-to-end import, using a representative chunk of gaia data."""
-    input_file = os.path.join(formats_dir, "gaia_minimum.csv")
-    schema_file = os.path.join(formats_dir, "gaia_minimum_schema.parquet")
+    input_file = formats_dir / "gaia_minimum.csv"
+    schema_file = formats_dir / "gaia_minimum_schema.parquet"
 
     args = ImportArguments(
         output_artifact_name="gaia_minimum",
@@ -566,7 +569,7 @@ def test_gaia_ecsv(
     tmp_path,
     assert_parquet_file_ids,
 ):
-    input_file = os.path.join(formats_dir, "gaia_epoch.ecsv")
+    input_file = formats_dir / "gaia_epoch.ecsv"
 
     args = ImportArguments(
         output_artifact_name="gaia_e_astropy",
@@ -658,7 +661,7 @@ def test_gaia_ecsv(
     # In-memory schema uses list<item> naming convention, but pyarrow converts to
     # the parquet-compliant list<element> convention when writing to disk.
     # Round trip the schema to get a schema with compliant nested naming convention.
-    schema_path = os.path.join(tmp_path, "temp_schema.parquet")
+    schema_path = tmp_path / "temp_schema.parquet"
     pq.write_table(expected_parquet_schema.empty_table(), where=schema_path)
     expected_parquet_schema = pq.read_metadata(schema_path).schema.to_arrow_schema()
 
@@ -670,3 +673,50 @@ def test_gaia_ecsv(
     assert schema.equals(expected_parquet_schema, check_metadata=False)
     schema = pds.dataset(args.catalog_path, format="parquet").schema
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+
+
+@pytest.mark.dask
+def test_import_indexed_csv(
+    dask_client,
+    indexed_files_dir,
+    tmp_path,
+):
+    """Use indexed-style CSV reads. There are two index files, and we expect
+    to have two batches worth of intermediate files."""
+    temp = tmp_path / "intermediate_files"
+    os.makedirs(temp)
+
+    args = ImportArguments(
+        output_artifact_name="indexed_csv",
+        input_file_list=[
+            indexed_files_dir / "csv_list_double_1_of_2.txt",
+            indexed_files_dir / "csv_list_double_2_of_2.txt",
+        ],
+        output_path=tmp_path,
+        file_reader="indexed_csv",
+        sort_columns="id",
+        tmp_dir=temp,
+        dask_tmp=temp,
+        highest_healpix_order=2,
+        delete_intermediate_parquet_files=False,
+        delete_resume_log_files=False,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert len(catalog.get_healpix_pixels()) == 1
+
+    # Check that there are TWO intermediate parquet file (two index files).
+    assert_directory_contains(
+        temp / "indexed_csv" / "intermediate" / "order_0" / "dir_0" / "pixel_11",
+        [
+            "shard_split_0_0.parquet",
+            "shard_split_1_0.parquet",
+        ],
+    )

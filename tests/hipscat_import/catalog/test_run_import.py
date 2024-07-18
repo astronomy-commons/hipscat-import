@@ -2,6 +2,7 @@
 
 import os
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -41,13 +42,10 @@ def test_resume_dask_runner(
     """Test execution in the presence of some resume files."""
     ## First, copy over our intermediate files.
     ## This prevents overwriting source-controlled resume files.
-    intermediate_dir = os.path.join(tmp_path, "resume_catalog", "intermediate")
-    shutil.copytree(
-        os.path.join(resume_dir, "intermediate"),
-        intermediate_dir,
-    )
+    intermediate_dir = tmp_path / "resume_catalog" / "intermediate"
+    shutil.copytree(resume_dir / "intermediate", intermediate_dir)
     ## Now set up our resume files to match previous work.
-    resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
+    resume_tmp = tmp_path / "tmp" / "resume_catalog"
     plan = ResumePlan(tmp_path=resume_tmp, progress_bar=False)
     histogram = SparseHistogram.make_from_counts([11], [131], 0)
     empty = SparseHistogram.make_empty(0)
@@ -63,10 +61,7 @@ def test_resume_dask_runner(
 
     ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
 
-    shutil.copytree(
-        os.path.join(resume_dir, "Norder=0"),
-        os.path.join(tmp_path, "resume_catalog", "Norder=0"),
-    )
+    shutil.copytree(resume_dir / "Norder=0", tmp_path / "resume_catalog" / "Norder=0")
 
     args = ImportArguments(
         output_artifact_name="resume_catalog",
@@ -75,7 +70,7 @@ def test_resume_dask_runner(
         output_path=tmp_path,
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
-        resume_tmp=os.path.join(tmp_path, "tmp"),
+        resume_tmp=tmp_path / "tmp",
         highest_healpix_order=0,
         pixel_threshold=1000,
         progress_bar=False,
@@ -93,17 +88,14 @@ def test_resume_dask_runner(
     assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    output_file = Path(args.catalog_path) / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
 
     ## Re-running the pipeline with fully done intermediate files
     ## should result in no changes to output files.
-    shutil.copytree(
-        os.path.join(resume_dir, "intermediate"),
-        resume_tmp,
-    )
+    shutil.copytree(resume_dir / "intermediate", resume_tmp)
     plan = args.resume_plan
     plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
     plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
@@ -145,25 +137,17 @@ def test_resume_dask_runner_diff_pixel_order(
     with the current HEALPix order."""
     ## First, copy over our intermediate files.
     ## This prevents overwriting source-controlled resume files.
-    intermediate_dir = os.path.join(tmp_path, "resume_catalog", "intermediate")
-    shutil.copytree(
-        os.path.join(resume_dir, "intermediate"),
-        intermediate_dir,
-    )
+    intermediate_dir = tmp_path / "resume_catalog" / "intermediate"
+    shutil.copytree(resume_dir / "intermediate", intermediate_dir)
 
     ## Now set up our resume files to match previous work.
-    resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
+    resume_tmp = tmp_path / "tmp" / "resume_catalog"
     ResumePlan(tmp_path=resume_tmp, progress_bar=False)
-    SparseHistogram.make_from_counts([11], [131], 0).to_file(
-        os.path.join(resume_tmp, "mapping_histogram.npz")
-    )
+    SparseHistogram.make_from_counts([11], [131], 0).to_file(resume_tmp / "mapping_histogram.npz")
     for file_index in range(0, 5):
         ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.SPLITTING_STAGE, f"split_{file_index}")
 
-    shutil.copytree(
-        os.path.join(resume_dir, "Norder=0"),
-        os.path.join(tmp_path, "resume_catalog", "Norder=0"),
-    )
+    shutil.copytree(resume_dir / "Norder=0", tmp_path / "resume_catalog" / "Norder=0")
 
     with pytest.raises(ValueError, match="incompatible with the highest healpix order"):
         args = ImportArguments(
@@ -173,7 +157,7 @@ def test_resume_dask_runner_diff_pixel_order(
             output_path=tmp_path,
             dask_tmp=tmp_path,
             tmp_dir=tmp_path,
-            resume_tmp=os.path.join(tmp_path, "tmp"),
+            resume_tmp=tmp_path / "tmp",
             constant_healpix_order=1,
             pixel_threshold=1000,
             progress_bar=False,
@@ -188,7 +172,7 @@ def test_resume_dask_runner_diff_pixel_order(
         output_path=tmp_path,
         dask_tmp=tmp_path,
         tmp_dir=tmp_path,
-        resume_tmp=os.path.join(tmp_path, "tmp"),
+        resume_tmp=tmp_path / "tmp",
         constant_healpix_order=1,
         pixel_threshold=1000,
         progress_bar=False,
@@ -220,7 +204,7 @@ def test_resume_dask_runner_histograms_diff_size(
     tmp_path,
 ):
     """Tests that the pipeline errors if the partial histograms have different sizes."""
-    resume_tmp = os.path.join(tmp_path, "tmp", "resume_catalog")
+    resume_tmp = tmp_path / "tmp" / "resume_catalog"
     ResumePlan(tmp_path=resume_tmp, progress_bar=False)
 
     # We'll create mock partial histograms of size 0 and 2
@@ -246,7 +230,7 @@ def test_resume_dask_runner_histograms_diff_size(
             output_path=tmp_path,
             dask_tmp=tmp_path,
             tmp_dir=tmp_path,
-            resume_tmp=os.path.join(tmp_path, "tmp"),
+            resume_tmp=tmp_path / "tmp",
             constant_healpix_order=1,
             pixel_threshold=1000,
             progress_bar=False,
