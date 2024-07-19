@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-import healpy as hp
+import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from hipscat.catalog import Catalog
 from hipscat.io import file_io

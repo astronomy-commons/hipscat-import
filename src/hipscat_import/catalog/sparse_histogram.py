@@ -1,6 +1,6 @@
 """Sparse 1-D histogram of healpix pixel counts."""
 
-import healpy as hp
+import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from scipy.sparse import csc_array, load_npz, save_npz, sparray
 
