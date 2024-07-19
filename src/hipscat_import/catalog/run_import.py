@@ -138,7 +138,9 @@ def run(args, client):
         partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
         partition_info.write_to_file(partition_info_file, storage_options=args.output_storage_options)
         if not args.debug_stats_only:
-            parquet_rows = write_parquet_metadata(args.catalog_path, storage_options=args.output_storage_options)
+            parquet_rows = write_parquet_metadata(
+                args.catalog_path, storage_options=args.output_storage_options
+            )
             if total_rows > 0 and parquet_rows != total_rows:
                 raise ValueError(
                     f"Number of rows in parquet ({parquet_rows}) does not match expectation ({total_rows})"
