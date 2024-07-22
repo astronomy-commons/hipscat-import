@@ -30,7 +30,7 @@ def map_pixel_shards(
         schema = file_io.read_parquet_metadata(
             original_catalog_metadata, storage_options=input_storage_options
         ).schema.to_arrow_schema()
-        data = file_io.load_parquet_to_pandas(
+        data = file_io.read_parquet_file_to_pandas(
             partition_file, schema=schema, storage_options=input_storage_options
         )
 

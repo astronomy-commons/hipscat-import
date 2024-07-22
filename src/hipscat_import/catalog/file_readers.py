@@ -184,7 +184,7 @@ class CsvReader(InputReader):
         if self.schema_file:
             if self.parquet_kwargs is None:
                 self.parquet_kwargs = {}
-            schema_parquet = file_io.load_parquet_to_pandas(
+            schema_parquet = file_io.read_parquet_file_to_pandas(
                 FilePointer(self.schema_file),
                 **self.parquet_kwargs,
             )
