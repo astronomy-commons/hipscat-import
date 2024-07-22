@@ -3,7 +3,7 @@
 import pickle
 from typing import Any, Dict, Union
 
-import healpy as hp
+import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq

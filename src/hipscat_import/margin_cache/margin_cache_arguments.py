@@ -2,7 +2,7 @@ import warnings
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
 
-import healpy as hp
+import hipscat.pixel_math.healpix_shim as hp
 from hipscat.catalog import Catalog
 from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
 from hipscat.io.validation import is_valid_catalog
