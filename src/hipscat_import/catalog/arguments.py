@@ -49,6 +49,9 @@ class ImportArguments(RuntimeArguments):
     use_schema_file: str | None = None
     """path to a parquet file with schema metadata. this will be used for column
     metadata when writing the files, if specified"""
+    expected_total_rows: int = 0
+    """number of expected rows found in the dataset. if non-zero, and we find we have 
+    a different number of rows, the pipeline will exit."""
     constant_healpix_order: int = -1
     """healpix order to use when mapping. if this is
     a positive number, this will be the order of all final pixels and we
