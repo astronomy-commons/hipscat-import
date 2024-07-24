@@ -23,7 +23,7 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
         pixel_order=object_pixel.order,
         pixel_number=object_pixel.pixel,
     )
-    object_data = file_io.load_parquet_to_pandas(
+    object_data = file_io.read_parquet_file_to_pandas(
         object_path,
         columns=[soap_args.object_id_column],
         schema=soap_args.object_catalog.schema,
@@ -108,10 +108,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
         else:
             read_columns = [soap_args.source_object_id_column]
         source_data = file_io.load_parquet_to_pandas(
-            source_path,
-            columns=read_columns,
-            schema=soap_args.source_catalog.schema,
-            storage_options=soap_args.source_storage_options,
+            source_path, columns=read_columns, storage_options=soap_args.source_storage_options
         ).set_index(soap_args.source_object_id_column)
 
         remaining_sources = len(source_data)

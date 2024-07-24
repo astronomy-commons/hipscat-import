@@ -347,3 +347,26 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     assert catalog.catalog_info.ra_column == "ra"
     assert catalog.catalog_info.dec_column == "dec"
     assert len(catalog.get_healpix_pixels()) == 1
+
+
+@pytest.mark.dask
+def test_import_mismatch_expectation(
+    dask_client,
+    small_sky_parts_dir,
+    tmp_path,
+):
+    """Test that the pipeline execution fails if the number of rows does not match
+    explicit (but wrong) expectation."""
+    args = ImportArguments(
+        output_artifact_name="small_sky",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=1,
+        progress_bar=False,
+        expected_total_rows=1_000,
+    )
+
+    with pytest.raises(ValueError, match="does not match expectation"):
+        runner.run(args, dask_client)
