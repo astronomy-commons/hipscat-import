@@ -4,7 +4,6 @@ import os
 import re
 from pathlib import Path
 
-import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -170,33 +169,20 @@ def resume_dir(test_data_dir):
 def basic_data_shard_df():
     ras = np.arange(0.0, 360.0)
     dec = np.full(360, 0.0)
-    ppix = np.full(360, 21)
-    porder = np.full(360, 1)
     norder = np.full(360, 1)
     npix = np.full(360, 0)
     hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
 
     test_df = pd.DataFrame(
-        data=zip(hipscat_indexes, ras, dec, ppix, porder, norder, npix),
+        data=zip(hipscat_indexes, ras, dec, norder, npix),
         columns=[
             "_hipscat_index",
             "weird_ra",
             "weird_dec",
-            "partition_pixel",
-            "partition_order",
             "Norder",
             "Npix",
         ],
     )
-
-    test_df["margin_pixel"] = hp.ang2pix(
-        2**3,
-        test_df["weird_ra"].values,
-        test_df["weird_dec"].values,
-        lonlat=True,
-        nest=True,
-    )
-
     return test_df
 
 
@@ -204,31 +190,19 @@ def basic_data_shard_df():
 def polar_data_shard_df():
     ras = np.arange(0.0, 360.0)
     dec = np.full(360, 89.9)
-    ppix = np.full(360, 15)
-    porder = np.full(360, 2)
     norder = np.full(360, 2)
     npix = np.full(360, 0)
     hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
 
     test_df = pd.DataFrame(
-        data=zip(hipscat_indexes, ras, dec, ppix, porder, norder, npix),
+        data=zip(hipscat_indexes, ras, dec, norder, npix),
         columns=[
             "_hipscat_index",
             "weird_ra",
             "weird_dec",
-            "partition_pixel",
-            "partition_order",
             "Norder",
             "Npix",
         ],
-    )
-
-    test_df["margin_pixel"] = hp.ang2pix(
-        2**3,
-        test_df["weird_ra"].values,
-        test_df["weird_dec"].values,
-        lonlat=True,
-        nest=True,
     )
 
     return test_df

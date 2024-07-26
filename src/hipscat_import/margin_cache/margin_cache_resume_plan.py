@@ -55,7 +55,7 @@ class MarginCachePlan(PipelineResumePlan):
             self.margin_pair_file = file_io.append_paths_to_pointer(self.tmp_path, self.MARGIN_PAIR_FILE)
             if not file_io.does_file_or_directory_exist(self.margin_pair_file):
                 margin_pairs = _find_partition_margin_pixel_pairs(self.combined_pixels, args.margin_order)
-                margin_pairs.to_csv(self.margin_pair_file)
+                margin_pairs.to_csv(self.margin_pair_file, index=False)
             step_progress.update(1)
 
             file_io.make_directory(
@@ -167,5 +167,5 @@ def _find_partition_margin_pixel_pairs(combined_pixels, margin_order):
     margin_pairs_df = pd.DataFrame(
         zip(norders, part_pix, margin_pix),
         columns=["partition_order", "partition_pixel", "margin_pixel"],
-    )
+    ).sort_values("margin_pixel")
     return margin_pairs_df

@@ -25,6 +25,9 @@ class MarginCacheArguments(RuntimeArguments):
     order of healpix partitioning in the source catalog. if `margin_order` is left
     default or set to -1, then the `margin_order` will be set dynamically to the
     highest partition order plus 1."""
+    fine_filtering: bool = True
+    """should we perform the precise boundary checking? if false, some results may be
+    greater than `margin_threshold` away from the border (but within `margin_order`)."""
     delete_intermediate_parquet_files: bool = True
     """should we delete the smaller intermediate parquet files generated in the
     splitting stage, once the relevant reducing stage is complete?"""

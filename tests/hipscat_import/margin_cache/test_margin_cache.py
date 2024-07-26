@@ -83,6 +83,7 @@ def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, da
             output_artifact_name="catalog_cache",
             margin_order=4,
             progress_bar=False,
+            fine_filtering=False,
         )
 
     assert args.catalog.catalog_info.ra_column == "source_ra"
