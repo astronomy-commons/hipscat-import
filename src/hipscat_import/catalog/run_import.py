@@ -60,6 +60,7 @@ def run(args, client):
             args.highest_healpix_order,
             args.lowest_healpix_order,
             args.pixel_threshold,
+            args.drop_empty_siblings,
             total_rows,
         )
 

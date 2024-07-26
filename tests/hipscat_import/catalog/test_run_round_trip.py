@@ -270,6 +270,7 @@ def test_import_keep_intermediate_files(
         tmp_dir=temp,
         dask_tmp=temp,
         progress_bar=False,
+        highest_healpix_order=2,
         delete_intermediate_parquet_files=False,
         delete_resume_log_files=False,
     )
