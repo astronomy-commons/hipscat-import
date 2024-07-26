@@ -24,7 +24,10 @@ def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
         pixel_number=object_pixel.pixel,
     )
     object_data = file_io.read_parquet_file_to_pandas(
-        object_path, columns=[soap_args.object_id_column], storage_options=soap_args.object_storage_options
+        object_path,
+        columns=[soap_args.object_id_column],
+        schema=soap_args.object_catalog.schema,
+        storage_options=soap_args.object_storage_options,
     ).set_index(soap_args.object_id_column)
 
     joined_data = source_data.merge(object_data, how="inner", left_index=True, right_index=True)
