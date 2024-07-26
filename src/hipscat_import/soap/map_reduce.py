@@ -107,7 +107,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
             read_columns = [soap_args.source_object_id_column, soap_args.source_id_column]
         else:
             read_columns = [soap_args.source_object_id_column]
-        source_data = file_io.load_parquet_to_pandas(
+        source_data = file_io.read_parquet_file_to_pandas(
             source_path, columns=read_columns, storage_options=soap_args.source_storage_options
         ).set_index(soap_args.source_object_id_column)
 
