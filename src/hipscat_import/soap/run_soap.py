@@ -50,17 +50,11 @@ def run(args, client):
     # All done - write out the metadata
     with resume_plan.print_progress(total=4, stage_name="Finishing") as step_progress:
         if args.write_leaf_files:
-            parquet_metadata.write_parquet_metadata(
+            total_rows = parquet_metadata.write_parquet_metadata(
                 args.catalog_path,
                 storage_options=args.output_storage_options,
             )
-            total_rows = 0
             metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
-            for row_group in parquet_metadata.read_row_group_fragments(
-                metadata_path,
-                storage_options=args.output_storage_options,
-            ):
-                total_rows += row_group.num_rows
             partition_join_info = PartitionJoinInfo.read_from_file(
                 metadata_path, storage_options=args.output_storage_options
             )
@@ -72,7 +66,6 @@ def run(args, client):
                 args.tmp_path, args.catalog_path, args.output_storage_options
             )
         step_progress.update(1)
-        total_rows = int(total_rows)
         catalog_info = args.to_catalog_info(total_rows)
         write_metadata.write_provenance_info(
             catalog_base_dir=args.catalog_path,
