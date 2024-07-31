@@ -57,16 +57,21 @@ class ImportArguments(RuntimeArguments):
     a positive number, this will be the order of all final pixels and we
     will not combine pixels according to the threshold"""
     lowest_healpix_order: int = 0
-    """the lowest possible healpix order that we will use for the final 
-    catalog partitioning. setting this higher than 0 will prevent creating
+    """when determining bins for the final partitioning, the lowest possible healpix order 
+    for resulting pixels. setting this higher than 0 will prevent creating
     partitions with a large area on the sky."""
-    highest_healpix_order: int = 7
+    highest_healpix_order: int = 10
     """healpix order to use when mapping. this will
     not necessarily be the order used in the final catalog, as we may combine
     pixels that don't meed the threshold"""
     pixel_threshold: int = 1_000_000
-    """maximum number of rows for a single resulting pixel.
-    we may combine hierarchically until we near the ``pixel_threshold``"""
+    """when determining bins for the final partitioning, the maximum number 
+    of rows for a single resulting pixel. we may combine hierarchically until 
+    we near the ``pixel_threshold``"""
+    drop_empty_siblings: bool = False
+    """when determining bins for the final partitioning, should we keep result pixels
+    at a higher order (smaller area) if the 3 sibling pixels are empty. setting this to 
+    False will result in the same number of result pixels, but they may differ in Norder"""
     mapping_healpix_order: int = -1
     """healpix order to use when mapping. will be
     ``highest_healpix_order`` unless a positive value is provided for
