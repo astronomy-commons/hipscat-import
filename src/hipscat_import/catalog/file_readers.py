@@ -205,13 +205,12 @@ class CsvReader(InputReader):
         if read_columns:
             self.kwargs["usecols"] = read_columns
 
-        with file_io.load_csv_to_pandas(
+        return file_io.load_csv_to_pandas_generator(
             FilePointer(input_file),
             chunksize=self.chunksize,
             header=self.header,
             **self.kwargs,
-        ) as reader:
-            yield from reader
+        )
 
 
 class IndexedCsvReader(CsvReader):
