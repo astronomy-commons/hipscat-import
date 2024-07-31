@@ -7,12 +7,12 @@ from hipscat import pixel_math
 from hipscat.catalog.partition_info import PartitionInfo
 from hipscat.io import file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 from hipscat_import.margin_cache.margin_cache_resume_plan import MarginCachePlan
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print_task_failure
 
 
+# pylint: disable=too-many-arguments
 def map_pixel_shards(
     partition_file,
     mapping_key,
@@ -24,6 +24,7 @@ def map_pixel_shards(
     margin_order,
     ra_column,
     dec_column,
+    fine_filtering,
 ):
     """Creates margin cache shards from a source partition file."""
     try:
@@ -33,25 +34,47 @@ def map_pixel_shards(
         data = file_io.read_parquet_file_to_pandas(
             partition_file, schema=schema, storage_options=input_storage_options
         )
+        source_pixel = HealpixPixel(data["Norder"].iloc[0], data["Npix"].iloc[0])
 
-        data["margin_pixel"] = hp.ang2pix(
+        # Constrain the possible margin pairs, first by only those `margin_order` pixels
+        # that **can** be contained in source pixel, then by `margin_order` pixels for rows
+        # in source data
+        margin_pairs = pd.read_csv(margin_pair_file)
+        explosion_factor = 4 ** (margin_order - source_pixel.order)
+        margin_pixel_range_start = source_pixel.pixel * explosion_factor
+        margin_pixel_range_end = (source_pixel.pixel + 1) * explosion_factor
+        margin_pairs = margin_pairs.query(
+            f"margin_pixel >= {margin_pixel_range_start} and margin_pixel < {margin_pixel_range_end}"
+        )
+
+        margin_pixel_list = hp.ang2pix(
             2**margin_order,
             data[ra_column].values,
             data[dec_column].values,
             lonlat=True,
             nest=True,
         )
+        margin_pixel_filter = pd.DataFrame(
+            {"margin_pixel": margin_pixel_list, "filter_value": np.arange(0, len(margin_pixel_list))}
+        ).merge(margin_pairs, on="margin_pixel")
 
-        margin_pairs = pd.read_csv(margin_pair_file)
-        constrained_data = data.reset_index().merge(margin_pairs, on="margin_pixel")
+        # For every possible output pixel, find the full margin_order pixel filter list,
+        # perform the filter, and pass along to helper method to compute fine filter
+        # and write out shard file.
+        for partition_key, data_filter in margin_pixel_filter.groupby(["partition_order", "partition_pixel"]):
+            data_filter = np.unique(data_filter["filter_value"]).tolist()
+            pixel = HealpixPixel(partition_key[0], partition_key[1])
 
-        if len(constrained_data):
-            constrained_data.groupby(["partition_order", "partition_pixel"]).apply(
-                _to_pixel_shard,
+            filtered_data = data.iloc[data_filter]
+            _to_pixel_shard(
+                filtered_data=filtered_data,
+                pixel=pixel,
                 margin_threshold=margin_threshold,
                 output_path=output_path,
                 ra_column=ra_column,
                 dec_column=dec_column,
+                source_pixel=source_pixel,
+                fine_filtering=fine_filtering,
             )
 
         MarginCachePlan.mapping_key_done(output_path, mapping_key)
@@ -60,60 +83,61 @@ def map_pixel_shards(
         raise exception
 
 
-def _to_pixel_shard(data, margin_threshold, output_path, ra_column, dec_column):
+def _to_pixel_shard(
+    filtered_data,
+    pixel,
+    margin_threshold,
+    output_path,
+    ra_column,
+    dec_column,
+    source_pixel,
+    fine_filtering,
+):
     """Do boundary checking for the cached partition and then output remaining data."""
-    order, pix = data["partition_order"].iloc[0], data["partition_pixel"].iloc[0]
-    source_order, source_pix = data["Norder"].iloc[0], data["Npix"].iloc[0]
+    if fine_filtering:
+        margin_check = pixel_math.check_margin_bounds(
+            filtered_data[ra_column].values,
+            filtered_data[dec_column].values,
+            pixel.order,
+            pixel.pixel,
+            margin_threshold,
+        )
 
-    data["margin_check"] = pixel_math.check_margin_bounds(
-        data[ra_column].values, data[dec_column].values, order, pix, margin_threshold
-    )
-
-    # pylint: disable-next=singleton-comparison
-    margin_data = data.loc[data["margin_check"] == True]
+        margin_data = filtered_data.iloc[margin_check]
+    else:
+        margin_data = filtered_data
 
     if len(margin_data):
         # generate a file name for our margin shard, that uses both sets of Norder/Npix
-        partition_dir = get_pixel_cache_directory(output_path, HealpixPixel(order, pix))
-        shard_dir = paths.pixel_directory(partition_dir, source_order, source_pix)
+        partition_dir = get_pixel_cache_directory(output_path, pixel)
+        shard_dir = paths.pixel_directory(partition_dir, source_pixel.order, source_pixel.pixel)
 
         file_io.make_directory(shard_dir, exist_ok=True)
 
-        shard_path = paths.pixel_catalog_file(partition_dir, source_order, source_pix)
-
-        final_df = margin_data.drop(
-            columns=[
-                "margin_check",
-                "margin_pixel",
-            ]
-        )
+        shard_path = paths.pixel_catalog_file(partition_dir, source_pixel.order, source_pixel.pixel)
 
         rename_columns = {
             PartitionInfo.METADATA_ORDER_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_ORDER_COLUMN_NAME}",
             PartitionInfo.METADATA_DIR_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_DIR_COLUMN_NAME}",
             PartitionInfo.METADATA_PIXEL_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_PIXEL_COLUMN_NAME}",
-            "partition_order": PartitionInfo.METADATA_ORDER_COLUMN_NAME,
-            "partition_pixel": PartitionInfo.METADATA_PIXEL_COLUMN_NAME,
         }
 
-        final_df.rename(columns=rename_columns, inplace=True)
+        margin_data = margin_data.rename(columns=rename_columns)
 
-        dir_column = np.floor_divide(final_df[PartitionInfo.METADATA_PIXEL_COLUMN_NAME].values, 10000) * 10000
+        margin_data[PartitionInfo.METADATA_ORDER_COLUMN_NAME] = pixel.order
+        margin_data[PartitionInfo.METADATA_DIR_COLUMN_NAME] = pixel.dir
+        margin_data[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] = pixel.pixel
 
-        final_df[PartitionInfo.METADATA_DIR_COLUMN_NAME] = dir_column
-
-        final_df = final_df.astype(
+        margin_data = margin_data.astype(
             {
                 PartitionInfo.METADATA_ORDER_COLUMN_NAME: np.uint8,
                 PartitionInfo.METADATA_DIR_COLUMN_NAME: np.uint64,
                 PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
             }
         )
-        final_df = final_df.set_index(HIPSCAT_ID_COLUMN).sort_index()
+        margin_data = margin_data.sort_index()
 
-        final_df.to_parquet(shard_path)
-
-        del data, margin_data, final_df
+        margin_data.to_parquet(shard_path)
 
 
 def reduce_margin_shards(

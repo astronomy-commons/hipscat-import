@@ -35,6 +35,7 @@ def generate_margin_cache(args, client):
                     margin_order=args.margin_order,
                     ra_column=args.catalog.catalog_info.ra_column,
                     dec_column=args.catalog.catalog_info.dec_column,
+                    fine_filtering=args.fine_filtering,
                 )
             )
         resume_plan.wait_for_mapping(futures)
@@ -59,16 +60,11 @@ def generate_margin_cache(args, client):
         resume_plan.wait_for_reducing(futures)
 
     with resume_plan.print_progress(total=4, stage_name="Finishing") as step_progress:
-        parquet_metadata.write_parquet_metadata(
+        total_rows = parquet_metadata.write_parquet_metadata(
             args.catalog_path, storage_options=args.output_storage_options
         )
         step_progress.update(1)
-        total_rows = 0
         metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
-        for row_group in parquet_metadata.read_row_group_fragments(
-            metadata_path, storage_options=args.output_storage_options
-        ):
-            total_rows += row_group.num_rows
         partition_info = PartitionInfo.read_from_file(
             metadata_path, storage_options=args.output_storage_options
         )

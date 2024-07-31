@@ -103,7 +103,7 @@ def test_partition_margin_pixel_pairs(small_sky_source_catalog):
     source_catalog = Catalog.read_from_hipscat(small_sky_source_catalog)
     margin_pairs = _find_partition_margin_pixel_pairs(source_catalog.get_healpix_pixels(), 3)
 
-    expected = np.array([725, 733, 757, 765, 727, 735, 759, 767, 469, 192])
+    expected = np.array([0, 2, 8, 10, 32, 34, 40, 42, 192, 192])
 
     npt.assert_array_equal(margin_pairs.iloc[:10]["margin_pixel"], expected)
     assert len(margin_pairs) == 196
@@ -121,9 +121,9 @@ def test_partition_margin_pixel_pairs_negative(small_sky_source_catalog):
 
     expected_order = 0
     expected_pixel = 10
-    expected = np.array([490, 704, 712, 736, 744, 706, 714, 738, 746, 512])
+    expected = np.array([760, 760, 762, 762, 763, 765, 766, 767, 767, 767])
 
-    assert margin_pairs.iloc[-1]["partition_order"] == expected_order
-    assert margin_pairs.iloc[-1]["partition_pixel"] == expected_pixel
+    assert margin_pairs.iloc[218]["partition_order"] == expected_order
+    assert margin_pairs.iloc[218]["partition_pixel"] == expected_pixel
     npt.assert_array_equal(margin_pairs.iloc[-10:]["margin_pixel"], expected)
     assert len(margin_pairs) == 536
