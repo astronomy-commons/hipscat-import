@@ -204,6 +204,7 @@ class ResumePlan(PipelineResumePlan):
         highest_healpix_order,
         lowest_healpix_order,
         pixel_threshold,
+        drop_empty_siblings,
         expected_total_rows,
     ) -> str:
         """Get a pointer to the existing alignment file for the pipeline, or
@@ -218,6 +219,7 @@ class ResumePlan(PipelineResumePlan):
             lowest_healpix_order (int): the lowest healpix order (e.g. 1-5). specifying a lowest order
                 constrains the partitioning to prevent spatially large pixels.
             threshold (int): the maximum number of objects allowed in a single pixel
+            drop_empty_siblings (bool):  if 3 of 4 pixels are empty, keep only the non-empty pixel
             expected_total_rows (int): number of expected rows found in the dataset.
 
         Returns:
@@ -239,6 +241,7 @@ class ResumePlan(PipelineResumePlan):
                     highest_order=highest_healpix_order,
                     lowest_order=lowest_healpix_order,
                     threshold=pixel_threshold,
+                    drop_empty_siblings=drop_empty_siblings,
                 )
             with open(file_name, "wb") as pickle_file:
                 pickle.dump(alignment, pickle_file)
