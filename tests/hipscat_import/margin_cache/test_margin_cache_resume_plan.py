@@ -16,6 +16,7 @@ from hipscat_import.margin_cache.margin_cache_resume_plan import (
 def small_sky_margin_args(tmp_path, small_sky_object_catalog):
     return MarginCacheArguments(
         margin_threshold=5.0,
+        margin_order=4,
         input_catalog_path=small_sky_object_catalog,
         output_path=tmp_path,
         output_artifact_name="catalog_cache",
