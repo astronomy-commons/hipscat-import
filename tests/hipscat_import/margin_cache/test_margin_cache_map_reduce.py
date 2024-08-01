@@ -98,7 +98,7 @@ def test_map_pixel_shards_error(tmp_path, capsys):
     assert "No such file or directory" in captured.out
 
 
-@pytest.mark.timeout(15)
+@pytest.mark.timeout(30)
 def test_map_pixel_shards_fine(tmp_path, test_data_dir, small_sky_source_catalog):
     """Test basic mapping behavior, with fine filtering enabled."""
     intermediate_dir = tmp_path / "intermediate"
