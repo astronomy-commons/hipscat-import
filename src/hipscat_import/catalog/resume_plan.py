@@ -37,8 +37,34 @@ class ResumePlan(PipelineResumePlan):
     HISTOGRAMS_DIR = "histograms"
     ALIGNMENT_FILE = "alignment.pickle"
 
-    def __post_init__(self):
-        """Initialize the plan."""
+    def __init__(
+        self,
+        resume: bool = True,
+        progress_bar: bool = True,
+        simple_progress_bar: bool = False,
+        input_paths=None,
+        tmp_path=None,
+        delete_resume_log_files: bool = True,
+        import_args=None,
+    ):
+        if import_args:
+            super().__init__(
+                resume=import_args.resume,
+                progress_bar=import_args.progress_bar,
+                simple_progress_bar=import_args.simple_progress_bar,
+                tmp_path=import_args.resume_tmp,
+                delete_resume_log_files=import_args.delete_resume_log_files,
+            )
+            self.input_paths = import_args.input_paths
+        else:
+            super().__init__(
+                resume=resume,
+                progress_bar=progress_bar,
+                simple_progress_bar=simple_progress_bar,
+                tmp_path=tmp_path,
+                delete_resume_log_files=delete_resume_log_files,
+            )
+            self.input_paths = input_paths
         self.gather_plan()
 
     def gather_plan(self):
