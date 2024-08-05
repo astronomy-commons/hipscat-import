@@ -34,6 +34,22 @@ def test_empty_required(small_sky_parts_dir, tmp_path):
             output_path=tmp_path,
         )
 
+    with pytest.raises(ValueError, match="input_file_list is required"):
+        ImportArguments(
+            output_artifact_name="catalog",
+            file_reader="csv",
+            input_file_list=None,
+            output_path=tmp_path,
+        )
+
+    with pytest.raises(ValueError, match="input_file_list is empty"):
+        ImportArguments(
+            output_artifact_name="catalog",
+            file_reader="csv",
+            input_file_list=[],
+            output_path=tmp_path,
+        )
+
 
 def test_invalid_paths(blank_data_dir, tmp_path):
     """Required arguments are provided, but paths aren't found."""
@@ -53,6 +69,17 @@ def test_invalid_paths(blank_data_dir, tmp_path):
             input_path="path",
             file_reader="csv",
             output_path=tmp_path,
+        )
+
+    # Too many paths!
+    with pytest.raises(ValueError, match="exactly one of"):
+        ImportArguments(
+            output_artifact_name="catalog",
+            input_path=blank_data_dir,
+            input_file_list=[blank_data_dir],
+            file_reader="csv",
+            output_path=tmp_path,
+            progress_bar=False,
         )
 
 

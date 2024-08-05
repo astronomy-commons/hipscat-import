@@ -151,13 +151,21 @@ def find_input_paths(
     """
     input_paths = []
     if input_path:
+        if input_file_list:
+            raise ValueError("exactly one of input_path or input_file_list is required")
+
         if not file_io.does_file_or_directory_exist(input_path, storage_options=storage_options):
             raise FileNotFoundError("input_path not found on local storage")
         input_paths = file_io.find_files_matching_path(
             input_path, file_matcher, include_protocol=True, storage_options=storage_options
         )
-    elif input_file_list:
+    elif not input_file_list is None:
+        # It's common for users to accidentally pass in an empty list. Give them a friendly error.
+        if len(input_file_list) == 0:
+            raise ValueError("input_file_list is empty")
         input_paths = input_file_list
+    else:
+        raise ValueError("exactly one of input_path or input_file_list is required")
     if len(input_paths) == 0:
         raise FileNotFoundError("No input files found")
     return input_paths
