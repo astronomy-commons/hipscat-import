@@ -8,28 +8,6 @@ from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
-def test_mapping_done(tmp_path):
-    """Verify expected behavior of mapping done file"""
-    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    assert not plan.is_mapping_done()
-    plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
-    assert plan.is_mapping_done()
-
-    plan.clean_resume_files()
-    assert not plan.is_mapping_done()
-
-
-def test_reducing_done(tmp_path):
-    """Verify expected behavior of reducing done file"""
-    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    assert not plan.is_reducing_done()
-    plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
-    assert plan.is_reducing_done()
-
-    plan.clean_resume_files()
-    assert not plan.is_reducing_done()
-
-
 def test_done_checks(tmp_path):
     """Verify that done files imply correct pipeline execution order:
     mapping > splitting > reducing

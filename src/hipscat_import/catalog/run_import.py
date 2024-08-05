@@ -30,7 +30,7 @@ def run(args, client):
     with open(pickled_reader_file, "wb") as pickle_file:
         pickle.dump(args.file_reader, pickle_file)
 
-    if not resume_plan.is_mapping_done():
+    if resume_plan.should_run_mapping:
         futures = []
         for key, file_path in resume_plan.map_files:
             futures.append(
@@ -69,93 +69,93 @@ def run(args, client):
 
         step_progress.update(1)
 
-    if not args.debug_stats_only:
-        if not resume_plan.is_splitting_done():
-            futures = []
-            for key, file_path in resume_plan.split_keys:
-                futures.append(
-                    client.submit(
-                        mr.split_pixels,
-                        input_file=file_path,
-                        pickled_reader_file=pickled_reader_file,
-                        highest_order=args.mapping_healpix_order,
-                        ra_column=args.ra_column,
-                        dec_column=args.dec_column,
-                        splitting_key=key,
-                        cache_shard_path=args.tmp_path,
-                        resume_path=resume_plan.tmp_path,
-                        alignment_file=alignment_file,
-                        use_hipscat_index=args.use_hipscat_index,
-                    )
+    if resume_plan.should_run_splitting:
+        futures = []
+        for key, file_path in resume_plan.split_keys:
+            futures.append(
+                client.submit(
+                    mr.split_pixels,
+                    input_file=file_path,
+                    pickled_reader_file=pickled_reader_file,
+                    highest_order=args.mapping_healpix_order,
+                    ra_column=args.ra_column,
+                    dec_column=args.dec_column,
+                    splitting_key=key,
+                    cache_shard_path=args.tmp_path,
+                    resume_path=resume_plan.tmp_path,
+                    alignment_file=alignment_file,
+                    use_hipscat_index=args.use_hipscat_index,
                 )
+            )
 
-            resume_plan.wait_for_splitting(futures)
+        resume_plan.wait_for_splitting(futures)
 
-        if not resume_plan.is_reducing_done():
-            futures = []
-            for (
-                destination_pixel,
-                source_pixel_count,
-                destination_pixel_key,
-            ) in resume_plan.get_reduce_items():
-                futures.append(
-                    client.submit(
-                        mr.reduce_pixel_shards,
-                        cache_shard_path=args.tmp_path,
-                        resume_path=resume_plan.tmp_path,
-                        reducing_key=destination_pixel_key,
-                        destination_pixel_order=destination_pixel.order,
-                        destination_pixel_number=destination_pixel.pixel,
-                        destination_pixel_size=source_pixel_count,
-                        output_path=args.catalog_path,
-                        ra_column=args.ra_column,
-                        dec_column=args.dec_column,
-                        sort_columns=args.sort_columns,
-                        add_hipscat_index=args.add_hipscat_index,
-                        use_schema_file=args.use_schema_file,
-                        use_hipscat_index=args.use_hipscat_index,
-                        delete_input_files=args.delete_intermediate_parquet_files,
-                        storage_options=args.output_storage_options,
-                    )
+    if resume_plan.should_run_reducing:
+        futures = []
+        for (
+            destination_pixel,
+            source_pixel_count,
+            destination_pixel_key,
+        ) in resume_plan.get_reduce_items():
+            futures.append(
+                client.submit(
+                    mr.reduce_pixel_shards,
+                    cache_shard_path=args.tmp_path,
+                    resume_path=resume_plan.tmp_path,
+                    reducing_key=destination_pixel_key,
+                    destination_pixel_order=destination_pixel.order,
+                    destination_pixel_number=destination_pixel.pixel,
+                    destination_pixel_size=source_pixel_count,
+                    output_path=args.catalog_path,
+                    ra_column=args.ra_column,
+                    dec_column=args.dec_column,
+                    sort_columns=args.sort_columns,
+                    add_hipscat_index=args.add_hipscat_index,
+                    use_schema_file=args.use_schema_file,
+                    use_hipscat_index=args.use_hipscat_index,
+                    delete_input_files=args.delete_intermediate_parquet_files,
+                    storage_options=args.output_storage_options,
                 )
+            )
 
-            resume_plan.wait_for_reducing(futures)
+        resume_plan.wait_for_reducing(futures)
 
     # All done - write out the metadata
-    with resume_plan.print_progress(total=5, stage_name="Finishing") as step_progress:
-        catalog_info = args.to_catalog_info(total_rows)
-        io.write_provenance_info(
-            catalog_base_dir=args.catalog_path,
-            dataset_info=catalog_info,
-            tool_args=args.provenance_info(),
-            storage_options=args.output_storage_options,
-        )
-        step_progress.update(1)
-
-        io.write_catalog_info(
-            catalog_base_dir=args.catalog_path,
-            dataset_info=catalog_info,
-            storage_options=args.output_storage_options,
-        )
-        step_progress.update(1)
-        partition_info = PartitionInfo.from_healpix(resume_plan.get_destination_pixels())
-        partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
-        partition_info.write_to_file(partition_info_file, storage_options=args.output_storage_options)
-        if not args.debug_stats_only:
-            parquet_rows = write_parquet_metadata(
-                args.catalog_path, storage_options=args.output_storage_options
+    if resume_plan.should_run_finishing:
+        with resume_plan.print_progress(total=5, stage_name="Finishing") as step_progress:
+            catalog_info = args.to_catalog_info(total_rows)
+            io.write_provenance_info(
+                catalog_base_dir=args.catalog_path,
+                dataset_info=catalog_info,
+                tool_args=args.provenance_info(),
+                storage_options=args.output_storage_options,
             )
-            if total_rows > 0 and parquet_rows != total_rows:
-                raise ValueError(
-                    f"Number of rows in parquet ({parquet_rows}) does not match expectation ({total_rows})"
+            step_progress.update(1)
+
+            io.write_catalog_info(
+                catalog_base_dir=args.catalog_path,
+                dataset_info=catalog_info,
+                storage_options=args.output_storage_options,
+            )
+            step_progress.update(1)
+            partition_info = PartitionInfo.from_healpix(resume_plan.get_destination_pixels())
+            partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
+            partition_info.write_to_file(partition_info_file, storage_options=args.output_storage_options)
+            if not args.debug_stats_only:
+                parquet_rows = write_parquet_metadata(
+                    args.catalog_path, storage_options=args.output_storage_options
                 )
-
-        else:
-            partition_info.write_to_metadata_files(
-                args.catalog_path, storage_options=args.output_storage_options
-            )
-        step_progress.update(1)
-        io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
-        step_progress.update(1)
-        resume_plan.clean_resume_files()
-        step_progress.update(1)
+                if total_rows > 0 and parquet_rows != total_rows:
+                    raise ValueError(
+                        f"Number of rows in parquet ({parquet_rows}) "
+                        f"does not match expectation ({total_rows})"
+                    )
+            else:
+                partition_info.write_to_metadata_files(
+                    args.catalog_path, storage_options=args.output_storage_options
+                )
+            step_progress.update(1)
+            io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
+            step_progress.update(1)
+            resume_plan.clean_resume_files()
+            step_progress.update(1)

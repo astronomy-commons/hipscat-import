@@ -28,6 +28,10 @@ class ResumePlan(PipelineResumePlan):
     """set of files (and job keys) that have yet to be split"""
     destination_pixel_map: Optional[List[Tuple[int, int, int]]] = None
     """Destination pixels and their expected final count"""
+    should_run_mapping: bool = True
+    should_run_splitting: bool = True
+    should_run_reducing: bool = True
+    should_run_finishing: bool = True
 
     MAPPING_STAGE = "mapping"
     SPLITTING_STAGE = "splitting"
@@ -45,6 +49,7 @@ class ResumePlan(PipelineResumePlan):
         input_paths=None,
         tmp_path=None,
         delete_resume_log_files: bool = True,
+        run_stages: List[str] | None = None,
         import_args=None,
     ):
         if import_args:
@@ -55,6 +60,8 @@ class ResumePlan(PipelineResumePlan):
                 tmp_path=import_args.resume_tmp,
                 delete_resume_log_files=import_args.delete_resume_log_files,
             )
+            if import_args.debug_stats_only:
+                run_stages = ["mapping", "finishing"]
             self.input_paths = import_args.input_paths
         else:
             super().__init__(
@@ -65,20 +72,20 @@ class ResumePlan(PipelineResumePlan):
                 delete_resume_log_files=delete_resume_log_files,
             )
             self.input_paths = input_paths
-        self.gather_plan()
+        self.gather_plan(run_stages)
 
-    def gather_plan(self):
+    def gather_plan(self, run_stages: List[str] | None = None):
         """Initialize the plan."""
-        with self.print_progress(total=5, stage_name="Planning") as step_progress:
+        with self.print_progress(total=4, stage_name="Planning") as step_progress:
             ## Make sure it's safe to use existing resume state.
             super().safe_to_resume()
             step_progress.update(1)
 
             ## Validate existing resume state.
             ## - if a later stage is complete, the earlier stages should be complete too.
-            mapping_done = self.is_mapping_done()
-            splitting_done = self.is_splitting_done()
-            reducing_done = self.is_reducing_done()
+            mapping_done = self.done_file_exists(self.MAPPING_STAGE)
+            splitting_done = self.done_file_exists(self.SPLITTING_STAGE)
+            reducing_done = self.done_file_exists(self.REDUCING_STAGE)
 
             if reducing_done and (not mapping_done or not splitting_done):
                 raise ValueError("mapping and splitting must be complete before reducing")
@@ -86,31 +93,38 @@ class ResumePlan(PipelineResumePlan):
                 raise ValueError("mapping must be complete before splitting")
             step_progress.update(1)
 
+            ## Figure out which stages we should run, based on requested `run_stages`
+            if run_stages:
+                # TODO - make sure all values are valid.
+                self.should_run_mapping = not mapping_done and self.MAPPING_STAGE in run_stages
+                self.should_run_splitting = not splitting_done and self.SPLITTING_STAGE in run_stages
+                self.should_run_reducing = not reducing_done and self.REDUCING_STAGE in run_stages
+                self.should_run_finishing = "finishing" in run_stages
+
             ## Validate that we're operating on the same file set as the previous instance.
             self.input_paths = self.check_original_input_paths(self.input_paths)
             step_progress.update(1)
 
             ## Gather keys for execution.
-            if not mapping_done:
+            if self.should_run_mapping:
                 self.map_files = self.get_remaining_map_keys()
-            if not splitting_done:
+                file_io.make_directory(
+                    file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
+                    exist_ok=True,
+                )
+            if self.should_run_splitting:
                 self.split_keys = self.get_remaining_split_keys()
-            ## We don't pre-gather the plan for the reducing keys.
-            ## It requires the full destination pixel map.
-            step_progress.update(1)
-            ## Go ahead and create our directories for storing resume files.
-            file_io.make_directory(
-                file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
-                exist_ok=True,
-            )
-            file_io.make_directory(
-                file_io.append_paths_to_pointer(self.tmp_path, self.SPLITTING_STAGE),
-                exist_ok=True,
-            )
-            file_io.make_directory(
-                file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
-                exist_ok=True,
-            )
+                file_io.make_directory(
+                    file_io.append_paths_to_pointer(self.tmp_path, self.SPLITTING_STAGE),
+                    exist_ok=True,
+                )
+            if self.should_run_reducing:
+                ## We don't pre-gather the plan for the reducing keys.
+                ## It requires the full destination pixel map.
+                file_io.make_directory(
+                    file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
+                    exist_ok=True,
+                )
             step_progress.update(1)
 
     def get_remaining_map_keys(self):
@@ -219,10 +233,6 @@ class ResumePlan(PipelineResumePlan):
             raise RuntimeError("some map stages did not complete successfully.")
         self.touch_stage_done_file(self.MAPPING_STAGE)
 
-    def is_mapping_done(self) -> bool:
-        """Are there files left to map?"""
-        return self.done_file_exists(self.MAPPING_STAGE)
-
     def get_alignment_file(
         self,
         raw_histogram,
@@ -296,10 +306,6 @@ class ResumePlan(PipelineResumePlan):
             raise RuntimeError(f"{len(remaining_split_items)} split stages did not complete successfully.")
         self.touch_stage_done_file(self.SPLITTING_STAGE)
 
-    def is_splitting_done(self) -> bool:
-        """Are there files left to split?"""
-        return self.done_file_exists(self.SPLITTING_STAGE)
-
     def get_reduce_items(self):
         """Fetch a triple for each partition to reduce.
 
@@ -324,10 +330,6 @@ class ResumePlan(PipelineResumePlan):
         if self.destination_pixel_map is None:
             raise RuntimeError("destination pixel map not known.")
         return [HealpixPixel(hp_order, hp_pixel) for hp_order, hp_pixel, _ in self.destination_pixel_map]
-
-    def is_reducing_done(self) -> bool:
-        """Are there partitions left to reduce?"""
-        return self.done_file_exists(self.REDUCING_STAGE)
 
     def wait_for_reducing(self, futures):
         """Wait for reducing futures to complete."""

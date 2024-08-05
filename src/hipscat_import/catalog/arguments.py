@@ -83,8 +83,8 @@ class ImportArguments(RuntimeArguments):
     if False, we will keep all sub-histograms from the mapping stage, and all
     done marker files at the end of the pipeline."""
     run_stages: List[str] = field(default_factory=list)
-    """list of parallel stages to run. options are ['mapping', 'splitting', 'reducing'].
-    ['planning', 'binning', 'finishing'] stages are not optional.
+    """list of parallel stages to run. options are ['mapping', 'splitting', 'reducing',
+    'finishing']. ['planning', 'binning'] stages are not optional.
     this can be used to force the pipeline to stop after an early stage, to allow the
     user to reset the dask client with different resources for different stages of
     the workflow. if not specified, we will run all pipeline stages."""
