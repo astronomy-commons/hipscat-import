@@ -71,6 +71,17 @@ def test_invalid_paths(blank_data_dir, tmp_path):
             output_path=tmp_path,
         )
 
+    # Too many paths!
+    with pytest.raises(ValueError, match="exactly one of"):
+        ImportArguments(
+            output_artifact_name="catalog",
+            input_path=blank_data_dir,
+            input_file_list=[blank_data_dir],
+            file_reader="csv",
+            output_path=tmp_path,
+            progress_bar=False,
+        )
+
 
 def test_missing_paths(tmp_path):
     ## Input path has no files
