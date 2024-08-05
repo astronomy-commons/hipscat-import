@@ -1,4 +1,3 @@
-import warnings
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
 
@@ -62,23 +61,20 @@ class MarginCacheArguments(RuntimeArguments):
                 raise ValueError("debug_filter_pixel_list has created empty catalog")
 
         highest_order = int(self.catalog.partition_info.get_highest_order())
-        margin_pixel_k = highest_order + 1
-        if self.margin_order > -1:
-            if self.margin_order < margin_pixel_k:
-                raise ValueError(
-                    "margin_order must be of a higher order "
-                    "than the highest order catalog partition pixel."
-                )
-        else:
-            self.margin_order = margin_pixel_k
+
+        if self.margin_order < 0:
+            self.margin_order = hp.margin2order(margin_thr_arcmin=self.margin_threshold / 60.0)
+
+        if self.margin_order < highest_order + 1:
+            raise ValueError(
+                "margin_order must be of a higher order than the highest order catalog partition pixel."
+            )
 
         margin_pixel_nside = hp.order2nside(self.margin_order)
-
-        if hp.nside2resol(margin_pixel_nside, arcmin=True) * 60.0 < self.margin_threshold:
-            warnings.warn(
-                "Warning: margin pixels have a smaller resolution than margin_threshold; "
-                "this may lead to data loss in the margin cache."
-            )
+        margin_pixel_avgsize = hp.nside2resol(margin_pixel_nside, arcmin=True)
+        margin_pixel_mindist = hp.avgsize2mindist(margin_pixel_avgsize)
+        if margin_pixel_mindist * 60.0 < self.margin_threshold:
+            raise ValueError("margin pixels must be larger than margin_threshold")
 
     def to_catalog_info(self, total_rows) -> MarginCacheCatalogInfo:
         """Catalog-type-specific dataset info."""

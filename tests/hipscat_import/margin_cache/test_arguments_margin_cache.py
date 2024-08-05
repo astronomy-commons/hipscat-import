@@ -36,7 +36,7 @@ def test_margin_order_dynamic(small_sky_source_catalog, tmp_path):
         output_artifact_name="catalog_cache",
     )
 
-    assert args.margin_order == 3
+    assert args.margin_order == 14
 
 
 def test_margin_order_static(small_sky_source_catalog, tmp_path):
@@ -52,7 +52,7 @@ def test_margin_order_static(small_sky_source_catalog, tmp_path):
     assert args.margin_order == 4
 
 
-def test_margin_order_invalid(small_sky_source_catalog, tmp_path):
+def test_margin_order_invalid_small_margin_order(small_sky_source_catalog, tmp_path):
     """Ensure we raise an exception when margin_order is invalid"""
     with pytest.raises(ValueError, match="margin_order"):
         MarginCacheArguments(
@@ -61,6 +61,19 @@ def test_margin_order_invalid(small_sky_source_catalog, tmp_path):
             output_path=tmp_path,
             output_artifact_name="catalog_cache",
             margin_order=2,
+        )
+
+
+def test_margin_threshold_invalid_large_margin_threshold(small_sky_source_catalog, tmp_path):
+    """Ensure we give a warning when margin_threshold is greater than margin_order resolution"""
+
+    with pytest.raises(ValueError, match="margin_threshold"):
+        MarginCacheArguments(
+            margin_threshold=360.0,
+            input_catalog_path=small_sky_source_catalog,
+            output_path=tmp_path,
+            output_artifact_name="catalog_cache",
+            margin_order=16,
         )
 
 
@@ -97,19 +110,6 @@ def test_debug_filter_pixel_list(small_sky_source_catalog, tmp_path):
             output_artifact_name="catalog_cache",
             margin_order=4,
             debug_filter_pixel_list=[HealpixPixel(0, 5)],
-        )
-
-
-def test_margin_threshold_warns(small_sky_source_catalog, tmp_path):
-    """Ensure we give a warning when margin_threshold is greater than margin_order resolution"""
-
-    with pytest.warns(UserWarning, match="margin_threshold"):
-        MarginCacheArguments(
-            margin_threshold=360.0,
-            input_catalog_path=small_sky_source_catalog,
-            output_path=tmp_path,
-            output_artifact_name="catalog_cache",
-            margin_order=16,
         )
 
 
