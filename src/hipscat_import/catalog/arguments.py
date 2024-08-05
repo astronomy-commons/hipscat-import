@@ -116,8 +116,6 @@ class ImportArguments(RuntimeArguments):
         if self.catalog_type not in ("source", "object"):
             raise ValueError("catalog_type should be one of `source` or `object`")
 
-        if (not self.input_path and not self.input_file_list) or (self.input_path and self.input_file_list):
-            raise ValueError("exactly one of input_path or input_file_list is required")
         if self.file_reader is None:
             raise ValueError("file_reader is required")
         if isinstance(self.file_reader, str):
