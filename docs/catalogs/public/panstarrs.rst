@@ -20,6 +20,8 @@ You can download the CSV files we used that contain python type information:
 
 - :download:`ps1_otmo_types</static/ps1_otmo_types.csv>`
 - :download:`ps1_detections_types</static/ps1_detections_types.csv>`
+- :download:`ps1_stack_object_types</static/ps1_stack_object_types.csv>`
+- :download:`ps1_forced_mean_object_types</static/ps1_forced_mean_object_type.csv>`
 
 Example import of objects (otmo)
 -------------------------------------------------------------------------------
