@@ -57,6 +57,23 @@ def test_csv_reader(small_sky_single_file):
     assert total_chunks == 1
 
 
+def test_csv_gzip_reader(formats_dir):
+    """Verify we can read the csv file into a single data frame."""
+    total_chunks = 0
+    for frame in CsvReader(compression="zip").read(formats_dir / "catalog.zip"):
+        total_chunks += 1
+        assert len(frame) == 131
+
+    assert total_chunks == 1
+
+    total_chunks = 0
+    for frame in CsvReader(compression="gzip").read(formats_dir / "catalog.csv.gz"):
+        total_chunks += 1
+        assert len(frame) == 131
+
+    assert total_chunks == 1
+
+
 def test_csv_reader_chunks(small_sky_single_file):
     """Verify we can read the csv file into multiple data frames."""
     total_chunks = 0
