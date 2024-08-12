@@ -10,7 +10,6 @@ from hipscat.io import FilePointer
 from hipscat.pixel_math import hipscat_id
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
-from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
 
 # pylint: disable=too-many-locals,too-many-arguments,too-many-instance-attributes,too-many-branches,too-few-public-methods
@@ -83,14 +82,18 @@ class ImportArguments(RuntimeArguments):
     """should we delete task-level done files once each stage is complete?
     if False, we will keep all sub-histograms from the mapping stage, and all
     done marker files at the end of the pipeline."""
+    run_stages: List[str] = field(default_factory=list)
+    """list of parallel stages to run. options are ['mapping', 'splitting', 'reducing',
+    'finishing']. ['planning', 'binning'] stages are not optional.
+    this can be used to force the pipeline to stop after an early stage, to allow the
+    user to reset the dask client with different resources for different stages of
+    the workflow. if not specified, we will run all pipeline stages."""
     debug_stats_only: bool = False
     """do not perform a map reduce and don't create a new
     catalog. generate the partition info"""
     file_reader: InputReader | str | None = None
     """instance of input reader that specifies arguments necessary for reading
     from your input files"""
-    resume_plan: ResumePlan | None = None
-    """container that handles read/write of log files for this pipeline"""
 
     def __post_init__(self):
         self._check_arguments()
@@ -132,13 +135,6 @@ class ImportArguments(RuntimeArguments):
             "**/*.*",
             self.input_file_list,
             storage_options=self.input_storage_options,
-        )
-        self.resume_plan = ResumePlan(
-            resume=self.resume,
-            progress_bar=self.progress_bar,
-            input_paths=self.input_paths,
-            tmp_path=self.resume_tmp,
-            delete_resume_log_files=self.delete_resume_log_files,
         )
 
     def to_catalog_info(self, total_rows) -> CatalogInfo:

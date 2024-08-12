@@ -176,6 +176,8 @@ class PipelineResumePlan:
         Raises:
             ValueError: if the retrieved file set differs from `input_paths`.
         """
+        if not input_paths:
+            return []
         input_paths = set(input_paths)
         input_paths = [str(p) for p in input_paths]
         input_paths.sort()

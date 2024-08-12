@@ -8,28 +8,6 @@ from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
-def test_mapping_done(tmp_path):
-    """Verify expected behavior of mapping done file"""
-    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    assert not plan.is_mapping_done()
-    plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
-    assert plan.is_mapping_done()
-
-    plan.clean_resume_files()
-    assert not plan.is_mapping_done()
-
-
-def test_reducing_done(tmp_path):
-    """Verify expected behavior of reducing done file"""
-    plan = ResumePlan(tmp_path=tmp_path, progress_bar=False)
-    assert not plan.is_reducing_done()
-    plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
-    assert plan.is_reducing_done()
-
-    plan.clean_resume_files()
-    assert not plan.is_reducing_done()
-
-
 def test_done_checks(tmp_path):
     """Verify that done files imply correct pipeline execution order:
     mapping > splitting > reducing
@@ -236,3 +214,32 @@ def test_some_reduce_task_failures(tmp_path, dask_client):
     ## Method succeeds, and done file is present.
     futures = [dask_client.submit(never_fails)]
     plan.wait_for_reducing(futures)
+
+
+def test_run_stages(tmp_path):
+    """Verify interaction with user-supplied run stages and done files"""
+    shared_args = {
+        "tmp_path": tmp_path / "stages",
+        "progress_bar": False,
+        "resume": True,
+    }
+    plan = ResumePlan(**shared_args)
+    assert plan.should_run_mapping
+    assert plan.should_run_splitting
+    assert plan.should_run_reducing
+    assert plan.should_run_finishing
+
+    with pytest.raises(ValueError, match="before splitting"):
+        plan.gather_plan(run_stages=["splitting"])
+
+    plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
+    with pytest.raises(ValueError, match="before reducing"):
+        plan.gather_plan(run_stages=["reducing"])
+
+    plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
+    plan.gather_plan()
+
+    assert not plan.should_run_mapping
+    assert not plan.should_run_splitting
+    assert plan.should_run_reducing
+    assert plan.should_run_finishing

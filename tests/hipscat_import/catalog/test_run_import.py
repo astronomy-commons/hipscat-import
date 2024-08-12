@@ -46,7 +46,7 @@ def test_resume_dask_runner(
     shutil.copytree(resume_dir / "intermediate", intermediate_dir)
     ## Now set up our resume files to match previous work.
     resume_tmp = tmp_path / "tmp" / "resume_catalog"
-    plan = ResumePlan(tmp_path=resume_tmp, progress_bar=False)
+    ResumePlan(tmp_path=resume_tmp, progress_bar=False)
     histogram = SparseHistogram.make_from_counts([11], [131], 0)
     empty = SparseHistogram.make_empty(0)
     for file_index in range(0, 5):
@@ -96,10 +96,6 @@ def test_resume_dask_runner(
     ## Re-running the pipeline with fully done intermediate files
     ## should result in no changes to output files.
     shutil.copytree(resume_dir / "intermediate", resume_tmp)
-    plan = args.resume_plan
-    plan.touch_stage_done_file(ResumePlan.MAPPING_STAGE)
-    plan.touch_stage_done_file(ResumePlan.SPLITTING_STAGE)
-    plan.touch_stage_done_file(ResumePlan.REDUCING_STAGE)
 
     args = ImportArguments(
         output_artifact_name="resume",
