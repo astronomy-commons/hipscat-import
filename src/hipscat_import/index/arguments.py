@@ -63,17 +63,19 @@ class IndexArguments(RuntimeArguments):
         self.input_catalog = Catalog.read_from_hipscat(
             catalog_path=self.input_catalog_path, storage_options=self.input_storage_options
         )
-        extra_columns = list(set(self.extra_columns))
         if self.include_radec:
             catalog_info = self.input_catalog.catalog_info
-            extra_columns.extend([catalog_info.ra_column, catalog_info.dec_column])
-        if len(extra_columns) > 0:
+            self.extra_columns.extend([catalog_info.ra_column, catalog_info.dec_column])
+        if len(self.extra_columns) > 0:
             # check that they're in the schema
             schema = self.input_catalog.schema
-            missing_fields = [x for x in extra_columns if schema.get_field_index(x) == -1]
+            missing_fields = [x for x in self.extra_columns if schema.get_field_index(x) == -1]
             if len(missing_fields):
                 raise ValueError(f"Some requested columns not in input catalog ({','.join(missing_fields)})")
-        self.extra_columns = list(set(extra_columns))
+        # Remove duplicates, preserving order
+        extra_columns = []
+        [extra_columns.append(x) for x in self.extra_columns if x not in extra_columns]
+        self.extra_columns = extra_columns
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
