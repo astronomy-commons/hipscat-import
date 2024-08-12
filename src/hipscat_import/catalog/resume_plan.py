@@ -94,11 +94,15 @@ class ResumePlan(PipelineResumePlan):
             step_progress.update(1)
 
             ## Figure out which stages we should run, based on requested `run_stages`
+            self.should_run_mapping = not mapping_done
+            self.should_run_splitting = not splitting_done
+            self.should_run_reducing = not reducing_done
+            self.should_run_finishing = True
+
             if run_stages:
-                # TODO - make sure all values are valid.
-                self.should_run_mapping = not mapping_done and self.MAPPING_STAGE in run_stages
-                self.should_run_splitting = not splitting_done and self.SPLITTING_STAGE in run_stages
-                self.should_run_reducing = not reducing_done and self.REDUCING_STAGE in run_stages
+                self.should_run_mapping &= self.MAPPING_STAGE in run_stages
+                self.should_run_splitting &= self.SPLITTING_STAGE in run_stages
+                self.should_run_reducing &= self.REDUCING_STAGE in run_stages
                 self.should_run_finishing = "finishing" in run_stages
 
             ## Validate that we're operating on the same file set as the previous instance.
@@ -113,6 +117,9 @@ class ResumePlan(PipelineResumePlan):
                     exist_ok=True,
                 )
             if self.should_run_splitting:
+                if not (mapping_done or self.should_run_mapping):
+                    raise ValueError("mapping must be complete before splitting")
+
                 self.split_keys = self.get_remaining_split_keys()
                 file_io.make_directory(
                     file_io.append_paths_to_pointer(self.tmp_path, self.SPLITTING_STAGE),
@@ -121,6 +128,9 @@ class ResumePlan(PipelineResumePlan):
             if self.should_run_reducing:
                 ## We don't pre-gather the plan for the reducing keys.
                 ## It requires the full destination pixel map.
+                if not (splitting_done or self.should_run_splitting):
+                    raise ValueError("splitting must be complete before reducing")
+
                 file_io.make_directory(
                     file_io.append_paths_to_pointer(self.tmp_path, self.REDUCING_STAGE),
                     exist_ok=True,
