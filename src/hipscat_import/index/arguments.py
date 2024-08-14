@@ -72,10 +72,11 @@ class IndexArguments(RuntimeArguments):
             missing_fields = [x for x in self.extra_columns if schema.get_field_index(x) == -1]
             if len(missing_fields):
                 raise ValueError(f"Some requested columns not in input catalog ({','.join(missing_fields)})")
-        extra_columns = []
         # Remove duplicates, preserving order
-        # pylint: disable=expression-not-assigned
-        [extra_columns.append(x) for x in self.extra_columns if x not in extra_columns]
+        extra_columns = []
+        for x in self.extra_columns:
+            if x not in extra_columns:
+                extra_columns.append(x)
         self.extra_columns = extra_columns
 
         if self.compute_partition_size < 100_000:
