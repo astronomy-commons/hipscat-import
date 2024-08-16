@@ -6,32 +6,92 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Distribute package
 
 on:
   release:
     types: [published]
 
-permissions:
-  contents: read
-
 jobs:
-  deploy:
-
+  publish-pypi:
+    name: Build and publish to PyPI
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          python -m pip install --upgrade pip
+          pip install .
+      - name: Lock dependencies
+        run: pip freeze | grep "hipscat-import" > requirements.lock
+      - name: Install dev dependencies
+        run: pip install .[dev]
+      - name: Run unit tests with pytest
+        run: python -m pytest tests
+      - name: Run dask-on-ray tests with pytest
+        run: python -m pytest tests --use_ray
+      - name: Install build tools
+        run: pip install build
+      - name: Build package
+        run: python -m build
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Save locked dependencies
+        uses: actions/upload-artifact@v4
+        with:
+          name: requirements.lock
+          path: requirements.lock
+
+  publish-docker:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    needs: publish-pypi
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Download locked dependencies
+      uses: actions/download-artifact@v4
       with:
-        python-version: '3.10'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-    - name: Build package
-      run: python -m build
-    - name: Publish package
-      uses: pypa/gh-action-pypi-publish@release/v1
+        name: requirements.lock
+        path: requirements.lock
+    - name: Show requirements lock
+      run: cat requirements.lock
+    - name: Log in to the GH registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    - name: Build and push Docker image
+      id: push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+    - name: Generate artifact attestation
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        subject-digest: ${{ steps.push.outputs.digest }}
+        push-to-registry: true
