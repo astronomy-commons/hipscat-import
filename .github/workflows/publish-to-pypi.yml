@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
       - name: Lock dependencies
-        run: pip freeze | grep "hipscat-import" > requirements.lock
+        run: pip freeze | grep -v "hipscat-import" > requirements.lock
       - name: Install dev dependencies
         run: pip install .[dev]
       - name: Run unit tests with pytest
