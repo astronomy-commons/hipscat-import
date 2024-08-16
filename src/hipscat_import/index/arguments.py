@@ -27,6 +27,8 @@ class IndexArguments(RuntimeArguments):
     """Include the hipscat spatial partition index."""
     include_order_pixel: bool = True
     """Include partitioning columns, Norder, Dir, and Npix. You probably want to keep these!"""
+    include_radec: bool = False
+    """Include the ra/dec coordinates of the row."""
     drop_duplicates: bool = True
     """Should we check for duplicate rows (including new indexing column),
     and remove duplicates before writing to new index catalog?
@@ -61,6 +63,21 @@ class IndexArguments(RuntimeArguments):
         self.input_catalog = Catalog.read_from_hipscat(
             catalog_path=self.input_catalog_path, storage_options=self.input_storage_options
         )
+        if self.include_radec:
+            catalog_info = self.input_catalog.catalog_info
+            self.extra_columns.extend([catalog_info.ra_column, catalog_info.dec_column])
+        if len(self.extra_columns) > 0:
+            # check that they're in the schema
+            schema = self.input_catalog.schema
+            missing_fields = [x for x in self.extra_columns if schema.get_field_index(x) == -1]
+            if len(missing_fields):
+                raise ValueError(f"Some requested columns not in input catalog ({','.join(missing_fields)})")
+        # Remove duplicates, preserving order
+        extra_columns = []
+        for x in self.extra_columns:
+            if x not in extra_columns:
+                extra_columns.append(x)
+        self.extra_columns = extra_columns
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
@@ -84,4 +101,5 @@ class IndexArguments(RuntimeArguments):
             "extra_columns": self.extra_columns,
             "include_hipscat_index": self.include_hipscat_index,
             "include_order_pixel": self.include_order_pixel,
+            "include_radec": self.include_radec,
         }

@@ -1,5 +1,7 @@
 """Tests of argument validation"""
 
+import re
+
 import pytest
 
 from hipscat_import.index.arguments import IndexArguments
@@ -109,6 +111,35 @@ def test_column_inclusion_args(tmp_path, small_sky_object_catalog):
         include_hipscat_index=False,
         include_order_pixel=True,
     )
+
+
+def test_extra_columns(tmp_path, small_sky_object_catalog):
+    args = IndexArguments(
+        input_catalog_path=small_sky_object_catalog,
+        indexing_column="id",
+        output_path=tmp_path,
+        output_artifact_name="small_sky_object_index",
+        extra_columns=["_hipscat_index"],
+    )
+    assert args.extra_columns == ["_hipscat_index"]
+
+    args = IndexArguments(
+        input_catalog_path=small_sky_object_catalog,
+        indexing_column="id",
+        output_path=tmp_path,
+        output_artifact_name="small_sky_object_index",
+        include_radec=True,
+    )
+    assert args.extra_columns == ["ra", "dec"]
+
+    with pytest.raises(ValueError, match=re.escape("not in input catalog (mag_r)")):
+        IndexArguments(
+            input_catalog_path=small_sky_object_catalog,
+            indexing_column="id",
+            output_path=tmp_path,
+            output_artifact_name="small_sky_object_index",
+            extra_columns=["mag_r"],
+        )
 
 
 def test_compute_partition_size(tmp_path, small_sky_object_catalog):
