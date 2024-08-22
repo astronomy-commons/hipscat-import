@@ -41,6 +41,7 @@ class ResumePlan(PipelineResumePlan):
     HISTOGRAMS_DIR = "histograms"
     ALIGNMENT_FILE = "alignment.pickle"
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         resume: bool = True,
@@ -48,7 +49,10 @@ class ResumePlan(PipelineResumePlan):
         simple_progress_bar: bool = False,
         input_paths=None,
         tmp_path=None,
+        tmp_base_path: FilePointer | None = None,
         delete_resume_log_files: bool = True,
+        delete_intermediate_parquet_files: bool = True,
+        output_storage_options: dict | None = None,
         run_stages: List[str] | None = None,
         import_args=None,
     ):
@@ -58,7 +62,10 @@ class ResumePlan(PipelineResumePlan):
                 progress_bar=import_args.progress_bar,
                 simple_progress_bar=import_args.simple_progress_bar,
                 tmp_path=import_args.resume_tmp,
+                tmp_base_path=import_args.tmp_base_path,
                 delete_resume_log_files=import_args.delete_resume_log_files,
+                delete_intermediate_parquet_files=import_args.delete_intermediate_parquet_files,
+                output_storage_options=import_args.output_storage_options,
             )
             if import_args.debug_stats_only:
                 run_stages = ["mapping", "finishing"]
@@ -69,7 +76,10 @@ class ResumePlan(PipelineResumePlan):
                 progress_bar=progress_bar,
                 simple_progress_bar=simple_progress_bar,
                 tmp_path=tmp_path,
+                tmp_base_path=tmp_base_path,
                 delete_resume_log_files=delete_resume_log_files,
+                delete_intermediate_parquet_files=delete_intermediate_parquet_files,
+                output_storage_options=output_storage_options,
             )
             self.input_paths = input_paths
         self.gather_plan(run_stages)

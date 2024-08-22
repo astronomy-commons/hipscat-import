@@ -20,6 +20,10 @@ class PipelineResumePlan:
 
     tmp_path: FilePointer
     """path for any intermediate files"""
+    tmp_base_path: FilePointer | None = None
+    """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
+    output_storage_options: dict | None = None
+    """optional dictionary of abstract filesystem credentials for the output."""
     resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run pipeline where we left off"""
@@ -34,6 +38,9 @@ class PipelineResumePlan:
     """should we delete task-level done files once each stage is complete?
     if False, we will keep all sub-histograms from the mapping stage, and all
     done marker files at the end of the pipeline."""
+    delete_intermediate_parquet_files: bool = True
+    """should we delete the smaller intermediate parquet files generated in the
+    mapping stage, once the relevant reducing stage is complete?"""
 
     ORIGINAL_INPUT_PATHS = "input_paths.txt"
 
@@ -45,10 +52,12 @@ class PipelineResumePlan:
         """
         if file_io.directory_has_contents(self.tmp_path):
             if not self.resume:
-                self.clean_resume_files()
+                file_io.remove_directory(
+                    self.tmp_path, ignore_errors=True, storage_options=self.output_storage_options
+                )
             else:
                 print(f"tmp_path ({self.tmp_path}) contains intermediate files; resuming prior progress.")
-        file_io.make_directory(self.tmp_path, exist_ok=True)
+        file_io.make_directory(self.tmp_path, exist_ok=True, storage_options=self.output_storage_options)
 
     def done_file_exists(self, stage_name):
         """Is there a file at a given path?
@@ -117,9 +126,13 @@ class PipelineResumePlan:
         return keys
 
     def clean_resume_files(self):
-        """Remove all intermediate files created in execution."""
-        if self.delete_resume_log_files:
-            file_io.remove_directory(self.tmp_path, ignore_errors=True)
+        """Remove the intermediate directory created in execution if the user decided
+        to erase all the stage log files as well as intermediate parquet."""
+        if self.delete_resume_log_files and self.delete_intermediate_parquet_files:
+            # Use the temporary directory base path if the user provided it, or
+            # delete the intermediate directory from inside the output directory
+            path = self.tmp_base_path if self.tmp_base_path is not None else self.tmp_path
+            file_io.remove_directory(path, ignore_errors=True, storage_options=self.output_storage_options)
 
     def wait_for_futures(self, futures, stage_name, fail_fast=False):
         """Wait for collected futures to complete.

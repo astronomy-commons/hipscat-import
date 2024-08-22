@@ -58,6 +58,8 @@ class RuntimeArguments:
     tmp_path: FilePointer | None = None
     """constructed temp path - defaults to tmp_dir, then dask_tmp, but will create
     a new temp directory under catalog_path if no other options are provided"""
+    tmp_base_path: FilePointer | None = None
+    """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
 
     def __post_init__(self):
         self._check_arguments()
@@ -82,18 +84,20 @@ class RuntimeArguments:
             )
         file_io.make_directory(self.catalog_path, exist_ok=True, storage_options=self.output_storage_options)
 
-        if self.tmp_dir:
+        if self.tmp_dir and str(self.tmp_dir) != str(self.output_path):
             if not file_io.does_file_or_directory_exist(self.tmp_dir):
                 raise FileNotFoundError(f"tmp_dir ({self.tmp_dir}) not found on local storage")
             self.tmp_path = file_io.append_paths_to_pointer(
                 self.tmp_dir, self.output_artifact_name, "intermediate"
             )
-        elif self.dask_tmp:
+            self.tmp_base_path = self.tmp_dir
+        elif self.dask_tmp and str(self.dask_tmp) != str(self.output_path):
             if not file_io.does_file_or_directory_exist(self.dask_tmp):
                 raise FileNotFoundError(f"dask_tmp ({self.dask_tmp}) not found on local storage")
             self.tmp_path = file_io.append_paths_to_pointer(
                 self.dask_tmp, self.output_artifact_name, "intermediate"
             )
+            self.tmp_base_path = self.dask_tmp
         else:
             self.tmp_path = file_io.append_paths_to_pointer(self.catalog_path, "intermediate")
         file_io.make_directory(self.tmp_path, exist_ok=True, storage_options=self.output_storage_options)

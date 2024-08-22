@@ -244,13 +244,6 @@ def test_import_constant_healpix_order(
     assert np.logical_and(ids >= 700, ids < 832).all()
 
 
-def assert_directory_contains(dir_name, expected_contents):
-    assert os.path.exists(dir_name)
-    actual_contents = os.listdir(dir_name)
-    actual_contents.sort()
-    npt.assert_array_equal(actual_contents, expected_contents)
-
-
 @pytest.mark.dask
 def test_import_keep_intermediate_files(
     dask_client,
@@ -274,7 +267,6 @@ def test_import_keep_intermediate_files(
         delete_intermediate_parquet_files=False,
         delete_resume_log_files=False,
     )
-
     runner.run(args, dask_client)
 
     # Check that the catalog metadata file exists
@@ -282,8 +274,80 @@ def test_import_keep_intermediate_files(
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
 
-    ## Check that stage-level done files are still around.
+    # Check that both stage level and intermediate parquet files exist
     base_intermediate_dir = temp / "small_sky_object_catalog" / "intermediate"
+    assert_stage_level_files_exist(base_intermediate_dir)
+    assert_intermediate_parquet_files_exist(base_intermediate_dir)
+
+
+@pytest.mark.dask
+def test_import_delete_provided_temp_directory(
+    dask_client,
+    small_sky_parts_dir,
+    tmp_path_factory,
+):
+    """Test that ALL intermediate files (and temporary base directory) are deleted
+    after successful import, when both `delete_intermediate_parquet_files` and
+    `delete_resume_log_files` are set to True."""
+    output_dir = tmp_path_factory.mktemp("small_sky_object_catalog")
+    # Provided temporary directory, outside `output_dir`
+    temp = tmp_path_factory.mktemp("intermediate_files")
+    base_intermediate_dir = temp / "small_sky_object_catalog" / "intermediate"
+
+    # When at least one of the delete flags is set to False we do
+    # not delete the provided temporary base directory.
+    args = ImportArguments(
+        output_artifact_name="small_sky_object_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=output_dir,
+        tmp_path=temp,
+        dask_tmp=temp,
+        progress_bar=False,
+        highest_healpix_order=2,
+        delete_intermediate_parquet_files=True,
+        delete_resume_log_files=False,
+    )
+    runner.run(args, dask_client)
+    assert_stage_level_files_exist(base_intermediate_dir)
+
+    args = ImportArguments(
+        output_artifact_name="small_sky_object_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=output_dir,
+        tmp_path=temp,
+        dask_tmp=temp,
+        progress_bar=False,
+        highest_healpix_order=2,
+        delete_intermediate_parquet_files=False,
+        delete_resume_log_files=True,
+        resume=False,
+    )
+    runner.run(args, dask_client)
+    assert_intermediate_parquet_files_exist(base_intermediate_dir)
+
+    # The temporary directory is deleted.
+    args = ImportArguments(
+        output_artifact_name="small_sky_object_catalog",
+        input_path=small_sky_parts_dir,
+        file_reader="csv",
+        output_path=output_dir,
+        tmp_path=temp,
+        dask_tmp=temp,
+        progress_bar=False,
+        highest_healpix_order=2,
+        delete_intermediate_parquet_files=True,
+        delete_resume_log_files=True,
+        resume=False,
+    )
+    runner.run(args, dask_client)
+    assert not os.path.exists(temp)
+
+
+def assert_stage_level_files_exist(base_intermediate_dir):
+    # Check that stage-level done files are still around for the import of
+    # `small_sky_object_catalog` at order 0.
     expected_contents = [
         "alignment.pickle",
         "histograms",  # directory containing sub-histograms
@@ -312,7 +376,10 @@ def test_import_keep_intermediate_files(
     checking_dir = base_intermediate_dir / "reducing"
     assert_directory_contains(checking_dir, ["0_11_done"])
 
-    # Check that all of the intermediate parquet shards are still around.
+
+def assert_intermediate_parquet_files_exist(base_intermediate_dir):
+    # Check that all the intermediate parquet shards are still around for the
+    # import of `small_sky_object_catalog` at order 0.
     checking_dir = base_intermediate_dir / "order_0" / "dir_0" / "pixel_11"
     assert_directory_contains(
         checking_dir,
@@ -324,6 +391,13 @@ def test_import_keep_intermediate_files(
             "shard_split_4_0.parquet",
         ],
     )
+
+
+def assert_directory_contains(dir_name, expected_contents):
+    assert os.path.exists(dir_name)
+    actual_contents = os.listdir(dir_name)
+    actual_contents.sort()
+    npt.assert_array_equal(actual_contents, expected_contents)
 
 
 @pytest.mark.dask
