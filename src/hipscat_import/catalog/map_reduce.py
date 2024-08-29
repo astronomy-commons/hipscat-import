@@ -177,9 +177,9 @@ def split_pixels(
                     pixel_dir, f"shard_{splitting_key}_{chunk_number}.parquet"
                 )
                 if _has_named_index(filtered_data):
-                    filtered_data.to_parquet(output_file, index=True)
+                    filtered_data.to_parquet(output_file.path, index=True, filesystem=output_file.fs)
                 else:
-                    filtered_data.to_parquet(output_file, index=False)
+                    filtered_data.to_parquet(output_file.path, index=False, filesystem=output_file.fs)
                 del filtered_data, data_indexes
 
         ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
@@ -305,9 +305,9 @@ def reduce_pixel_shards(
 
         if schema:
             schema = _modify_arrow_schema(schema, add_hipscat_index)
-            dataframe.to_parquet(destination_file, schema=schema)
+            dataframe.to_parquet(destination_file.path, schema=schema, filesystem=destination_file.fs)
         else:
-            dataframe.to_parquet(destination_file)
+            dataframe.to_parquet(destination_file.path, filesystem=destination_file.fs)
 
         del dataframe, merged_table, tables
 
