@@ -9,8 +9,9 @@ from typing import List, Optional, Tuple
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from hipscat import pixel_math
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from upath import UPath
 
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -20,7 +21,7 @@ from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 class ResumePlan(PipelineResumePlan):
     """Container class for holding the state of each file in the pipeline plan."""
 
-    input_paths: List[FilePointer] = field(default_factory=list)
+    input_paths: List[UPath] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
     map_files: List[Tuple[str, str]] = field(default_factory=list)
     """list of files (and job keys) that have yet to be mapped"""
@@ -49,7 +50,7 @@ class ResumePlan(PipelineResumePlan):
         simple_progress_bar: bool = False,
         input_paths=None,
         tmp_path=None,
-        tmp_base_path: FilePointer | None = None,
+        tmp_base_path: UPath | None = None,
         delete_resume_log_files: bool = True,
         delete_intermediate_parquet_files: bool = True,
         output_storage_options: dict | None = None,

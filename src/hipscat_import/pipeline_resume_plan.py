@@ -8,19 +8,20 @@ from pathlib import Path
 
 from dask.distributed import as_completed, get_worker
 from dask.distributed import print as dask_print
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from tqdm.auto import tqdm as auto_tqdm
 from tqdm.std import tqdm as std_tqdm
+from upath import UPath
 
 
 @dataclass
 class PipelineResumePlan:
     """Container class for holding the state of pipeline plan."""
 
-    tmp_path: FilePointer
+    tmp_path: UPath
     """path for any intermediate files"""
-    tmp_base_path: FilePointer | None = None
+    tmp_base_path: UPath | None = None
     """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
     output_storage_options: dict | None = None
     """optional dictionary of abstract filesystem credentials for the output."""
@@ -120,8 +121,7 @@ class PipelineResumePlan:
         result_files = file_io.find_files_matching_path(directory, f"*{extension}")
         keys = []
         for file_path in result_files:
-            result_file_name = file_io.get_basename_from_filepointer(file_path)
-            match = re.match(r"(.*)" + extension, str(result_file_name))
+            match = re.match(r"(.*)" + extension, str(file_path.name))
             keys.append(match.group(1))
         return keys
 
@@ -191,9 +191,9 @@ class PipelineResumePlan:
         """
         if not input_paths:
             return []
-        input_paths = set(input_paths)
-        input_paths = [str(p) for p in input_paths]
-        input_paths.sort()
+        expected_input_paths = set(input_paths)
+        expected_input_paths = [str(p) for p in input_paths]
+        expected_input_paths.sort()
 
         original_input_paths = []
 
@@ -212,7 +212,7 @@ class PipelineResumePlan:
                 for path in input_paths:
                     file_handle.write(f"{path}\n")
         else:
-            if original_input_paths != input_paths:
+            if original_input_paths != expected_input_paths:
                 raise ValueError("Different file set from resumed pipeline execution.")
 
         return input_paths

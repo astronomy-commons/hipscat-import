@@ -8,9 +8,10 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 from hipscat import pixel_math
-from hipscat.io import FilePointer, file_io, paths
+from hipscat.io import file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healpix
+from upath import UPath
 
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
@@ -34,7 +35,7 @@ def _has_named_index(dataframe):
 
 
 def _iterate_input_file(
-    input_file: FilePointer,
+    input_file: UPath,
     pickled_reader_file: str,
     highest_order,
     ra_column,
@@ -67,9 +68,9 @@ def _iterate_input_file(
 
 
 def map_to_pixels(
-    input_file: FilePointer,
+    input_file: UPath,
     pickled_reader_file: str,
-    resume_path: FilePointer,
+    resume_path: UPath,
     mapping_key,
     highest_order,
     ra_column,
@@ -79,10 +80,10 @@ def map_to_pixels(
     """Map a file of input objects to their healpix pixels.
 
     Args:
-        input_file (FilePointer): file to read for catalog data.
+        input_file (UPath): file to read for catalog data.
         file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input
             reader that specifies arguments necessary for reading from the input file.
-        resume_path (FilePointer): where to write resume partial results.
+        resume_path (UPath): where to write resume partial results.
         mapping_key (str): unique counter for this input file, used
             when creating intermediate files
         highest_order (int): healpix order to use when mapping
@@ -127,21 +128,21 @@ def map_to_pixels(
 
 
 def split_pixels(
-    input_file: FilePointer,
+    input_file: UPath,
     pickled_reader_file: str,
     splitting_key,
     highest_order,
     ra_column,
     dec_column,
-    cache_shard_path: FilePointer,
-    resume_path: FilePointer,
+    cache_shard_path: UPath,
+    resume_path: UPath,
     alignment_file=None,
     use_hipscat_index=False,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
 
     Args:
-        input_file (FilePointer): file to read for catalog data.
+        input_file (UPath): file to read for catalog data.
         file_reader (hipscat_import.catalog.file_readers.InputReader): instance
             of input reader that specifies arguments necessary for reading from the input file.
         splitting_key (str): unique counter for this input file, used
@@ -149,8 +150,8 @@ def split_pixels(
         highest_order (int): healpix order to use when mapping
         ra_column (str): where to find right ascension data in the dataframe
         dec_column (str): where to find declation in the dataframe
-        cache_shard_path (FilePointer): where to write intermediate parquet files.
-        resume_path (FilePointer): where to write resume files.
+        cache_shard_path (UPath): where to write intermediate parquet files.
+        resume_path (UPath): where to write resume files.
 
     Raises:
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
@@ -225,8 +226,8 @@ def reduce_pixel_shards(
           for more in-depth discussion of this field.
 
     Args:
-        cache_shard_path (FilePointer): where to read intermediate parquet files.
-        resume_path (FilePointer): where to write resume files.
+        cache_shard_path (UPath): where to read intermediate parquet files.
+        resume_path (UPath): where to write resume files.
         reducing_key (str): unique string for this task, used for resume files.
         origin_pixel_numbers (list[int]): high order pixels, with object
             data written to intermediate directories.
@@ -234,7 +235,7 @@ def reduce_pixel_shards(
         destination_pixel_number (int): pixel number at the above order
         destination_pixel_size (int): expected number of rows to write
             for the catalog's final pixel
-        output_path (FilePointer): where to write the final catalog pixel data
+        output_path (UPath): where to write the final catalog pixel data
         sort_columns (str): column for survey identifier, or other sortable column
         add_hipscat_index (bool): should we add a _hipscat_index column to
             the resulting parquet file?
@@ -253,9 +254,8 @@ def reduce_pixel_shards(
         )
         file_io.make_directory(destination_dir, exist_ok=True, storage_options=storage_options)
 
-        destination_file = paths.pixel_catalog_file(
-            output_path, destination_pixel_order, destination_pixel_number
-        )
+        healpix_pixel = HealpixPixel(destination_pixel_order, destination_pixel_number)
+        destination_file = paths.pixel_catalog_file(output_path, healpix_pixel)
 
         schema = None
         if use_schema_file:
@@ -264,7 +264,6 @@ def reduce_pixel_shards(
             ).schema.to_arrow_schema()
 
         tables = []
-        healpix_pixel = HealpixPixel(destination_pixel_order, destination_pixel_number)
         pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
 
         if schema:

@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
 
 from hipscat.catalog.catalog import CatalogInfo
-from hipscat.io import FilePointer
 from hipscat.pixel_math import hipscat_id
+from upath import UPath
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
 from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
@@ -24,11 +24,11 @@ class ImportArguments(RuntimeArguments):
 
     catalog_type: str = "object"
     """level of catalog data, object (things in the sky) or source (detections)"""
-    input_path: FilePointer | None = None
+    input_path: UPath | None = None
     """path to search for the input data"""
-    input_file_list: List[FilePointer] = field(default_factory=list)
+    input_file_list: List[str] = field(default_factory=list)
     """can be used instead of input_path to import only specified files"""
-    input_paths: List[FilePointer] = field(default_factory=list)
+    input_paths: List[UPath] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
     input_storage_options: Union[Dict[Any, Any], None] = None
     """optional dictionary of abstract filesystem credentials for the INPUT."""

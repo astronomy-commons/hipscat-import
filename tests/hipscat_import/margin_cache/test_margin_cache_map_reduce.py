@@ -81,7 +81,7 @@ def test_map_pixel_shards_error(tmp_path, capsys):
     catalog parquet files."""
     with pytest.raises(FileNotFoundError):
         margin_cache_map_reduce.map_pixel_shards(
-            paths.pixel_catalog_file(tmp_path, 1, 0),
+            paths.pixel_catalog_file(tmp_path, HealpixPixel(1, 0)),
             mapping_key="1_21",
             input_storage_options=None,
             original_catalog_metadata="",
@@ -95,7 +95,7 @@ def test_map_pixel_shards_error(tmp_path, capsys):
         )
 
     captured = capsys.readouterr()
-    assert "No such file or directory" in captured.out
+    assert "Parquet file does not exist" in captured.out
 
 
 @pytest.mark.timeout(30)
@@ -166,8 +166,8 @@ def test_reduce_margin_shards(tmp_path):
     os.makedirs(shard_dir)
     os.makedirs(intermediate_dir / "reducing")
 
-    first_shard_path = paths.pixel_catalog_file(partition_dir, 1, 0)
-    second_shard_path = paths.pixel_catalog_file(partition_dir, 1, 1)
+    first_shard_path = paths.pixel_catalog_file(partition_dir, HealpixPixel(1, 0))
+    second_shard_path = paths.pixel_catalog_file(partition_dir, HealpixPixel(1, 1))
 
     ras = np.arange(0.0, 360.0)
     dec = np.full(360, 0.0)
@@ -216,7 +216,7 @@ def test_reduce_margin_shards(tmp_path):
         input_storage_options=None,
     )
 
-    result_path = paths.pixel_catalog_file(tmp_path, 1, 21)
+    result_path = paths.pixel_catalog_file(tmp_path, HealpixPixel(1, 21))
 
     validate_result_dataframe(result_path, 720)
     assert os.path.exists(shard_dir)
@@ -234,7 +234,7 @@ def test_reduce_margin_shards(tmp_path):
         input_storage_options=None,
     )
 
-    result_path = paths.pixel_catalog_file(tmp_path, 1, 21)
+    result_path = paths.pixel_catalog_file(tmp_path, HealpixPixel(1, 21))
 
     validate_result_dataframe(result_path, 720)
     assert not os.path.exists(shard_dir)
@@ -252,8 +252,8 @@ def test_reduce_margin_shards_error(tmp_path, basic_data_shard_df, capsys):
     # Don't write anything at the metadata path!
     schema_path = tmp_path / "metadata.parquet"
 
-    basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, 1, 0))
-    basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, 1, 1))
+    basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, HealpixPixel(1, 0)))
+    basic_data_shard_df.to_parquet(paths.pixel_catalog_file(partition_dir, HealpixPixel(1, 1)))
 
     with pytest.raises(FileNotFoundError):
         margin_cache_map_reduce.reduce_margin_shards(
@@ -269,4 +269,4 @@ def test_reduce_margin_shards_error(tmp_path, basic_data_shard_df, capsys):
         )
 
     captured = capsys.readouterr()
-    assert "No such file or directory" in captured.out
+    assert "Parquet file does not exist" in captured.out

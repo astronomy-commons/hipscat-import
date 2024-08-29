@@ -114,7 +114,7 @@ def _to_pixel_shard(
 
         file_io.make_directory(shard_dir, exist_ok=True)
 
-        shard_path = paths.pixel_catalog_file(partition_dir, source_pixel.order, source_pixel.pixel)
+        shard_path = paths.pixel_catalog_file(partition_dir, source_pixel)
 
         rename_columns = {
             PartitionInfo.METADATA_ORDER_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_ORDER_COLUMN_NAME}",
@@ -153,9 +153,8 @@ def reduce_margin_shards(
 ):
     """Reduce all partition pixel directories into a single file"""
     try:
-        shard_dir = get_pixel_cache_directory(
-            intermediate_directory, HealpixPixel(partition_order, partition_pixel)
-        )
+        healpix_pixel = HealpixPixel(partition_order, partition_pixel)
+        shard_dir = get_pixel_cache_directory(intermediate_directory, healpix_pixel)
         if file_io.does_file_or_directory_exist(shard_dir):
             schema = file_io.read_parquet_metadata(
                 original_catalog_metadata, storage_options=input_storage_options
@@ -175,9 +174,7 @@ def reduce_margin_shards(
                     margin_cache_dir, exist_ok=True, storage_options=output_storage_options
                 )
 
-                margin_cache_file_path = paths.pixel_catalog_file(
-                    output_path, partition_order, partition_pixel
-                )
+                margin_cache_file_path = paths.pixel_catalog_file(output_path, healpix_pixel)
 
                 full_df.to_parquet(
                     margin_cache_file_path, schema=schema, storage_options=output_storage_options

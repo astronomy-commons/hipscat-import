@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from importlib.metadata import version
 from typing import Any, Dict, Union
 
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
+from upath import UPath
 
 # pylint: disable=too-many-instance-attributes
 
@@ -52,13 +53,13 @@ class RuntimeArguments:
     """if provided, send an email to the indicated email address once the 
     import pipeline has complete."""
 
-    catalog_path: FilePointer | None = None
+    catalog_path: UPath | None = None
     """constructed output path for the catalog that will be something like
     <output_path>/<output_artifact_name>"""
-    tmp_path: FilePointer | None = None
+    tmp_path: UPath | None = None
     """constructed temp path - defaults to tmp_dir, then dask_tmp, but will create
     a new temp directory under catalog_path if no other options are provided"""
-    tmp_base_path: FilePointer | None = None
+    tmp_base_path: UPath | None = None
     """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
 
     def __post_init__(self):
@@ -77,7 +78,7 @@ class RuntimeArguments:
         if self.dask_threads_per_worker <= 0:
             raise ValueError("dask_threads_per_worker should be greater than 0")
 
-        self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_artifact_name)
+        self.catalog_path = file_io.get_upath(self.output_path) / self.output_artifact_name
         if not self.resume:
             file_io.remove_directory(
                 self.catalog_path, ignore_errors=True, storage_options=self.output_storage_options
@@ -161,7 +162,7 @@ def find_input_paths(
         if not file_io.does_file_or_directory_exist(input_path, storage_options=storage_options):
             raise FileNotFoundError("input_path not found on local storage")
         input_paths = file_io.find_files_matching_path(
-            input_path, file_matcher, include_protocol=True, storage_options=storage_options
+            input_path, file_matcher, storage_options=storage_options
         )
     elif not input_file_list is None:
         # It's common for users to accidentally pass in an empty list. Give them a friendly error.
