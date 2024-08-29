@@ -16,7 +16,6 @@ from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print
 def map_pixel_shards(
     partition_file,
     mapping_key,
-    input_storage_options,
     original_catalog_metadata,
     margin_pair_file,
     margin_threshold,
@@ -28,12 +27,8 @@ def map_pixel_shards(
 ):
     """Creates margin cache shards from a source partition file."""
     try:
-        schema = file_io.read_parquet_metadata(
-            original_catalog_metadata, storage_options=input_storage_options
-        ).schema.to_arrow_schema()
-        data = file_io.read_parquet_file_to_pandas(
-            partition_file, schema=schema, storage_options=input_storage_options
-        )
+        schema = file_io.read_parquet_metadata(original_catalog_metadata).schema.to_arrow_schema()
+        data = file_io.read_parquet_file_to_pandas(partition_file, schema=schema)
         source_pixel = HealpixPixel(data["Norder"].iloc[0], data["Npix"].iloc[0])
 
         # Constrain the possible margin pairs, first by only those `margin_order` pixels
@@ -144,21 +139,17 @@ def reduce_margin_shards(
     intermediate_directory,
     reducing_key,
     output_path,
-    output_storage_options,
     partition_order,
     partition_pixel,
     original_catalog_metadata,
     delete_intermediate_parquet_files,
-    input_storage_options,
 ):
     """Reduce all partition pixel directories into a single file"""
     try:
         healpix_pixel = HealpixPixel(partition_order, partition_pixel)
         shard_dir = get_pixel_cache_directory(intermediate_directory, healpix_pixel)
         if file_io.does_file_or_directory_exist(shard_dir):
-            schema = file_io.read_parquet_metadata(
-                original_catalog_metadata, storage_options=input_storage_options
-            ).schema.to_arrow_schema()
+            schema = file_io.read_parquet_metadata(original_catalog_metadata).schema.to_arrow_schema()
 
             schema = (
                 schema.append(pa.field("margin_Norder", pa.uint8()))
@@ -170,15 +161,11 @@ def reduce_margin_shards(
 
             if len(full_df):
                 margin_cache_dir = paths.pixel_directory(output_path, partition_order, partition_pixel)
-                file_io.make_directory(
-                    margin_cache_dir, exist_ok=True, storage_options=output_storage_options
-                )
+                file_io.make_directory(margin_cache_dir, exist_ok=True)
 
                 margin_cache_file_path = paths.pixel_catalog_file(output_path, healpix_pixel)
 
-                full_df.to_parquet(
-                    margin_cache_file_path, schema=schema, storage_options=output_storage_options
-                )
+                full_df.to_parquet(margin_cache_file_path, schema=schema)
                 if delete_intermediate_parquet_files:
                     file_io.remove_directory(shard_dir)
 

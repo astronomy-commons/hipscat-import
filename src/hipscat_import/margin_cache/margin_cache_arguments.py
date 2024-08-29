@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from typing import List, Optional
 
 import hipscat.pixel_math.healpix_shim as hp
 from hipscat.catalog import Catalog
 from hipscat.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
 from hipscat.io.validation import is_valid_catalog
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from upath import UPath
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -34,10 +35,8 @@ class MarginCacheArguments(RuntimeArguments):
     """should we delete task-level done files once each stage is complete?
     if False, we will keep all done marker files at the end of the pipeline."""
 
-    input_catalog_path: str = ""
+    input_catalog_path: Optional[UPath] = None
     """the path to the hipscat-formatted input catalog."""
-    input_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the INPUT."""
     debug_filter_pixel_list: List[HealpixPixel] = field(default_factory=list)
     """debug setting. if provided, we will first filter the catalog to the pixels
     provided. this can be useful for creating a margin over a subset of a catalog."""
@@ -49,12 +48,10 @@ class MarginCacheArguments(RuntimeArguments):
         super()._check_arguments()
         if not self.input_catalog_path:
             raise ValueError("input_catalog_path is required")
-        if not is_valid_catalog(self.input_catalog_path, storage_options=self.input_storage_options):
+        if not is_valid_catalog(self.input_catalog_path):
             raise ValueError("input_catalog_path not a valid catalog")
 
-        self.catalog = Catalog.read_from_hipscat(
-            self.input_catalog_path, storage_options=self.input_storage_options
-        )
+        self.catalog = Catalog.read_from_hipscat(self.input_catalog_path)
         if len(self.debug_filter_pixel_list) > 0:
             self.catalog = self.catalog.filter_from_pixel_list(self.debug_filter_pixel_list)
             if len(self.catalog.get_healpix_pixels()) == 0:

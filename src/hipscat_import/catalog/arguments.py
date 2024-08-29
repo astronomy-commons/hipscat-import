@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from typing import List, Optional
 
 from hipscat.catalog.catalog import CatalogInfo
 from hipscat.pixel_math import hipscat_id
@@ -24,14 +24,12 @@ class ImportArguments(RuntimeArguments):
 
     catalog_type: str = "object"
     """level of catalog data, object (things in the sky) or source (detections)"""
-    input_path: UPath | None = None
+    input_path: Optional[UPath] = None
     """path to search for the input data"""
     input_file_list: List[str] = field(default_factory=list)
     """can be used instead of input_path to import only specified files"""
     input_paths: List[UPath] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
-    input_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the INPUT."""
 
     ra_column: str = "ra"
     """column for right ascension"""
@@ -130,12 +128,7 @@ class ImportArguments(RuntimeArguments):
                 raise ValueError("When using _hipscat_index for position, no sort columns should be added")
 
         # Basic checks complete - make more checks and create directories where necessary
-        self.input_paths = find_input_paths(
-            self.input_path,
-            "**/*.*",
-            self.input_file_list,
-            storage_options=self.input_storage_options,
-        )
+        self.input_paths = find_input_paths(self.input_path, "**/*.*", self.input_file_list)
 
     def to_catalog_info(self, total_rows) -> CatalogInfo:
         """Catalog-type-specific dataset info."""

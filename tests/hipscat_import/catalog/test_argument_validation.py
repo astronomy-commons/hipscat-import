@@ -263,7 +263,6 @@ def test_write_provenance_info(formats_dir, tmp_path):
         catalog_base_dir=args.catalog_path,
         dataset_info=args.to_catalog_info(0),
         tool_args=args.provenance_info(),
-        storage_options=args.output_storage_options,
     )
 
 

@@ -1,7 +1,6 @@
 """File reading generators for common file types."""
 
 import abc
-from typing import Any, Dict, Union
 
 import pandas as pd
 import pyarrow
@@ -114,15 +113,15 @@ class InputReader(abc.ABC):
             all_args["kwargs"]["storage_options"] = "REDACTED"
         return {"input_reader_type": type(self).__name__, **vars(self)}
 
-    def regular_file_exists(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **_kwargs):
+    def regular_file_exists(self, input_file, **_kwargs):
         """Check that the `input_file` points to a single regular file
 
         Raises:
             FileNotFoundError: if nothing exists at path, or directory found.
         """
-        if not file_io.does_file_or_directory_exist(input_file, storage_options=storage_options):
+        if not file_io.does_file_or_directory_exist(input_file):
             raise FileNotFoundError(f"File not found at path: {input_file}")
-        if not file_io.is_regular_file(input_file, storage_options=storage_options):
+        if not file_io.is_regular_file(input_file):
             raise FileNotFoundError(f"Directory found at path - requires regular file: {input_file}")
 
     def read_index_file(self, input_file, upath_kwargs=None, **kwargs):

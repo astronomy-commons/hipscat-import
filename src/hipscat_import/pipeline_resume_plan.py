@@ -23,8 +23,6 @@ class PipelineResumePlan:
     """path for any intermediate files"""
     tmp_base_path: UPath | None = None
     """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
-    output_storage_options: dict | None = None
-    """optional dictionary of abstract filesystem credentials for the output."""
     resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run pipeline where we left off"""
@@ -53,12 +51,10 @@ class PipelineResumePlan:
         """
         if file_io.directory_has_contents(self.tmp_path):
             if not self.resume:
-                file_io.remove_directory(
-                    self.tmp_path, ignore_errors=True, storage_options=self.output_storage_options
-                )
+                file_io.remove_directory(self.tmp_path, ignore_errors=True)
             else:
                 print(f"tmp_path ({self.tmp_path}) contains intermediate files; resuming prior progress.")
-        file_io.make_directory(self.tmp_path, exist_ok=True, storage_options=self.output_storage_options)
+        file_io.make_directory(self.tmp_path, exist_ok=True)
 
     def done_file_exists(self, stage_name):
         """Is there a file at a given path?
@@ -132,7 +128,7 @@ class PipelineResumePlan:
             # Use the temporary directory base path if the user provided it, or
             # delete the intermediate directory from inside the output directory
             path = self.tmp_base_path if self.tmp_base_path is not None else self.tmp_path
-            file_io.remove_directory(path, ignore_errors=True, storage_options=self.output_storage_options)
+            file_io.remove_directory(path, ignore_errors=True)
 
     def wait_for_futures(self, futures, stage_name, fail_fast=False):
         """Wait for collected futures to complete.

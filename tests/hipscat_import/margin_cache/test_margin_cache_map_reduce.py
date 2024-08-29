@@ -83,7 +83,6 @@ def test_map_pixel_shards_error(tmp_path, capsys):
         margin_cache_map_reduce.map_pixel_shards(
             paths.pixel_catalog_file(tmp_path, HealpixPixel(1, 0)),
             mapping_key="1_21",
-            input_storage_options=None,
             original_catalog_metadata="",
             margin_pair_file="",
             margin_threshold=10,
@@ -106,7 +105,6 @@ def test_map_pixel_shards_fine(tmp_path, test_data_dir, small_sky_source_catalog
     margin_cache_map_reduce.map_pixel_shards(
         small_sky_source_catalog / "Norder=1" / "Dir=0" / "Npix=47.parquet",
         mapping_key="1_47",
-        input_storage_options=None,
         original_catalog_metadata=small_sky_source_catalog / "_common_metadata",
         margin_pair_file=test_data_dir / "margin_pairs" / "small_sky_source_pairs.csv",
         margin_threshold=3600,
@@ -136,7 +134,6 @@ def test_map_pixel_shards_coarse(tmp_path, test_data_dir, small_sky_source_catal
     margin_cache_map_reduce.map_pixel_shards(
         small_sky_source_catalog / "Norder=1" / "Dir=0" / "Npix=47.parquet",
         mapping_key="1_47",
-        input_storage_options=None,
         original_catalog_metadata=small_sky_source_catalog / "_common_metadata",
         margin_pair_file=test_data_dir / "margin_pairs" / "small_sky_source_pairs.csv",
         margin_threshold=3600,
@@ -208,12 +205,10 @@ def test_reduce_margin_shards(tmp_path):
         intermediate_dir,
         "1_21",
         tmp_path,
-        None,
         1,
         21,
         original_catalog_metadata=schema_path,
         delete_intermediate_parquet_files=False,
-        input_storage_options=None,
     )
 
     result_path = paths.pixel_catalog_file(tmp_path, HealpixPixel(1, 21))
@@ -226,12 +221,10 @@ def test_reduce_margin_shards(tmp_path):
         intermediate_dir,
         "1_21",
         tmp_path,
-        None,
         1,
         21,
         original_catalog_metadata=schema_path,
         delete_intermediate_parquet_files=True,
-        input_storage_options=None,
     )
 
     result_path = paths.pixel_catalog_file(tmp_path, HealpixPixel(1, 21))
@@ -260,12 +253,10 @@ def test_reduce_margin_shards_error(tmp_path, basic_data_shard_df, capsys):
             intermediate_dir,
             "1_21",
             tmp_path,
-            None,
             1,
             21,
             original_catalog_metadata=schema_path,
             delete_intermediate_parquet_files=True,
-            input_storage_options=None,
         )
 
     captured = capsys.readouterr()

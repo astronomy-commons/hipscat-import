@@ -53,7 +53,6 @@ class ResumePlan(PipelineResumePlan):
         tmp_base_path: UPath | None = None,
         delete_resume_log_files: bool = True,
         delete_intermediate_parquet_files: bool = True,
-        output_storage_options: dict | None = None,
         run_stages: List[str] | None = None,
         import_args=None,
     ):
@@ -66,7 +65,6 @@ class ResumePlan(PipelineResumePlan):
                 tmp_base_path=import_args.tmp_base_path,
                 delete_resume_log_files=import_args.delete_resume_log_files,
                 delete_intermediate_parquet_files=import_args.delete_intermediate_parquet_files,
-                output_storage_options=import_args.output_storage_options,
             )
             if import_args.debug_stats_only:
                 run_stages = ["mapping", "finishing"]
@@ -80,7 +78,6 @@ class ResumePlan(PipelineResumePlan):
                 tmp_base_path=tmp_base_path,
                 delete_resume_log_files=delete_resume_log_files,
                 delete_intermediate_parquet_files=delete_intermediate_parquet_files,
-                output_storage_options=output_storage_options,
             )
             self.input_paths = input_paths
         self.gather_plan(run_stages)
@@ -263,7 +260,7 @@ class ResumePlan(PipelineResumePlan):
         pixel_threshold,
         drop_empty_siblings,
         expected_total_rows,
-    ) -> str:
+    ) -> UPath:
         """Get a pointer to the existing alignment file for the pipeline, or
         generate a new alignment using provided arguments.
 

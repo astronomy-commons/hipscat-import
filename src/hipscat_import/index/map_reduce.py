@@ -2,14 +2,11 @@
 
 import dask.dataframe as dd
 import numpy as np
-import pandas as pd
 from hipscat.io import file_io, paths
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN
 
 
-def read_leaf_file(
-    input_file, include_columns, include_hipscat_index, drop_duplicates, schema, storage_options
-):
+def read_leaf_file(input_file, include_columns, include_hipscat_index, drop_duplicates, schema):
     """Mapping function called once per input file.
 
     Reads the leaf parquet file, and returns with appropriate columns and duplicates dropped."""
@@ -18,7 +15,6 @@ def read_leaf_file(
         columns=include_columns,
         engine="pyarrow",
         schema=schema,
-        # storage_options=storage_options,
     )
 
     data = data.reset_index()
@@ -51,7 +47,6 @@ def create_index(args, client):
         include_hipscat_index=args.include_hipscat_index,
         drop_duplicates=args.drop_duplicates,
         schema=args.input_catalog.schema,
-        storage_options=args.input_storage_options,
     )
 
     if args.include_order_pixel:

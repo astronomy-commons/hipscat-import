@@ -1,7 +1,6 @@
 """Import a set of non-hipscat files using dask for parallelization"""
 
 import pickle
-from typing import Any, Dict, Union
 
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
@@ -204,7 +203,6 @@ def reduce_pixel_shards(
     add_hipscat_index=True,
     delete_input_files=True,
     use_schema_file="",
-    storage_options: Union[Dict[Any, Any], None] = None,
 ):
     """Reduce sharded source pixels into destination pixels.
 
@@ -252,16 +250,14 @@ def reduce_pixel_shards(
         destination_dir = paths.pixel_directory(
             output_path, destination_pixel_order, destination_pixel_number
         )
-        file_io.make_directory(destination_dir, exist_ok=True, storage_options=storage_options)
+        file_io.make_directory(destination_dir, exist_ok=True)
 
         healpix_pixel = HealpixPixel(destination_pixel_order, destination_pixel_number)
         destination_file = paths.pixel_catalog_file(output_path, healpix_pixel)
 
         schema = None
         if use_schema_file:
-            schema = file_io.read_parquet_metadata(
-                use_schema_file, storage_options=storage_options
-            ).schema.to_arrow_schema()
+            schema = file_io.read_parquet_metadata(use_schema_file).schema.to_arrow_schema()
 
         tables = []
         pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
@@ -309,16 +305,16 @@ def reduce_pixel_shards(
 
         if schema:
             schema = _modify_arrow_schema(schema, add_hipscat_index)
-            dataframe.to_parquet(destination_file, schema=schema, storage_options=storage_options)
+            dataframe.to_parquet(destination_file, schema=schema)
         else:
-            dataframe.to_parquet(destination_file, storage_options=storage_options)
+            dataframe.to_parquet(destination_file)
 
         del dataframe, merged_table, tables
 
         if delete_input_files:
             pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
 
-            file_io.remove_directory(pixel_dir, ignore_errors=True, storage_options=storage_options)
+            file_io.remove_directory(pixel_dir, ignore_errors=True)
 
         ResumePlan.reducing_key_done(tmp_path=resume_path, reducing_key=reducing_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
