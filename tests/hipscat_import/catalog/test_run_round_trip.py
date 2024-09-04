@@ -12,6 +12,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pyarrow as pa
+from pyarrow import csv
 import pyarrow.dataset as pds
 import pyarrow.parquet as pq
 import pytest
@@ -486,6 +487,74 @@ def test_import_starr_file(
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
+
+
+class PyarrowCsvReader(CsvReader):
+    """Use pyarrow for CSV reading, and force some pyarrow dtypes."""
+
+    def read(self, input_file, read_columns=None):
+        table = csv.read_csv(input_file)
+        extras = pa.array([[True, False, True]] * len(table), type=pa.list_(pa.bool_(), 3))
+        table = table.append_column("extras", extras)
+        yield table.to_pandas()
+
+
+@pytest.mark.dask
+def test_import_pyarrow_types(
+    dask_client,
+    small_sky_single_file,
+    assert_parquet_file_ids,
+    tmp_path,
+):
+    """Test basic execution.
+    - tests that we can run pipeline with a totally unknown file type, so long
+      as a valid InputReader implementation is provided.
+    """
+
+    args = ImportArguments(
+        output_artifact_name="pyarrow_dtype",
+        input_file_list=[small_sky_single_file],
+        file_reader=PyarrowCsvReader(),
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_healpix_pixels()) == 1
+
+    # Check that the catalog parquet file exists and contains correct object IDs
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+
+    expected_ids = [*range(700, 831)]
+    assert_parquet_file_ids(output_file, "id", expected_ids)
+
+    expected_parquet_schema = pa.schema(
+        [
+            pa.field("id", pa.int64()),
+            pa.field("ra", pa.float64()),
+            pa.field("dec", pa.float64()),
+            pa.field("ra_error", pa.int64()),
+            pa.field("dec_error", pa.int64()),
+            pa.field("extras", pa.list_(pa.bool_())),
+            pa.field("Norder", pa.uint8()),
+            pa.field("Dir", pa.uint64()),
+            pa.field("Npix", pa.uint64()),
+            pa.field("_hipscat_index", pa.uint64()),
+        ]
+    )
+    schema = pq.read_metadata(output_file).schema.to_arrow_schema()
+    assert schema.equals(expected_parquet_schema, check_metadata=False)
+    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    assert schema.equals(expected_parquet_schema, check_metadata=False)
 
 
 @pytest.mark.dask
