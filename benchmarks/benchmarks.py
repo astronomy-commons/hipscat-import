@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
+
 import numpy as np
+
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
@@ -26,13 +28,7 @@ class BinningSuite:
             histo.to_file(binning_dir / f"map_{m}")
         return (tmp_dir, num_paths)
 
-    # def time_read_histogram(self, cache):
-    #     input_paths = [f"foo{i}" for i in range(0, cache[1])]
-    #     plan = ResumePlan(tmp_path=cache[0], progress_bar=False, input_paths=input_paths)
-
-    #     plan.read_histogram(8)
-
-    def peakmem_read_histogram(self, cache):
+    def time_read_histogram(self, cache):
         input_paths = [f"foo{i}" for i in range(0, cache[1])]
         plan = ResumePlan(tmp_path=cache[0], progress_bar=False, input_paths=input_paths)
 

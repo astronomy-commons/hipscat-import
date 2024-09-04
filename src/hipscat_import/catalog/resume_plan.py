@@ -6,13 +6,14 @@ import pickle
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
+import hipscat.pixel_math as hist
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from hipscat import pixel_math
 from hipscat.io import FilePointer, file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-import hipscat.pixel_math as hist
 from numpy import frombuffer
+
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
@@ -177,12 +178,15 @@ class ResumePlan(PipelineResumePlan):
                 raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
             histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.npz")
             aggregate_histogram = hist.empty_histogram(healpix_order)
-            # aggregate_histogram = SparseHistogram.make_empty(healpix_order)
             for partial_file_name in histogram_files:
                 partial = SparseHistogram.from_file(partial_file_name)
-                aggregate_histogram = np.add(aggregate_histogram, partial.to_array())
-
-            # aggregate_histogram.to_file(file_name)
+                partial_as_array = partial.to_array()
+                if aggregate_histogram.shape != partial_as_array.shape:
+                    raise ValueError(
+                        "The histogram partials have incompatible sizes due to different healpix orders. "
+                        + "To start the pipeline from scratch with the current order set `resume` to False."
+                    )
+                aggregate_histogram = np.add(aggregate_histogram, partial_as_array)
 
             file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
             with open(file_name, "wb+") as file_handle:
@@ -192,8 +196,6 @@ class ResumePlan(PipelineResumePlan):
                     file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
                     ignore_errors=True,
                 )
-
-        # full_histogram = SparseHistogram.from_file(file_name).to_array()
 
         with open(file_name, "rb") as file_handle:
             full_histogram = frombuffer(file_handle.read(), dtype=np.int64)
