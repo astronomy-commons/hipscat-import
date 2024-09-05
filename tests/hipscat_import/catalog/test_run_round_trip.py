@@ -496,7 +496,7 @@ class PyarrowCsvReader(CsvReader):
         table = csv.read_csv(input_file)
         extras = pa.array([[True, False, True]] * len(table), type=pa.list_(pa.bool_(), 3))
         table = table.append_column("extras", extras)
-        yield table.to_pandas()
+        yield table.to_pandas(types_mapper=pd.ArrowDtype)
 
 
 @pytest.mark.dask
