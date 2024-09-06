@@ -353,10 +353,9 @@ def test_reduce_hipscat_index(parquet_shards_dir, assert_parquet_file_ids, tmp_p
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
-    assert data_frame.index.name == "_hipscat_index"
     npt.assert_array_equal(
         data_frame.columns,
-        ["id", "ra", "dec", "ra_error", "dec_error", "Norder", "Dir", "Npix"],
+        ["_hipscat_index", "id", "ra", "dec", "ra_error", "dec_error", "Norder", "Dir", "Npix"],
     )
 
     mr.reduce_pixel_shards(

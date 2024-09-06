@@ -5,6 +5,7 @@ from typing import Any, Dict, Union
 
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from hipscat import pixel_math
@@ -50,19 +51,30 @@ def _iterate_input_file(
 
     for chunk_number, data in enumerate(file_reader.read(input_file, read_columns=read_columns)):
         if use_hipscat_index:
-            if data.index.name == HIPSCAT_ID_COLUMN:
-                mapped_pixels = hipscat_id_to_healpix(data.index, target_order=highest_order)
+            if isinstance(data, pd.DataFrame):
+                if data.index.name == HIPSCAT_ID_COLUMN:
+                    mapped_pixels = hipscat_id_to_healpix(data.index, target_order=highest_order)
+                else:
+                    mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
             else:
                 mapped_pixels = hipscat_id_to_healpix(data[HIPSCAT_ID_COLUMN], target_order=highest_order)
         else:
-            # Set up the pixel data
-            mapped_pixels = hp.ang2pix(
-                2**highest_order,
-                data[ra_column].to_numpy(copy=False, dtype=float),
-                data[dec_column].to_numpy(copy=False, dtype=float),
-                lonlat=True,
-                nest=True,
-            )
+            if isinstance(data, pd.DataFrame):
+                mapped_pixels = hp.ang2pix(
+                    2**highest_order,
+                    data[ra_column].to_numpy(copy=False, dtype=float),
+                    data[dec_column].to_numpy(copy=False, dtype=float),
+                    lonlat=True,
+                    nest=True,
+                )
+            else:
+                mapped_pixels = hp.ang2pix(
+                    2**highest_order,
+                    data[ra_column].to_numpy(),
+                    data[dec_column].to_numpy(),
+                    lonlat=True,
+                    nest=True,
+                )
         yield chunk_number, data, mapped_pixels
 
 
@@ -166,22 +178,24 @@ def split_pixels(
             unique_pixels, unique_inverse = np.unique(aligned_pixels, return_inverse=True)
 
             for unique_index, [order, pixel, _] in enumerate(unique_pixels):
-                mapped_indexes = np.where(unique_inverse == unique_index)
-                data_indexes = data.index[mapped_indexes[0].tolist()]
-
-                filtered_data = data.filter(items=data_indexes, axis=0)
-
                 pixel_dir = get_pixel_cache_directory(cache_shard_path, HealpixPixel(order, pixel))
                 file_io.make_directory(pixel_dir, exist_ok=True)
                 output_file = file_io.append_paths_to_pointer(
                     pixel_dir, f"shard_{splitting_key}_{chunk_number}.parquet"
                 )
-                if _has_named_index(filtered_data):
-                    filtered_data.to_parquet(output_file, index=True)
-                else:
-                    filtered_data.to_parquet(output_file, index=False)
-                del filtered_data, data_indexes
+                mapped_indexes = np.where(unique_inverse == unique_index)
+                if isinstance(data, pd.DataFrame):
+                    data_indexes = data.index[mapped_indexes[0].tolist()]
 
+                    filtered_data = data.filter(items=data_indexes, axis=0)
+                    if _has_named_index(filtered_data):
+                        filtered_data = filtered_data.reset_index()
+                    filtered_data = pa.Table.from_pandas(filtered_data, preserve_index=False)
+                else:
+                    filtered_data = data.filter(unique_inverse == unique_index)
+
+                pq.write_table(filtered_data, output_file)
+                del filtered_data
         ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
         print_task_failure(f"Failed SPLITTING stage with file {input_file}", exception)
@@ -263,16 +277,10 @@ def reduce_pixel_shards(
                 use_schema_file, storage_options=storage_options
             ).schema.to_arrow_schema()
 
-        tables = []
         healpix_pixel = HealpixPixel(destination_pixel_order, destination_pixel_number)
         pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
 
-        if schema:
-            tables.append(pq.read_table(pixel_dir, schema=schema))
-        else:
-            tables.append(pq.read_table(pixel_dir))
-
-        merged_table = pa.concat_tables(tables)
+        merged_table = pq.read_table(pixel_dir, schema=schema)
 
         rows_written = len(merged_table)
 
@@ -283,38 +291,37 @@ def reduce_pixel_shards(
                 f" Expected {destination_pixel_size}, wrote {rows_written}"
             )
 
-        dataframe = merged_table.to_pandas()
         if sort_columns:
-            dataframe = dataframe.sort_values(sort_columns.split(","))
+            split_columns = sort_columns.split(",")
+            if len(split_columns) > 1:
+                merged_table = merged_table.sort_by([(col_name, "ascending") for col_name in split_columns])
+            else:
+                merged_table = merged_table.sort_by(sort_columns)
         if add_hipscat_index:
-            ## If we had a meaningful index before, preserve it as a column.
-            if _has_named_index(dataframe):
-                dataframe = dataframe.reset_index()
-
-            dataframe[HIPSCAT_ID_COLUMN] = pixel_math.compute_hipscat_id(
-                dataframe[ra_column].values,
-                dataframe[dec_column].values,
-            )
-            dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN).sort_index()
-
-            # Adjust the schema to make sure that the _hipscat_index will
-            # be saved as a uint64
+            merged_table = merged_table.add_column(
+                0,
+                HIPSCAT_ID_COLUMN,
+                [
+                    pixel_math.compute_hipscat_id(
+                        merged_table[ra_column].to_numpy(),
+                        merged_table[dec_column].to_numpy(),
+                    )
+                ],
+            ).sort_by(HIPSCAT_ID_COLUMN)
         elif use_hipscat_index:
-            if dataframe.index.name != HIPSCAT_ID_COLUMN:
-                dataframe = dataframe.set_index(HIPSCAT_ID_COLUMN)
-            dataframe = dataframe.sort_index()
+            merged_table = merged_table.sort_by(HIPSCAT_ID_COLUMN)
 
-        dataframe["Norder"] = np.full(rows_written, fill_value=healpix_pixel.order, dtype=np.uint8)
-        dataframe["Dir"] = np.full(rows_written, fill_value=healpix_pixel.dir, dtype=np.uint64)
-        dataframe["Npix"] = np.full(rows_written, fill_value=healpix_pixel.pixel, dtype=np.uint64)
+        merged_table = (
+            merged_table.append_column(
+                "Norder", [np.full(rows_written, fill_value=healpix_pixel.order, dtype=np.uint8)]
+            )
+            .append_column("Dir", [np.full(rows_written, fill_value=healpix_pixel.dir, dtype=np.uint64)])
+            .append_column("Npix", [np.full(rows_written, fill_value=healpix_pixel.pixel, dtype=np.uint64)])
+        )
 
-        if schema:
-            schema = _modify_arrow_schema(schema, add_hipscat_index)
-            dataframe.to_parquet(destination_file, schema=schema, storage_options=storage_options)
-        else:
-            dataframe.to_parquet(destination_file, storage_options=storage_options)
+        pq.write_table(merged_table, destination_file)
 
-        del dataframe, merged_table, tables
+        del merged_table
 
         if delete_input_files:
             pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
@@ -328,18 +335,3 @@ def reduce_pixel_shards(
             exception,
         )
         raise exception
-
-
-def _modify_arrow_schema(schema, add_hipscat_index):
-    if add_hipscat_index:
-        pandas_index_column = schema.get_field_index("__index_level_0__")
-        if pandas_index_column != -1:
-            schema = schema.remove(pandas_index_column)
-        schema = schema.insert(0, pa.field(HIPSCAT_ID_COLUMN, pa.uint64()))
-    schema = (
-        schema.append(pa.field("Norder", pa.uint8()))
-        .append(pa.field("Dir", pa.uint64()))
-        .append(pa.field("Npix", pa.uint64()))
-    )
-
-    return schema
