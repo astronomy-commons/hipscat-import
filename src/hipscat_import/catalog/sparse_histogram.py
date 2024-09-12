@@ -46,6 +46,11 @@ class SparseHistogram:
         """
         save_npz(file_name, self.sparse_array)
 
+    def to_dense_file(self, file_name):
+        """Persist the DENSE array to disk as a numpy array."""
+        with open(file_name, "wb+") as file_handle:
+            file_handle.write(self.to_array().data)
+
     @classmethod
     def make_empty(cls, healpix_order=10):
         """Create an empty sparse array for a given healpix order.
