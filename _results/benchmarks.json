@@ -1,0 +1,19 @@
+{
+    "benchmarks.BinningSuite.time_read_histogram": {
+        "code": "class BinningSuite:\n    def time_read_histogram(self, cache):\n        input_paths = [f\"foo{i}\" for i in range(0, cache[1])]\n        plan = ResumePlan(tmp_path=cache[0], progress_bar=False, input_paths=input_paths)\n    \n        plan.read_histogram(8)\n\n    def setup_cache(self):\n        root_dir = Path(os.getcwd())\n        tmp_dir = root_dir / \"intermediate\"\n        binning_dir = tmp_dir / \"histograms\"\n        binning_dir.mkdir(parents=True, exist_ok=True)\n        max_value = 786_432\n    \n        num_paths = 2_000\n        for m in range(0, num_paths):\n            k = (m + 1) * 100\n            pixels = np.arange(k, max_value, k)\n            counts = np.full(len(pixels), fill_value=k)\n    \n            histo = SparseHistogram.make_from_counts(pixels, counts, healpix_order=8)\n    \n            histo.to_file(binning_dir / f\"map_{m}\")\n        return (tmp_dir, num_paths)",
+        "min_run_count": 2,
+        "name": "benchmarks.BinningSuite.time_read_histogram",
+        "number": 0,
+        "param_names": [],
+        "params": [],
+        "repeat": 0,
+        "rounds": 2,
+        "sample_time": 0.01,
+        "setup_cache_key": "benchmarks:13",
+        "type": "time",
+        "unit": "seconds",
+        "version": "36b198fb05b011aeace3277f49ea9e917e65231c52b9c370d5c833f3dc6028b9",
+        "warmup_time": -1
+    },
+    "version": 2
+}
