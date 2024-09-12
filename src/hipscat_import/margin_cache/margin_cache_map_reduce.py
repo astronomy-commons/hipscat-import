@@ -165,7 +165,9 @@ def reduce_margin_shards(
 
                 margin_cache_file_path = paths.pixel_catalog_file(output_path, healpix_pixel)
 
-                full_df.to_parquet(margin_cache_file_path.path, schema=schema, filesystem=margin_cache_file_path.fs)
+                full_df.to_parquet(
+                    margin_cache_file_path.path, schema=schema, filesystem=margin_cache_file_path.fs
+                )
                 if delete_intermediate_parquet_files:
                     file_io.remove_directory(shard_dir)
 

@@ -6,14 +6,14 @@ import pickle
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-import hipscat.pixel_math as hist
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from hipscat import pixel_math
 from hipscat.io import file_io
+from hipscat.pixel_math import empty_histogram
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
-from upath import UPath
 from numpy import frombuffer
+from upath import UPath
 
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -175,7 +175,7 @@ class ResumePlan(PipelineResumePlan):
             if len(remaining_map_files) > 0:
                 raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
             histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.npz")
-            aggregate_histogram = hist.empty_histogram(healpix_order)
+            aggregate_histogram = empty_histogram(healpix_order)
             for partial_file_name in histogram_files:
                 partial = SparseHistogram.from_file(partial_file_name)
                 partial_as_array = partial.to_array()
