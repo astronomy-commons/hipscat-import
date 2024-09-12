@@ -6,12 +6,14 @@ import pickle
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
+import hipscat.pixel_math as hist
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from hipscat import pixel_math
 from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from upath import UPath
+from numpy import frombuffer
 
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -173,18 +175,28 @@ class ResumePlan(PipelineResumePlan):
             if len(remaining_map_files) > 0:
                 raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
             histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.npz")
-            aggregate_histogram = SparseHistogram.make_empty(healpix_order)
+            aggregate_histogram = hist.empty_histogram(healpix_order)
             for partial_file_name in histogram_files:
-                aggregate_histogram.add(SparseHistogram.from_file(partial_file_name))
+                partial = SparseHistogram.from_file(partial_file_name)
+                partial_as_array = partial.to_array()
+                if aggregate_histogram.shape != partial_as_array.shape:
+                    raise ValueError(
+                        "The histogram partials have incompatible sizes due to different healpix orders. "
+                        + "To start the pipeline from scratch with the current order set `resume` to False."
+                    )
+                aggregate_histogram = np.add(aggregate_histogram, partial_as_array)
 
-            aggregate_histogram.to_file(file_name)
+            file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
+            with open(file_name, "wb+") as file_handle:
+                file_handle.write(aggregate_histogram.data)
             if self.delete_resume_log_files:
                 file_io.remove_directory(
                     file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
                     ignore_errors=True,
                 )
 
-        full_histogram = SparseHistogram.from_file(file_name).to_array()
+        with open(file_name, "rb") as file_handle:
+            full_histogram = frombuffer(file_handle.read(), dtype=np.int64)
 
         if len(full_histogram) != hp.order2npix(healpix_order):
             raise ValueError(
