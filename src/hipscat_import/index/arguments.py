@@ -19,7 +19,7 @@ class IndexArguments(RuntimeArguments):
     """Data class for holding indexing arguments"""
 
     ## Input
-    input_catalog_path: Optional[str | Path | UPath] = None
+    input_catalog_path: str | Path | UPath | None = None
     input_catalog: Optional[Catalog] = None
     indexing_column: str = ""
     extra_columns: List[str] = field(default_factory=list)

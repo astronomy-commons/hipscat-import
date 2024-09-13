@@ -18,7 +18,7 @@ class VerificationArguments(RuntimeArguments):
     """Data class for holding verification arguments"""
 
     ## Input
-    input_catalog_path: Optional[str | Path | UPath] = None
+    input_catalog_path: str | Path | UPath | None = None
     """Path to an existing catalog that will be inspected."""
     input_catalog: Optional[Catalog] = None
     """In-memory representation of a catalog. If not provided, it will be loaded

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from hipscat.catalog.catalog import CatalogInfo
 from hipscat.pixel_math import hipscat_id
@@ -25,7 +25,7 @@ class ImportArguments(RuntimeArguments):
 
     catalog_type: str = "object"
     """level of catalog data, object (things in the sky) or source (detections)"""
-    input_path: Optional[str | Path | UPath] = None
+    input_path: str | Path | UPath | None = None
     """path to search for the input data"""
     input_file_list: List[str | Path | UPath] = field(default_factory=list)
     """can be used instead of input_path to import only specified files"""
@@ -44,7 +44,7 @@ class ImportArguments(RuntimeArguments):
     resolve the counter within the same higher-order pixel space"""
     add_hipscat_index: bool = True
     """add the hipscat spatial index field alongside the data"""
-    use_schema_file: Optional[str | Path | UPath] = None
+    use_schema_file: str | Path | UPath | None = None
     """path to a parquet file with schema metadata. this will be used for column
     metadata when writing the files, if specified"""
     expected_total_rows: int = 0

@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from dask.distributed import as_completed, get_worker
 from dask.distributed import print as dask_print
@@ -22,7 +21,7 @@ class PipelineResumePlan:
 
     tmp_path: UPath
     """path for any intermediate files"""
-    tmp_base_path: Optional[str | Path | UPath] = None
+    tmp_base_path: str | Path | UPath | None = None
     """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
     resume: bool = True
     """if there are existing intermediate resume files, should we
