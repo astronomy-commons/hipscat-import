@@ -37,7 +37,6 @@ class MarginCachePlan(PipelineResumePlan):
             tmp_base_path=args.tmp_base_path,
             delete_resume_log_files=args.delete_resume_log_files,
             delete_intermediate_parquet_files=args.delete_intermediate_parquet_files,
-            output_storage_options=args.output_storage_options,
         )
         self._gather_plan(args)
 

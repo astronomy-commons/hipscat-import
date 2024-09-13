@@ -6,8 +6,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 from hipscat.catalog.association_catalog.partition_join_info import PartitionJoinInfo
-from hipscat.io import FilePointer, file_io, paths
-from hipscat.io.file_io.file_pointer import get_fs, strip_leading_slash_for_pyarrow
+from hipscat.io import file_io, paths
 from hipscat.io.parquet_metadata import get_healpix_pixel_from_metadata
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.healpix_pixel_function import get_pixel_argsort
@@ -18,16 +17,11 @@ from hipscat_import.soap.resume_plan import SoapPlan
 
 
 def _count_joins_for_object(source_data, source_pixel, object_pixel, soap_args):
-    object_path = paths.pixel_catalog_file(
-        catalog_base_dir=soap_args.object_catalog_dir,
-        pixel_order=object_pixel.order,
-        pixel_number=object_pixel.pixel,
-    )
+    object_path = paths.pixel_catalog_file(soap_args.object_catalog_dir, object_pixel)
     object_data = file_io.read_parquet_file_to_pandas(
         object_path,
         columns=[soap_args.object_id_column],
         schema=soap_args.object_catalog.schema,
-        storage_options=soap_args.object_storage_options,
     ).set_index(soap_args.object_id_column)
 
     joined_data = source_data.merge(object_data, how="inner", left_index=True, right_index=True)
@@ -80,9 +74,7 @@ def _write_count_results(cache_path, source_healpix, results):
 
     file_io.write_dataframe_to_csv(
         dataframe=dataframe,
-        file_pointer=file_io.append_paths_to_pointer(
-            cache_path, f"{source_healpix.order}_{source_healpix.pixel}.csv"
-        ),
+        file_pointer=cache_path / f"{source_healpix.order}_{source_healpix.pixel}.csv",
         index=False,
     )
 
@@ -98,11 +90,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
             of the object catalog to be joined.
     """
     try:
-        source_path = paths.pixel_catalog_file(
-            catalog_base_dir=file_io.get_file_pointer_from_path(soap_args.source_catalog_dir),
-            pixel_order=source_pixel.order,
-            pixel_number=source_pixel.pixel,
-        )
+        source_path = paths.pixel_catalog_file(soap_args.source_catalog_dir, source_pixel)
         if soap_args.write_leaf_files and soap_args.source_object_id_column != soap_args.source_id_column:
             read_columns = [soap_args.source_object_id_column, soap_args.source_id_column]
         else:
@@ -111,7 +99,6 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
             source_path,
             columns=read_columns,
             schema=soap_args.source_catalog.schema,
-            storage_options=soap_args.source_storage_options,
         ).set_index(soap_args.source_object_id_column)
 
         remaining_sources = len(source_data)
@@ -139,7 +126,7 @@ def count_joins(soap_args: SoapArguments, source_pixel: HealpixPixel, object_pix
         raise exception
 
 
-def combine_partial_results(input_path, output_path, output_storage_options) -> int:
+def combine_partial_results(input_path, output_path) -> int:
     """Combine many partial CSVs into single partition join info.
     Also write out a debug file with counts of unmatched sources, if any.
 
@@ -164,30 +151,21 @@ def combine_partial_results(input_path, output_path, output_storage_options) -> 
     unmatched = dataframe.loc[dataframe["Norder"] == -1]
 
     file_io.write_dataframe_to_csv(
-        dataframe=matched,
-        file_pointer=file_io.append_paths_to_pointer(output_path, "partition_join_info.csv"),
-        index=False,
-        storage_options=output_storage_options,
+        dataframe=matched, file_pointer=output_path / "partition_join_info.csv", index=False
     )
 
     if len(unmatched) > 0:
         file_io.write_dataframe_to_csv(
-            dataframe=unmatched,
-            file_pointer=file_io.append_paths_to_pointer(output_path, "unmatched_sources.csv"),
-            index=False,
-            storage_options=output_storage_options,
+            dataframe=unmatched, file_pointer=output_path / "unmatched_sources.csv", index=False
         )
 
     primary_only = matched.groupby(["Norder", "Dir", "Npix"])["num_rows"].sum().reset_index()
     file_io.write_dataframe_to_csv(
-        dataframe=primary_only,
-        file_pointer=file_io.append_paths_to_pointer(output_path, "partition_info.csv"),
-        index=False,
-        storage_options=output_storage_options,
+        dataframe=primary_only, file_pointer=output_path / "partition_info.csv", index=False
     )
 
     join_info = PartitionJoinInfo(matched)
-    join_info.write_to_metadata_files(output_path, storage_options=output_storage_options)
+    join_info.write_to_metadata_files(output_path)
 
     return primary_only["num_rows"].sum()
 
@@ -226,18 +204,13 @@ def reduce_joins(
             shards.append(pq.read_table(shard_file_name))
 
         # Write all of the shards into a single parquet file, one row-group-per-shard.
-        starting_catalog_path = FilePointer(str(soap_args.catalog_path))
-        destination_dir = paths.pixel_directory(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-        file_io.make_directory(
-            destination_dir, exist_ok=True, storage_options=soap_args.output_storage_options
+        destination_dir = paths.pixel_directory(
+            soap_args.catalog_path, object_pixel.order, object_pixel.pixel
         )
+        file_io.make_directory(destination_dir, exist_ok=True)
 
-        output_file = paths.pixel_catalog_file(starting_catalog_path, object_pixel.order, object_pixel.pixel)
-        file_system, output_file = get_fs(
-            file_pointer=output_file, storage_options=soap_args.output_storage_options
-        )
-        output_file = strip_leading_slash_for_pyarrow(output_file, protocol=file_system.protocol)
-        with pq.ParquetWriter(output_file, shards[0].schema, filesystem=file_system) as writer:
+        output_file = paths.pixel_catalog_file(soap_args.catalog_path, object_pixel)
+        with pq.ParquetWriter(output_file.path, shards[0].schema, filesystem=output_file.fs) as writer:
             for table in shards:
                 writer.write_table(table)
 

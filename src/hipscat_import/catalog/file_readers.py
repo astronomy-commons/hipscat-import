@@ -1,7 +1,6 @@
 """File reading generators for common file types."""
 
 import abc
-from typing import Any, Dict, Union
 
 import pandas as pd
 import pyarrow
@@ -9,7 +8,8 @@ import pyarrow.dataset
 import pyarrow.parquet as pq
 from astropy.io import ascii as ascii_reader
 from astropy.table import Table
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
+from upath import UPath
 
 # pylint: disable=too-few-public-methods,too-many-arguments
 
@@ -113,30 +113,40 @@ class InputReader(abc.ABC):
             all_args["kwargs"]["storage_options"] = "REDACTED"
         return {"input_reader_type": type(self).__name__, **vars(self)}
 
-    def regular_file_exists(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **_kwargs):
+    def regular_file_exists(self, input_file, **_kwargs):
         """Check that the `input_file` points to a single regular file
 
         Raises:
             FileNotFoundError: if nothing exists at path, or directory found.
         """
-        if not file_io.does_file_or_directory_exist(input_file, storage_options=storage_options):
+        if not file_io.does_file_or_directory_exist(input_file):
             raise FileNotFoundError(f"File not found at path: {input_file}")
-        if not file_io.is_regular_file(input_file, storage_options=storage_options):
+        if not file_io.is_regular_file(input_file):
             raise FileNotFoundError(f"Directory found at path - requires regular file: {input_file}")
 
-    def read_index_file(self, input_file, storage_options: Union[Dict[Any, Any], None] = None, **kwargs):
+    def read_index_file(self, input_file, upath_kwargs=None, **kwargs):
         """Read an "indexed" file.
 
         This should contain a list of paths to files to be read and batched.
 
+        In order to create a valid connection to the string paths, provide any
+        additional universal pathlib (i.e. fsspec) arguments to the `upath_kwargs` kwarg.
+        In this way, the "index" file may contain a list of paths on a remote service,
+        and the `upath_kwargs` will be used to create a connection to that remote service.
+
         Raises:
             FileNotFoundError: if nothing exists at path, or directory found.
         """
+        input_file = file_io.get_upath(input_file)
         self.regular_file_exists(input_file, **kwargs)
-        file_names = file_io.load_text_file(input_file, storage_options=storage_options)
+        file_names = file_io.load_text_file(input_file)
         file_names = [f.strip() for f in file_names]
-        file_names = [f for f in file_names if f]
-        return file_names
+        if upath_kwargs is None:
+            upath_kwargs = {}
+
+        file_paths = [UPath(f, **upath_kwargs) for f in file_names if f]
+
+        return file_paths
 
 
 class CsvReader(InputReader):
@@ -170,6 +180,7 @@ class CsvReader(InputReader):
         column_names=None,
         type_map=None,
         parquet_kwargs=None,
+        upath_kwargs=None,
         **kwargs,
     ):
         self.chunksize = chunksize
@@ -178,6 +189,7 @@ class CsvReader(InputReader):
         self.column_names = column_names
         self.type_map = type_map
         self.parquet_kwargs = parquet_kwargs
+        self.upath_kwargs = upath_kwargs
         self.kwargs = kwargs
 
         schema_parquet = None
@@ -185,7 +197,7 @@ class CsvReader(InputReader):
             if self.parquet_kwargs is None:
                 self.parquet_kwargs = {}
             schema_parquet = file_io.read_parquet_file_to_pandas(
-                FilePointer(self.schema_file),
+                self.schema_file,
                 **self.parquet_kwargs,
             )
 
@@ -206,7 +218,7 @@ class CsvReader(InputReader):
             self.kwargs["usecols"] = read_columns
 
         return file_io.load_csv_to_pandas_generator(
-            FilePointer(input_file),
+            input_file,
             chunksize=self.chunksize,
             header=self.header,
             **self.kwargs,
@@ -220,11 +232,13 @@ class IndexedCsvReader(CsvReader):
     """
 
     def read(self, input_file, read_columns=None):
-        file_names = self.read_index_file(input_file=input_file, **self.kwargs)
+        file_paths = self.read_index_file(
+            input_file=input_file, upath_kwargs=self.upath_kwargs, **self.kwargs
+        )
 
         batch_size = 0
         batch_frames = []
-        for file in file_names:
+        for file in file_paths:
             for single_frame in super().read(file, read_columns=read_columns):
                 if batch_size + len(single_frame) >= self.chunksize:
                     # We've hit our chunksize, send the batch off to the task.
@@ -382,6 +396,7 @@ class IndexedParquetReader(InputReader):
         fragment_readahead=4,
         use_threads=True,
         column_names=None,
+        upath_kwargs=None,
         **kwargs,
     ):
         self.chunksize = chunksize
@@ -389,11 +404,14 @@ class IndexedParquetReader(InputReader):
         self.fragment_readahead = fragment_readahead
         self.use_threads = use_threads
         self.column_names = column_names
+        self.upath_kwargs = upath_kwargs
         self.kwargs = kwargs
 
     def read(self, input_file, read_columns=None):
         columns = read_columns or self.column_names
-        file_names = self.read_index_file(input_file=input_file, **self.kwargs)
+        file_names = self.read_index_file(
+            input_file=input_file, upath_kwargs=self.upath_kwargs, **self.kwargs
+        )
         (_, input_dataset) = file_io.read_parquet_dataset(file_names, **self.kwargs)
 
         batches, nrows = [], 0

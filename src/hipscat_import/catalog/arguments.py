@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from pathlib import Path
+from typing import List
 
 from hipscat.catalog.catalog import CatalogInfo
-from hipscat.io import FilePointer
 from hipscat.pixel_math import hipscat_id
+from upath import UPath
 
 from hipscat_import.catalog.file_readers import InputReader, get_file_reader
 from hipscat_import.runtime_arguments import RuntimeArguments, find_input_paths
@@ -24,14 +25,12 @@ class ImportArguments(RuntimeArguments):
 
     catalog_type: str = "object"
     """level of catalog data, object (things in the sky) or source (detections)"""
-    input_path: FilePointer | None = None
+    input_path: str | Path | UPath | None = None
     """path to search for the input data"""
-    input_file_list: List[FilePointer] = field(default_factory=list)
+    input_file_list: List[str | Path | UPath] = field(default_factory=list)
     """can be used instead of input_path to import only specified files"""
-    input_paths: List[FilePointer] = field(default_factory=list)
+    input_paths: List[str | Path | UPath] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
-    input_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the INPUT."""
 
     ra_column: str = "ra"
     """column for right ascension"""
@@ -45,7 +44,7 @@ class ImportArguments(RuntimeArguments):
     resolve the counter within the same higher-order pixel space"""
     add_hipscat_index: bool = True
     """add the hipscat spatial index field alongside the data"""
-    use_schema_file: str | None = None
+    use_schema_file: str | Path | UPath | None = None
     """path to a parquet file with schema metadata. this will be used for column
     metadata when writing the files, if specified"""
     expected_total_rows: int = 0
@@ -130,12 +129,7 @@ class ImportArguments(RuntimeArguments):
                 raise ValueError("When using _hipscat_index for position, no sort columns should be added")
 
         # Basic checks complete - make more checks and create directories where necessary
-        self.input_paths = find_input_paths(
-            self.input_path,
-            "**/*.*",
-            self.input_file_list,
-            storage_options=self.input_storage_options,
-        )
+        self.input_paths = find_input_paths(self.input_path, "**/*.*", self.input_file_list)
 
     def to_catalog_info(self, total_rows) -> CatalogInfo:
         """Catalog-type-specific dataset info."""

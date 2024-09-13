@@ -169,7 +169,7 @@ You can find the full API documentation for
     )
 
 If you're reading from cloud storage, or otherwise have some filesystem credential
-dict, put those in ``input_storage_options``.
+dict, initialize ``input_file`` using ``universal_pathlib``'s utilities.
 
 Indexed batching strategy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -304,7 +304,7 @@ preferable to delete any existing contents, however, as this may cause
 unexpected side effects.
 
 If you're writing to cloud storage, or otherwise have some filesystem credential
-dict, put those in ``output_storage_options``.
+dict, initialize ``output_path`` using ``universal_pathlib``'s utilities.
 
 In addition, you can specify directories to use for various intermediate files:
 

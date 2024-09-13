@@ -5,9 +5,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from importlib.metadata import version
-from typing import Any, Dict, Union
+from pathlib import Path
 
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
+from upath import UPath
 
 # pylint: disable=too-many-instance-attributes
 
@@ -17,15 +18,13 @@ class RuntimeArguments:
     """Data class for holding runtime arguments"""
 
     ## Output
-    output_path: str = ""
+    output_path: str | Path | UPath | None = None
     """base path where new catalog should be output"""
     output_artifact_name: str = ""
     """short, convenient name for the catalog"""
-    output_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the OUTPUT."""
 
     ## Execution
-    tmp_dir: str = ""
+    tmp_dir: str | Path | UPath | None = None
     """path for storing intermediate files"""
     resume: bool = True
     """If True, we try to read any existing intermediate files and continue to run
@@ -38,27 +37,27 @@ class RuntimeArguments:
     """if displaying a progress bar, use a text-only simple progress
     bar instead of widget. this can be useful in some environments when running
     in a notebook where ipywidgets cannot be used (see `progress_bar` argument)"""
-    dask_tmp: str = ""
+    dask_tmp: str | Path | UPath | None = None
     """directory for dask worker space. this should be local to
     the execution of the pipeline, for speed of reads and writes"""
     dask_n_workers: int = 1
     """number of workers for the dask client"""
     dask_threads_per_worker: int = 1
     """number of threads per dask worker"""
-    resume_tmp: str = ""
+    resume_tmp: str | Path | UPath | None = None
     """directory for intermediate resume files, when needed. see RTD for more info."""
 
     completion_email_address: str = ""
     """if provided, send an email to the indicated email address once the 
     import pipeline has complete."""
 
-    catalog_path: FilePointer | None = None
+    catalog_path: UPath | None = None
     """constructed output path for the catalog that will be something like
     <output_path>/<output_artifact_name>"""
-    tmp_path: FilePointer | None = None
+    tmp_path: UPath | None = None
     """constructed temp path - defaults to tmp_dir, then dask_tmp, but will create
     a new temp directory under catalog_path if no other options are provided"""
-    tmp_base_path: FilePointer | None = None
+    tmp_base_path: UPath | None = None
     """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
 
     def __post_init__(self):
@@ -77,12 +76,10 @@ class RuntimeArguments:
         if self.dask_threads_per_worker <= 0:
             raise ValueError("dask_threads_per_worker should be greater than 0")
 
-        self.catalog_path = file_io.append_paths_to_pointer(self.output_path, self.output_artifact_name)
+        self.catalog_path = file_io.get_upath(self.output_path) / self.output_artifact_name
         if not self.resume:
-            file_io.remove_directory(
-                self.catalog_path, ignore_errors=True, storage_options=self.output_storage_options
-            )
-        file_io.make_directory(self.catalog_path, exist_ok=True, storage_options=self.output_storage_options)
+            file_io.remove_directory(self.catalog_path, ignore_errors=True)
+        file_io.make_directory(self.catalog_path, exist_ok=True)
 
         if self.tmp_dir and str(self.tmp_dir) != str(self.output_path):
             if not file_io.does_file_or_directory_exist(self.tmp_dir):
@@ -100,7 +97,7 @@ class RuntimeArguments:
             self.tmp_base_path = self.dask_tmp
         else:
             self.tmp_path = file_io.append_paths_to_pointer(self.catalog_path, "intermediate")
-        file_io.make_directory(self.tmp_path, exist_ok=True, storage_options=self.output_storage_options)
+        file_io.make_directory(self.tmp_path, exist_ok=True)
         if self.resume_tmp:
             self.resume_tmp = file_io.append_paths_to_pointer(self.resume_tmp, self.output_artifact_name)
         else:
@@ -138,9 +135,7 @@ class RuntimeArguments:
         return {}
 
 
-def find_input_paths(
-    input_path="", file_matcher="", input_file_list=None, storage_options: Union[Dict[Any, Any], None] = None
-):
+def find_input_paths(input_path="", file_matcher="", input_file_list=None):
     """Helper method to find input paths, given either a prefix and format, or an
     explicit list of paths.
 
@@ -158,12 +153,10 @@ def find_input_paths(
         if input_file_list:
             raise ValueError("exactly one of input_path or input_file_list is required")
 
-        if not file_io.does_file_or_directory_exist(input_path, storage_options=storage_options):
+        if not file_io.does_file_or_directory_exist(input_path):
             raise FileNotFoundError("input_path not found on local storage")
-        input_paths = file_io.find_files_matching_path(
-            input_path, file_matcher, include_protocol=True, storage_options=storage_options
-        )
-    elif not input_file_list is None:
+        input_paths = file_io.find_files_matching_path(input_path, file_matcher)
+    elif input_file_list is not None:
         # It's common for users to accidentally pass in an empty list. Give them a friendly error.
         if len(input_file_list) == 0:
             raise ValueError("input_file_list is empty")

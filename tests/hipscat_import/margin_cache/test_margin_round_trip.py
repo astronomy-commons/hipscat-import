@@ -8,6 +8,7 @@ import pytest
 from hipscat.catalog.catalog import Catalog
 from hipscat.catalog.healpix_dataset.healpix_dataset import HealpixDataset
 from hipscat.io import paths
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 import hipscat_import.catalog.run_import as runner
 import hipscat_import.margin_cache.margin_cache as mc
@@ -68,7 +69,7 @@ def test_margin_import_gaia_minimum(
     norder = 0
     npix = 0
 
-    test_file = paths.pixel_catalog_file(args.catalog_path, norder, npix)
+    test_file = paths.pixel_catalog_file(args.catalog_path, HealpixPixel(norder, npix))
 
     data = pd.read_parquet(test_file)
 
@@ -122,7 +123,7 @@ def test_margin_import_mixed_schema_csv(
     norder = 2
     npix = 187
 
-    test_file = paths.pixel_catalog_file(args.catalog_path, norder, npix)
+    test_file = paths.pixel_catalog_file(args.catalog_path, HealpixPixel(norder, npix))
 
     data = pd.read_parquet(test_file)
 

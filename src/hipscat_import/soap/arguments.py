@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Dict, Union
+from pathlib import Path
 
 from hipscat.catalog import Catalog
 from hipscat.catalog.association_catalog.association_catalog import AssociationCatalogInfo
 from hipscat.catalog.catalog_type import CatalogType
 from hipscat.io.validation import is_valid_catalog
+from upath import UPath
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -14,17 +17,13 @@ class SoapArguments(RuntimeArguments):
     """Data class for holding source-object association arguments"""
 
     ## Input - Object catalog
-    object_catalog_dir: str = ""
+    object_catalog_dir: str | Path | UPath | None = None
     object_id_column: str = ""
-    object_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the OBJECT catalog."""
 
     ## Input - Source catalog
-    source_catalog_dir: str = ""
+    source_catalog_dir: str | Path | UPath | None = None
     source_object_id_column: str = ""
     source_id_column: str = ""
-    source_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the SOURCE catalog."""
 
     resume: bool = True
     """if there are existing intermediate resume files, should we
@@ -50,23 +49,19 @@ class SoapArguments(RuntimeArguments):
             raise ValueError("object_catalog_dir is required")
         if not self.object_id_column:
             raise ValueError("object_id_column is required")
-        if not is_valid_catalog(self.object_catalog_dir, storage_options=self.object_storage_options):
+        if not is_valid_catalog(self.object_catalog_dir):
             raise ValueError("object_catalog_dir not a valid catalog")
 
-        self.object_catalog = Catalog.read_from_hipscat(
-            catalog_path=self.object_catalog_dir, storage_options=self.object_storage_options
-        )
+        self.object_catalog = Catalog.read_from_hipscat(catalog_path=self.object_catalog_dir)
 
         if not self.source_catalog_dir:
             raise ValueError("source_catalog_dir is required")
         if not self.source_object_id_column:
             raise ValueError("source_object_id_column is required")
-        if not is_valid_catalog(self.source_catalog_dir, storage_options=self.source_storage_options):
+        if not is_valid_catalog(self.source_catalog_dir):
             raise ValueError("source_catalog_dir not a valid catalog")
 
-        self.source_catalog = Catalog.read_from_hipscat(
-            catalog_path=self.source_catalog_dir, storage_options=self.source_storage_options
-        )
+        self.source_catalog = Catalog.read_from_hipscat(catalog_path=self.source_catalog_dir)
 
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")

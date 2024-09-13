@@ -27,20 +27,11 @@ def run(args, client):
             catalog_base_dir=args.catalog_path,
             dataset_info=index_catalog_info,
             tool_args=args.provenance_info(),
-            storage_options=args.output_storage_options,
         )
         step_progress.update(1)
-        write_metadata.write_catalog_info(
-            catalog_base_dir=args.catalog_path,
-            dataset_info=index_catalog_info,
-            storage_options=args.output_storage_options,
-        )
+        write_metadata.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=index_catalog_info)
         step_progress.update(1)
-        file_io.remove_directory(
-            args.tmp_path, ignore_errors=True, storage_options=args.output_storage_options
-        )
+        file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)
-        parquet_metadata.write_parquet_metadata(
-            args.catalog_path, order_by_healpix=False, storage_options=args.output_storage_options
-        )
+        parquet_metadata.write_parquet_metadata(args.catalog_path, order_by_healpix=False)
         step_progress.update(1)

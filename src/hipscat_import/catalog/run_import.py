@@ -114,7 +114,6 @@ def run(args, client):
                     use_schema_file=args.use_schema_file,
                     use_hipscat_index=args.use_hipscat_index,
                     delete_input_files=args.delete_intermediate_parquet_files,
-                    storage_options=args.output_storage_options,
                 )
             )
 
@@ -128,34 +127,25 @@ def run(args, client):
                 catalog_base_dir=args.catalog_path,
                 dataset_info=catalog_info,
                 tool_args=args.provenance_info(),
-                storage_options=args.output_storage_options,
             )
             step_progress.update(1)
 
-            io.write_catalog_info(
-                catalog_base_dir=args.catalog_path,
-                dataset_info=catalog_info,
-                storage_options=args.output_storage_options,
-            )
+            io.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=catalog_info)
             step_progress.update(1)
             partition_info = PartitionInfo.from_healpix(resume_plan.get_destination_pixels())
             partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
-            partition_info.write_to_file(partition_info_file, storage_options=args.output_storage_options)
+            partition_info.write_to_file(partition_info_file)
             if not args.debug_stats_only:
-                parquet_rows = write_parquet_metadata(
-                    args.catalog_path, storage_options=args.output_storage_options
-                )
+                parquet_rows = write_parquet_metadata(args.catalog_path)
                 if total_rows > 0 and parquet_rows != total_rows:
                     raise ValueError(
                         f"Number of rows in parquet ({parquet_rows}) "
                         f"does not match expectation ({total_rows})"
                     )
             else:
-                partition_info.write_to_metadata_files(
-                    args.catalog_path, storage_options=args.output_storage_options
-                )
+                partition_info.write_to_metadata_files(args.catalog_path)
             step_progress.update(1)
-            io.write_fits_map(args.catalog_path, raw_histogram, storage_options=args.output_storage_options)
+            io.write_fits_map(args.catalog_path, raw_histogram)
             step_progress.update(1)
             resume_plan.clean_resume_files()
             step_progress.update(1)
