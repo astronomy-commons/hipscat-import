@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from importlib.metadata import version
+from pathlib import Path
+from typing import Optional
 
 from hipscat.io import file_io
 from upath import UPath
@@ -17,13 +19,13 @@ class RuntimeArguments:
     """Data class for holding runtime arguments"""
 
     ## Output
-    output_path: str = ""
+    output_path: Optional[str | Path | UPath] = None
     """base path where new catalog should be output"""
     output_artifact_name: str = ""
     """short, convenient name for the catalog"""
 
     ## Execution
-    tmp_dir: str = ""
+    tmp_dir: Optional[str | Path | UPath] = None
     """path for storing intermediate files"""
     resume: bool = True
     """If True, we try to read any existing intermediate files and continue to run
@@ -36,14 +38,14 @@ class RuntimeArguments:
     """if displaying a progress bar, use a text-only simple progress
     bar instead of widget. this can be useful in some environments when running
     in a notebook where ipywidgets cannot be used (see `progress_bar` argument)"""
-    dask_tmp: str = ""
+    dask_tmp: Optional[str | Path | UPath] = None
     """directory for dask worker space. this should be local to
     the execution of the pipeline, for speed of reads and writes"""
     dask_n_workers: int = 1
     """number of workers for the dask client"""
     dask_threads_per_worker: int = 1
     """number of threads per dask worker"""
-    resume_tmp: str = ""
+    resume_tmp: Optional[str | Path | UPath] = None
     """directory for intermediate resume files, when needed. see RTD for more info."""
 
     completion_email_address: str = ""

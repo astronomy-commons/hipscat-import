@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 from hipscat.catalog import Catalog
@@ -15,11 +18,11 @@ class SoapArguments(RuntimeArguments):
     """Data class for holding source-object association arguments"""
 
     ## Input - Object catalog
-    object_catalog_dir: Optional[UPath] = None
+    object_catalog_dir: Optional[str | Path | UPath] = None
     object_id_column: str = ""
 
     ## Input - Source catalog
-    source_catalog_dir: Optional[UPath] = None
+    source_catalog_dir: Optional[str | Path | UPath] = None
     source_object_id_column: str = ""
     source_id_column: str = ""
 

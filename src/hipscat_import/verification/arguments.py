@@ -1,10 +1,14 @@
 """Utility to hold all arguments required throughout verification pipeline"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 
 from hipscat.catalog import Catalog
 from hipscat.io.validation import is_valid_catalog
+from upath import UPath
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -14,7 +18,7 @@ class VerificationArguments(RuntimeArguments):
     """Data class for holding verification arguments"""
 
     ## Input
-    input_catalog_path: str = ""
+    input_catalog_path: Optional[str | Path | UPath] = None
     """Path to an existing catalog that will be inspected."""
     input_catalog: Optional[Catalog] = None
     """In-memory representation of a catalog. If not provided, it will be loaded

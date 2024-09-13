@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 
 from hipscat.catalog.catalog import CatalogInfo
@@ -24,11 +25,11 @@ class ImportArguments(RuntimeArguments):
 
     catalog_type: str = "object"
     """level of catalog data, object (things in the sky) or source (detections)"""
-    input_path: Optional[UPath] = None
+    input_path: Optional[str | Path | UPath] = None
     """path to search for the input data"""
-    input_file_list: List[str] = field(default_factory=list)
+    input_file_list: List[str | Path | UPath] = field(default_factory=list)
     """can be used instead of input_path to import only specified files"""
-    input_paths: List[UPath] = field(default_factory=list)
+    input_paths: List[str | Path | UPath] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
 
     ra_column: str = "ra"
@@ -43,7 +44,7 @@ class ImportArguments(RuntimeArguments):
     resolve the counter within the same higher-order pixel space"""
     add_hipscat_index: bool = True
     """add the hipscat spatial index field alongside the data"""
-    use_schema_file: str | None = None
+    use_schema_file: Optional[str | Path | UPath] = None
     """path to a parquet file with schema metadata. this will be used for column
     metadata when writing the files, if specified"""
     expected_total_rows: int = 0

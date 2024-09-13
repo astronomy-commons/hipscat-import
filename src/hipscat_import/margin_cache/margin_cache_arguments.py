@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 
 import hipscat.pixel_math.healpix_shim as hp
@@ -35,7 +38,7 @@ class MarginCacheArguments(RuntimeArguments):
     """should we delete task-level done files once each stage is complete?
     if False, we will keep all done marker files at the end of the pipeline."""
 
-    input_catalog_path: Optional[UPath] = None
+    input_catalog_path: Optional[str | Path | UPath] = None
     """the path to the hipscat-formatted input catalog."""
     debug_filter_pixel_list: List[HealpixPixel] = field(default_factory=list)
     """debug setting. if provided, we will first filter the catalog to the pixels

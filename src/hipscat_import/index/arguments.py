@@ -1,6 +1,9 @@
 """Utility to hold all arguments required throughout indexing"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 
 from hipscat.catalog import Catalog
@@ -16,7 +19,7 @@ class IndexArguments(RuntimeArguments):
     """Data class for holding indexing arguments"""
 
     ## Input
-    input_catalog_path: Optional[UPath] = None
+    input_catalog_path: Optional[str | Path | UPath] = None
     input_catalog: Optional[Catalog] = None
     indexing_column: str = ""
     extra_columns: List[str] = field(default_factory=list)
