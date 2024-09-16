@@ -17,8 +17,9 @@ def read_leaf_file(input_file, include_columns, include_hipscat_index, drop_dupl
         schema=schema,
     )
 
-    data = data.reset_index()
-    if not include_hipscat_index:
+    if data.index.name == HIPSCAT_ID_COLUMN:
+        data = data.reset_index()
+    if not include_hipscat_index and HIPSCAT_ID_COLUMN in data.columns:
         data = data.drop(columns=[HIPSCAT_ID_COLUMN])
 
     if drop_duplicates:
@@ -32,6 +33,8 @@ def create_index(args, client):
     include_columns = [args.indexing_column]
     if args.extra_columns:
         include_columns.extend(args.extra_columns)
+    if args.include_hipscat_index:
+        include_columns.append(HIPSCAT_ID_COLUMN)
     if args.include_order_pixel:
         include_columns.extend(["Norder", "Dir", "Npix"])
 
