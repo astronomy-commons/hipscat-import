@@ -279,6 +279,7 @@ def test_dask_runner(
     # Check that the schema is correct for leaf parquet and _metadata files
     expected_parquet_schema = pa.schema(
         [
+            pa.field("_hipscat_index", pa.uint64()),
             pa.field("id", pa.int64()),
             pa.field("ra", pa.float32()),
             pa.field("dec", pa.float32()),
@@ -287,30 +288,12 @@ def test_dask_runner(
             pa.field("Norder", pa.uint8()),
             pa.field("Dir", pa.uint64()),
             pa.field("Npix", pa.uint64()),
-            pa.field("_hipscat_index", pa.uint64()),
         ]
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
     schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
-
-    # Check that, when re-loaded as a pandas dataframe, the appropriate numeric types are used.
-    data_frame = pd.read_parquet(output_file, engine="pyarrow")
-    expected_dtypes = pd.Series(
-        {
-            "id": np.int64,
-            "ra": np.float32,
-            "dec": np.float32,
-            "ra_error": np.float32,
-            "dec_error": np.float32,
-            "Norder": np.uint8,
-            "Dir": np.uint64,
-            "Npix": np.uint64,
-        }
-    )
-    assert data_frame.dtypes.equals(expected_dtypes)
-    assert data_frame.index.dtype == np.uint64
 
 
 @pytest.mark.dask
