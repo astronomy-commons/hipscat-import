@@ -1,11 +1,15 @@
 """Utility to hold all arguments required throughout indexing"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import List, Optional
 
 from hipscat.catalog import Catalog
 from hipscat.catalog.index.index_catalog_info import IndexCatalogInfo
 from hipscat.io.validation import is_valid_catalog
+from upath import UPath
 
 from hipscat_import.runtime_arguments import RuntimeArguments
 
@@ -15,10 +19,8 @@ class IndexArguments(RuntimeArguments):
     """Data class for holding indexing arguments"""
 
     ## Input
-    input_catalog_path: str = ""
+    input_catalog_path: str | Path | UPath | None = None
     input_catalog: Optional[Catalog] = None
-    input_storage_options: Union[Dict[Any, Any], None] = None
-    """optional dictionary of abstract filesystem credentials for the INPUT."""
     indexing_column: str = ""
     extra_columns: List[str] = field(default_factory=list)
 
@@ -58,11 +60,9 @@ class IndexArguments(RuntimeArguments):
         if not self.include_hipscat_index and not self.include_order_pixel:
             raise ValueError("At least one of include_hipscat_index or include_order_pixel must be True")
 
-        if not is_valid_catalog(self.input_catalog_path, storage_options=self.input_storage_options):
+        if not is_valid_catalog(self.input_catalog_path):
             raise ValueError("input_catalog_path not a valid catalog")
-        self.input_catalog = Catalog.read_from_hipscat(
-            catalog_path=self.input_catalog_path, storage_options=self.input_storage_options
-        )
+        self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
         if self.include_radec:
             catalog_info = self.input_catalog.catalog_info
             self.extra_columns.extend([catalog_info.ra_column, catalog_info.dec_column])

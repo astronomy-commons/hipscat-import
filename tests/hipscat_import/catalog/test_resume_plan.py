@@ -58,15 +58,14 @@ def test_same_input_paths(tmp_path, small_sky_single_file, formats_headers_csv):
             input_paths=[small_sky_single_file, small_sky_single_file],
         )
 
-    ## Includes a duplicate file, but that's ok.
-    plan = ResumePlan(
-        tmp_path=tmp_path,
-        progress_bar=False,
-        resume=True,
-        input_paths=[small_sky_single_file, small_sky_single_file, formats_headers_csv],
-    )
-    map_files = plan.map_files
-    assert len(map_files) == 2
+    ## Includes a duplicate file, and we don't like that.
+    with pytest.raises(ValueError, match="Different file set"):
+        ResumePlan(
+            tmp_path=tmp_path,
+            progress_bar=False,
+            resume=True,
+            input_paths=[small_sky_single_file, small_sky_single_file, formats_headers_csv],
+        )
 
 
 def test_read_write_histogram(tmp_path):

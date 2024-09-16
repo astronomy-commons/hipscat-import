@@ -1,7 +1,6 @@
 """Import a set of non-hipscat files using dask for parallelization"""
 
 import pickle
-from typing import Any, Dict, Union
 
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
@@ -9,9 +8,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from hipscat import pixel_math
-from hipscat.io import FilePointer, file_io, paths
+from hipscat.io import file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healpix
+from upath import UPath
 
 from hipscat_import.catalog.resume_plan import ResumePlan
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
@@ -35,7 +35,7 @@ def _has_named_index(dataframe):
 
 
 def _iterate_input_file(
-    input_file: FilePointer,
+    input_file: UPath,
     pickled_reader_file: str,
     highest_order,
     ra_column,
@@ -79,9 +79,9 @@ def _iterate_input_file(
 
 
 def map_to_pixels(
-    input_file: FilePointer,
+    input_file: UPath,
     pickled_reader_file: str,
-    resume_path: FilePointer,
+    resume_path: UPath,
     mapping_key,
     highest_order,
     ra_column,
@@ -91,10 +91,10 @@ def map_to_pixels(
     """Map a file of input objects to their healpix pixels.
 
     Args:
-        input_file (FilePointer): file to read for catalog data.
+        input_file (UPath): file to read for catalog data.
         file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input
             reader that specifies arguments necessary for reading from the input file.
-        resume_path (FilePointer): where to write resume partial results.
+        resume_path (UPath): where to write resume partial results.
         mapping_key (str): unique counter for this input file, used
             when creating intermediate files
         highest_order (int): healpix order to use when mapping
@@ -139,21 +139,21 @@ def map_to_pixels(
 
 
 def split_pixels(
-    input_file: FilePointer,
+    input_file: UPath,
     pickled_reader_file: str,
     splitting_key,
     highest_order,
     ra_column,
     dec_column,
-    cache_shard_path: FilePointer,
-    resume_path: FilePointer,
+    cache_shard_path: UPath,
+    resume_path: UPath,
     alignment_file=None,
     use_hipscat_index=False,
 ):
     """Map a file of input objects to their healpix pixels and split into shards.
 
     Args:
-        input_file (FilePointer): file to read for catalog data.
+        input_file (UPath): file to read for catalog data.
         file_reader (hipscat_import.catalog.file_readers.InputReader): instance
             of input reader that specifies arguments necessary for reading from the input file.
         splitting_key (str): unique counter for this input file, used
@@ -161,8 +161,8 @@ def split_pixels(
         highest_order (int): healpix order to use when mapping
         ra_column (str): where to find right ascension data in the dataframe
         dec_column (str): where to find declation in the dataframe
-        cache_shard_path (FilePointer): where to write intermediate parquet files.
-        resume_path (FilePointer): where to write resume files.
+        cache_shard_path (UPath): where to write intermediate parquet files.
+        resume_path (UPath): where to write resume files.
 
     Raises:
         ValueError: if the `ra_column` or `dec_column` cannot be found in the input file.
@@ -194,7 +194,7 @@ def split_pixels(
                 else:
                     filtered_data = data.filter(unique_inverse == unique_index)
 
-                pq.write_table(filtered_data, output_file)
+                pq.write_table(filtered_data, output_file.path, filesystem=output_file.fs)
                 del filtered_data
         ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -217,7 +217,6 @@ def reduce_pixel_shards(
     add_hipscat_index=True,
     delete_input_files=True,
     use_schema_file="",
-    storage_options: Union[Dict[Any, Any], None] = None,
 ):
     """Reduce sharded source pixels into destination pixels.
 
@@ -239,8 +238,8 @@ def reduce_pixel_shards(
           for more in-depth discussion of this field.
 
     Args:
-        cache_shard_path (FilePointer): where to read intermediate parquet files.
-        resume_path (FilePointer): where to write resume files.
+        cache_shard_path (UPath): where to read intermediate parquet files.
+        resume_path (UPath): where to write resume files.
         reducing_key (str): unique string for this task, used for resume files.
         origin_pixel_numbers (list[int]): high order pixels, with object
             data written to intermediate directories.
@@ -248,7 +247,7 @@ def reduce_pixel_shards(
         destination_pixel_number (int): pixel number at the above order
         destination_pixel_size (int): expected number of rows to write
             for the catalog's final pixel
-        output_path (FilePointer): where to write the final catalog pixel data
+        output_path (UPath): where to write the final catalog pixel data
         sort_columns (str): column for survey identifier, or other sortable column
         add_hipscat_index (bool): should we add a _hipscat_index column to
             the resulting parquet file?
@@ -265,17 +264,14 @@ def reduce_pixel_shards(
         destination_dir = paths.pixel_directory(
             output_path, destination_pixel_order, destination_pixel_number
         )
-        file_io.make_directory(destination_dir, exist_ok=True, storage_options=storage_options)
+        file_io.make_directory(destination_dir, exist_ok=True)
 
-        destination_file = paths.pixel_catalog_file(
-            output_path, destination_pixel_order, destination_pixel_number
-        )
+        healpix_pixel = HealpixPixel(destination_pixel_order, destination_pixel_number)
+        destination_file = paths.pixel_catalog_file(output_path, healpix_pixel)
 
         schema = None
         if use_schema_file:
-            schema = file_io.read_parquet_metadata(
-                use_schema_file, storage_options=storage_options
-            ).schema.to_arrow_schema()
+            schema = file_io.read_parquet_metadata(use_schema_file).schema.to_arrow_schema()
 
         healpix_pixel = HealpixPixel(destination_pixel_order, destination_pixel_number)
         pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
@@ -319,14 +315,13 @@ def reduce_pixel_shards(
             .append_column("Npix", [np.full(rows_written, fill_value=healpix_pixel.pixel, dtype=np.uint64)])
         )
 
-        pq.write_table(merged_table, destination_file)
-
+        pq.write_table(merged_table, destination_file.path, filesystem=destination_file.fs)
         del merged_table
 
         if delete_input_files:
             pixel_dir = get_pixel_cache_directory(cache_shard_path, healpix_pixel)
 
-            file_io.remove_directory(pixel_dir, ignore_errors=True, storage_options=storage_options)
+            file_io.remove_directory(pixel_dir, ignore_errors=True)
 
         ResumePlan.reducing_key_done(tmp_path=resume_path, reducing_key=reducing_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught

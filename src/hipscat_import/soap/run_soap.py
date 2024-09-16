@@ -50,35 +50,21 @@ def run(args, client):
     # All done - write out the metadata
     with resume_plan.print_progress(total=4, stage_name="Finishing") as step_progress:
         if args.write_leaf_files:
-            total_rows = parquet_metadata.write_parquet_metadata(
-                args.catalog_path,
-                storage_options=args.output_storage_options,
-            )
+            total_rows = parquet_metadata.write_parquet_metadata(args.catalog_path)
             metadata_path = paths.get_parquet_metadata_pointer(args.catalog_path)
-            partition_join_info = PartitionJoinInfo.read_from_file(
-                metadata_path, storage_options=args.output_storage_options
-            )
-            partition_join_info.write_to_csv(
-                catalog_path=args.catalog_path, storage_options=args.output_storage_options
-            )
+            partition_join_info = PartitionJoinInfo.read_from_file(metadata_path)
+            partition_join_info.write_to_csv(catalog_path=args.catalog_path)
         else:
-            total_rows = combine_partial_results(
-                args.tmp_path, args.catalog_path, args.output_storage_options
-            )
+            total_rows = combine_partial_results(args.tmp_path, args.catalog_path)
         step_progress.update(1)
         catalog_info = args.to_catalog_info(total_rows)
         write_metadata.write_provenance_info(
             catalog_base_dir=args.catalog_path,
             dataset_info=catalog_info,
             tool_args=args.provenance_info(),
-            storage_options=args.output_storage_options,
         )
         step_progress.update(1)
-        write_metadata.write_catalog_info(
-            dataset_info=catalog_info,
-            catalog_base_dir=args.catalog_path,
-            storage_options=args.output_storage_options,
-        )
+        write_metadata.write_catalog_info(dataset_info=catalog_info, catalog_base_dir=args.catalog_path)
         step_progress.update(1)
         resume_plan.clean_resume_files()
         step_progress.update(1)

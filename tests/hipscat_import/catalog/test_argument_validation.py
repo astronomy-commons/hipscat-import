@@ -107,7 +107,7 @@ def test_good_paths(blank_data_dir, blank_data_file, tmp_path):
     )
     assert args.input_path == blank_data_dir
     assert len(args.input_paths) == 1
-    assert str(blank_data_file) in args.input_paths[0]
+    assert str(blank_data_file) in str(args.input_paths[0])
 
 
 def test_multiple_files_in_path(small_sky_parts_dir, tmp_path):
@@ -263,7 +263,6 @@ def test_write_provenance_info(formats_dir, tmp_path):
         catalog_base_dir=args.catalog_path,
         dataset_info=args.to_catalog_info(0),
         tool_args=args.provenance_info(),
-        storage_options=args.output_storage_options,
     )
 
 

@@ -7,6 +7,7 @@ import pytest
 from hipscat.catalog import PartitionInfo
 from hipscat.catalog.healpix_dataset.healpix_dataset import HealpixDataset
 from hipscat.io import paths
+from hipscat.pixel_math.healpix_pixel import HealpixPixel
 
 import hipscat_import.margin_cache.margin_cache as mc
 from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
@@ -31,7 +32,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
     norder = 1
     npix = 47
 
-    test_file = paths.pixel_catalog_file(args.catalog_path, norder, npix)
+    test_file = paths.pixel_catalog_file(args.catalog_path, HealpixPixel(norder, npix))
 
     data = pd.read_parquet(test_file)
 
@@ -92,7 +93,7 @@ def test_margin_cache_gen_negative_pixels(small_sky_source_catalog, tmp_path, da
     norder = 0
     npix = 7
 
-    negative_test_file = paths.pixel_catalog_file(args.catalog_path, norder, npix)
+    negative_test_file = paths.pixel_catalog_file(args.catalog_path, HealpixPixel(norder, npix))
 
     negative_data = pd.read_parquet(negative_test_file)
 

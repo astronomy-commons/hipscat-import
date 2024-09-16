@@ -8,22 +8,21 @@ from pathlib import Path
 
 from dask.distributed import as_completed, get_worker
 from dask.distributed import print as dask_print
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from tqdm.auto import tqdm as auto_tqdm
 from tqdm.std import tqdm as std_tqdm
+from upath import UPath
 
 
 @dataclass
 class PipelineResumePlan:
     """Container class for holding the state of pipeline plan."""
 
-    tmp_path: FilePointer
+    tmp_path: UPath
     """path for any intermediate files"""
-    tmp_base_path: FilePointer | None = None
+    tmp_base_path: str | Path | UPath | None = None
     """temporary base directory: either `tmp_dir` or `dask_dir`, if those were provided by the user"""
-    output_storage_options: dict | None = None
-    """optional dictionary of abstract filesystem credentials for the output."""
     resume: bool = True
     """if there are existing intermediate resume files, should we
     read those and continue to run pipeline where we left off"""
@@ -52,12 +51,10 @@ class PipelineResumePlan:
         """
         if file_io.directory_has_contents(self.tmp_path):
             if not self.resume:
-                file_io.remove_directory(
-                    self.tmp_path, ignore_errors=True, storage_options=self.output_storage_options
-                )
+                file_io.remove_directory(self.tmp_path, ignore_errors=True)
             else:
                 print(f"tmp_path ({self.tmp_path}) contains intermediate files; resuming prior progress.")
-        file_io.make_directory(self.tmp_path, exist_ok=True, storage_options=self.output_storage_options)
+        file_io.make_directory(self.tmp_path, exist_ok=True)
 
     def done_file_exists(self, stage_name):
         """Is there a file at a given path?
@@ -120,8 +117,7 @@ class PipelineResumePlan:
         result_files = file_io.find_files_matching_path(directory, f"*{extension}")
         keys = []
         for file_path in result_files:
-            result_file_name = file_io.get_basename_from_filepointer(file_path)
-            match = re.match(r"(.*)" + extension, str(result_file_name))
+            match = re.match(r"(.*)" + extension, str(file_path.name))
             keys.append(match.group(1))
         return keys
 
@@ -132,7 +128,7 @@ class PipelineResumePlan:
             # Use the temporary directory base path if the user provided it, or
             # delete the intermediate directory from inside the output directory
             path = self.tmp_base_path if self.tmp_base_path is not None else self.tmp_path
-            file_io.remove_directory(path, ignore_errors=True, storage_options=self.output_storage_options)
+            file_io.remove_directory(path, ignore_errors=True)
 
     def wait_for_futures(self, futures, stage_name, fail_fast=False):
         """Wait for collected futures to complete.
@@ -191,9 +187,9 @@ class PipelineResumePlan:
         """
         if not input_paths:
             return []
-        input_paths = set(input_paths)
-        input_paths = [str(p) for p in input_paths]
-        input_paths.sort()
+        expected_input_paths = set(input_paths)
+        expected_input_paths = [str(p) for p in input_paths]
+        expected_input_paths.sort()
 
         original_input_paths = []
 
@@ -212,7 +208,7 @@ class PipelineResumePlan:
                 for path in input_paths:
                     file_handle.write(f"{path}\n")
         else:
-            if original_input_paths != input_paths:
+            if original_input_paths != expected_input_paths:
                 raise ValueError("Different file set from resumed pipeline execution.")
 
         return input_paths

@@ -9,8 +9,11 @@ from typing import List, Optional, Tuple
 import hipscat.pixel_math.healpix_shim as hp
 import numpy as np
 from hipscat import pixel_math
-from hipscat.io import FilePointer, file_io
+from hipscat.io import file_io
+from hipscat.pixel_math import empty_histogram
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from numpy import frombuffer
+from upath import UPath
 
 from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
@@ -20,7 +23,7 @@ from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 class ResumePlan(PipelineResumePlan):
     """Container class for holding the state of each file in the pipeline plan."""
 
-    input_paths: List[FilePointer] = field(default_factory=list)
+    input_paths: List[UPath] = field(default_factory=list)
     """resolved list of all files that will be used in the importer"""
     map_files: List[Tuple[str, str]] = field(default_factory=list)
     """list of files (and job keys) that have yet to be mapped"""
@@ -49,10 +52,9 @@ class ResumePlan(PipelineResumePlan):
         simple_progress_bar: bool = False,
         input_paths=None,
         tmp_path=None,
-        tmp_base_path: FilePointer | None = None,
+        tmp_base_path: UPath | None = None,
         delete_resume_log_files: bool = True,
         delete_intermediate_parquet_files: bool = True,
-        output_storage_options: dict | None = None,
         run_stages: List[str] | None = None,
         import_args=None,
     ):
@@ -65,7 +67,6 @@ class ResumePlan(PipelineResumePlan):
                 tmp_base_path=import_args.tmp_base_path,
                 delete_resume_log_files=import_args.delete_resume_log_files,
                 delete_intermediate_parquet_files=import_args.delete_intermediate_parquet_files,
-                output_storage_options=import_args.output_storage_options,
             )
             if import_args.debug_stats_only:
                 run_stages = ["mapping", "finishing"]
@@ -79,7 +80,6 @@ class ResumePlan(PipelineResumePlan):
                 tmp_base_path=tmp_base_path,
                 delete_resume_log_files=delete_resume_log_files,
                 delete_intermediate_parquet_files=delete_intermediate_parquet_files,
-                output_storage_options=output_storage_options,
             )
             self.input_paths = input_paths
         self.gather_plan(run_stages)
@@ -175,18 +175,28 @@ class ResumePlan(PipelineResumePlan):
             if len(remaining_map_files) > 0:
                 raise RuntimeError(f"{len(remaining_map_files)} map stages did not complete successfully.")
             histogram_files = file_io.find_files_matching_path(self.tmp_path, self.HISTOGRAMS_DIR, "*.npz")
-            aggregate_histogram = SparseHistogram.make_empty(healpix_order)
+            aggregate_histogram = empty_histogram(healpix_order)
             for partial_file_name in histogram_files:
-                aggregate_histogram.add(SparseHistogram.from_file(partial_file_name))
+                partial = SparseHistogram.from_file(partial_file_name)
+                partial_as_array = partial.to_array()
+                if aggregate_histogram.shape != partial_as_array.shape:
+                    raise ValueError(
+                        "The histogram partials have incompatible sizes due to different healpix orders. "
+                        + "To start the pipeline from scratch with the current order set `resume` to False."
+                    )
+                aggregate_histogram = np.add(aggregate_histogram, partial_as_array)
 
-            aggregate_histogram.to_file(file_name)
+            file_name = file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAM_BINARY_FILE)
+            with open(file_name, "wb+") as file_handle:
+                file_handle.write(aggregate_histogram.data)
             if self.delete_resume_log_files:
                 file_io.remove_directory(
                     file_io.append_paths_to_pointer(self.tmp_path, self.HISTOGRAMS_DIR),
                     ignore_errors=True,
                 )
 
-        full_histogram = SparseHistogram.from_file(file_name).to_array()
+        with open(file_name, "rb") as file_handle:
+            full_histogram = frombuffer(file_handle.read(), dtype=np.int64)
 
         if len(full_histogram) != hp.order2npix(healpix_order):
             raise ValueError(
@@ -262,7 +272,7 @@ class ResumePlan(PipelineResumePlan):
         pixel_threshold,
         drop_empty_siblings,
         expected_total_rows,
-    ) -> str:
+    ) -> UPath:
         """Get a pointer to the existing alignment file for the pipeline, or
         generate a new alignment using provided arguments.
 
