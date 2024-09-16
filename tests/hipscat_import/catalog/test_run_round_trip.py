@@ -608,8 +608,57 @@ def test_import_hipscat_index(
     )
 
 
+class SimplePyarrowCsvReader(CsvReader):
+    """Use pyarrow for CSV reading, and force some pyarrow dtypes.
+    Return a pyarrow table instead of pd.DataFrame."""
+
+    def read(self, input_file, read_columns=None):
+        yield csv.read_csv(input_file)
+
+
 @pytest.mark.dask
-def test_import_hipscat_index_pyarrow_table(
+def test_import_hipscat_index_pyarrow_table_csv(
+    dask_client,
+    small_sky_single_file,
+    assert_parquet_file_ids,
+    tmp_path,
+):
+    """Should be identical to the above test, but uses the ParquetPyarrowReader."""
+    args = ImportArguments(
+        output_artifact_name="small_sky_pyarrow",
+        input_file_list=[small_sky_single_file],
+        file_reader=SimplePyarrowCsvReader(),
+        output_path=tmp_path,
+        dask_tmp=tmp_path,
+        highest_healpix_order=2,
+        pixel_threshold=3_000,
+        progress_bar=False,
+    )
+
+    runner.run(args, dask_client)
+
+    # Check that the catalog metadata file exists
+    catalog = Catalog.read_from_hipscat(args.catalog_path)
+    assert catalog.on_disk
+    assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.total_rows == 131
+    assert len(catalog.get_healpix_pixels()) == 1
+
+    # Check that the catalog parquet file exists and contains correct object IDs
+    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+
+    expected_ids = [*range(700, 831)]
+    assert_parquet_file_ids(output_file, "id", expected_ids)
+    data_frame = pd.read_parquet(output_file, engine="pyarrow")
+    assert data_frame.index.name is None
+    npt.assert_array_equal(
+        data_frame.columns,
+        ["_hipscat_index", "id", "ra", "dec", "ra_error", "dec_error", "Norder", "Dir", "Npix"],
+    )
+
+
+@pytest.mark.dask
+def test_import_hipscat_index_pyarrow_table_parquet(
     dask_client,
     formats_dir,
     assert_parquet_file_ids,
