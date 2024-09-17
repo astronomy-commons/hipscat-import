@@ -113,20 +113,20 @@ def _to_pixel_shard(
 
         rename_columns = {
             PartitionInfo.METADATA_ORDER_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_ORDER_COLUMN_NAME}",
-            PartitionInfo.METADATA_DIR_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_DIR_COLUMN_NAME}",
+            "Dir": f"margin_Dir",
             PartitionInfo.METADATA_PIXEL_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_PIXEL_COLUMN_NAME}",
         }
 
         margin_data = margin_data.rename(columns=rename_columns)
 
         margin_data[PartitionInfo.METADATA_ORDER_COLUMN_NAME] = pixel.order
-        margin_data[PartitionInfo.METADATA_DIR_COLUMN_NAME] = pixel.dir
+        margin_data["Dir"] = pixel.dir
         margin_data[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] = pixel.pixel
 
         margin_data = margin_data.astype(
             {
                 PartitionInfo.METADATA_ORDER_COLUMN_NAME: np.uint8,
-                PartitionInfo.METADATA_DIR_COLUMN_NAME: np.uint64,
+                "Dir": np.uint64,
                 PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
             }
         )
