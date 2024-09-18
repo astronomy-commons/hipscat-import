@@ -26,7 +26,7 @@ class IndexArguments(RuntimeArguments):
 
     ## Output
     include_healpix_29: bool = True
-    """Include the hipscat spatial partition index."""
+    """Include the healpix-based hats spatial index."""
     include_order_pixel: bool = True
     """Include partitioning columns, Norder, Dir, and Npix. You probably want to keep these!"""
     include_radec: bool = False

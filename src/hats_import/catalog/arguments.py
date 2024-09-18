@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List
 
 from hats.catalog.catalog import CatalogInfo
-from hipscat.pixel_math import hipscat_id
+from hats.pixel_math import hipscat_id
 from upath import UPath
 
 from hats_import.catalog.file_readers import InputReader, get_file_reader
@@ -43,7 +43,7 @@ class ImportArguments(RuntimeArguments):
     they should be comma-separated. if `add_healpix_29=True`, this sorting will be used to
     resolve the counter within the same higher-order pixel space"""
     add_healpix_29: bool = True
-    """add the hipscat spatial index field alongside the data"""
+    """add the healpix-based hats spatial index field alongside the data"""
     use_schema_file: str | Path | UPath | None = None
     """path to a parquet file with schema metadata. this will be used for column
     metadata when writing the files, if specified"""
@@ -169,7 +169,7 @@ class ImportArguments(RuntimeArguments):
 
 
 def check_healpix_order_range(
-    order, field_name, lower_bound=0, upper_bound=hipscat_id.HIPSCAT_ID_HEALPIX_ORDER
+    order, field_name, lower_bound=0, upper_bound=hipscat_id.SPATIAL_INDEX_ORDER
 ):
     """Helper method to check if the ``order`` is within the range determined by the
     ``lower_bound`` and ``upper_bound``, inclusive.
@@ -185,7 +185,7 @@ def check_healpix_order_range(
     """
     if lower_bound < 0:
         raise ValueError("healpix orders must be positive")
-    if upper_bound > hipscat_id.HIPSCAT_ID_HEALPIX_ORDER:
-        raise ValueError(f"healpix order should be <= {hipscat_id.HIPSCAT_ID_HEALPIX_ORDER}")
+    if upper_bound > hipscat_id.SPATIAL_INDEX_ORDER:
+        raise ValueError(f"healpix order should be <= {hipscat_id.SPATIAL_INDEX_ORDER}")
     if not lower_bound <= order <= upper_bound:
         raise ValueError(f"{field_name} should be between {lower_bound} and {upper_bound}")

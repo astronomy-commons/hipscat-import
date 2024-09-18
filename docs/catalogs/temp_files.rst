@@ -199,7 +199,7 @@ and share some of the results with you, to give some suggestion of the disk requ
 you may face when converting your own catalogs to hats format.
 
 ============= =============== =========== =============== =========================
-Catalog	      Input size (-h) Input size  Hipscatted size Ratio
+Catalog	      Input size (-h) Input size  HATS size       Ratio
 ============= =============== =========== =============== =========================
 allwise       1.2T             1196115700       310184460   0.26 (a lot smaller)
 neowise	      3.9T             4177447284      4263269112   1.02 (about the same)

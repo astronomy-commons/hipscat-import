@@ -1,7 +1,7 @@
-HiPSCat Import
+HATS Import
 ========================================================================================
 
-Utility for ingesting large survey data into HiPSCat structure.
+Utility for ingesting large survey data into HATS structure.
 
 Installation
 -------------------------------------------------------------------------------

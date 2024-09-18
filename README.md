@@ -11,14 +11,14 @@
 [![codecov](https://codecov.io/gh/astronomy-commons/hats-import/branch/main/graph/badge.svg)](https://codecov.io/gh/astronomy-commons/hats-import)
 [![Read the Docs](https://img.shields.io/readthedocs/hats-import)](https://hats-import.readthedocs.io/)
 
-## HiPSCat import - Utility for ingesting large survey data into HiPSCat structure.
+## HATS import - Utility for ingesting large survey data into HATS structure.
 
 Check out our [ReadTheDocs site](https://hats-import.readthedocs.io/en/stable/)
 for more information on partitioning, installation, and contributing.
 
 See related projects:
 
-* HiPSCat ([on GitHub](https://github.com/astronomy-commons/hats))
+* HATS ([on GitHub](https://github.com/astronomy-commons/hats))
   ([on ReadTheDocs](https://hats.readthedocs.io/en/stable/))
 * LSDB ([on GitHub](https://github.com/astronomy-commons/lsdb)) 
   ([on ReadTheDocs](https://lsdb.readthedocs.io/en/stable/))
