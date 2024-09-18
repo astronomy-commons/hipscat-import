@@ -32,9 +32,9 @@ Challenges with this data set
 
 .. code-block:: python
 
-    import hipscat_import.pipeline as runner
-    from hipscat_import.catalog.arguments import ImportArguments
-    from hipscat_import.catalog.file_readers import ParquetReader
+    import hats_import.pipeline as runner
+    from hats_import.catalog.arguments import ImportArguments
+    from hats_import.catalog.file_readers import ParquetReader
     import pyarrow.parquet as pq
     import pyarrow as pa
     import re

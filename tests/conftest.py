@@ -39,7 +39,7 @@ def dask_client(use_ray):
 def pytest_addoption(parser):
     """Add command line option to test dask unit tests on ray.
 
-    This must live in /tests/conftest.py (not /tests/hipscat-import/conftest.py)"""
+    This must live in /tests/conftest.py (not /tests/hats-import/conftest.py)"""
     parser.addoption(
         "--use_ray",
         action="store_true",
