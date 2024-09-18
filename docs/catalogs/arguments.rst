@@ -95,7 +95,7 @@ cleaning operations automatically for you.
 Reading input files
 -------------------------------------------------------------------------------
 
-Catalog import reads through a list of files and converts them into a hatsted catalog.
+Catalog import reads through a list of files and converts them into a hats-sharded catalog.
 
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -206,11 +206,11 @@ Which fields?
 
 Specify the ``ra_column`` and ``dec_column`` for the dataset.
 
-There are two fields that we require in order to make a valid hatsted
+There are two fields that we require in order to make a valid hats-sharded
 catalog, the right ascension and declination. At this time, this is the only 
 supported system for celestial coordinates.
 
-If you're importing data that has previously been hatsted, you may use
+If you're importing data that has previously been hats-sharded, you may use
 ``use_healpix_29 = True``. This will use that previously compused hats spatial
 index as the position, instead of ra/dec.
 
