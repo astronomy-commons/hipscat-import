@@ -328,13 +328,13 @@ dask operations more performant, but if you do not intend to publish your datase
 and do not intend to use dask, then you can suppress generation of this column to
 save a little space in your final disk usage.
 
-The ``_healpix_29`` uses a high healpix order and a uniqueness counter to create
+The ``_healpix_29`` uses a high healpix order to create
 values that can order all points in the sky, according to a nested healpix scheme.
 
 ``sort_columns`` - ``str`` - column for survey identifier, or other sortable column. 
 If sorting by multiple columns, they should be comma-separated. 
-If ``add_healpix_29=True``, this sorting will be used to resolve the 
-index counter within the same higher-order pixel space.
+If ``add_healpix_29=True``, ``_healpix_29`` will be the primary sort key, but the 
+provided sorting will be used for any rows within the same higher-order pixel space.
 
 ``use_schema_file`` - ``str`` - path to a parquet file with schema metadata. 
 This will be used for column metadata when writing the files, if specified.

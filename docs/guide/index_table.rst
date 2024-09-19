@@ -250,9 +250,7 @@ arguments for a few of those.
 computing the leaf parquet files.
 
 ``include_healpix_29`` - ``bool`` - whether or not to include the 64-bit
-hats spatial index in the index table. Defaults to ``True``. It can be 
-useful to keep this value if the ``_healpix_29`` is your only unique
-identifier, or you intend to re-partition your data.
+hats spatial index in the index table. Defaults to ``True``. 
 
 ``include_order_pixel`` - ``bool`` - whether to include partitioning columns, 
 ``Norder``, ``Dir``, and ``Npix``. You probably want to keep these!
@@ -270,7 +268,6 @@ and ``include_order_pixel`` options above. We desribe some common patterns below
     .. code-block:: python
 
         indexing_column="target_id",
-        # target_id is unique, and I don't need to keep extra data
         include_healpix_29=False,
         # I want to know where my data is in the sky.
         include_order_pixel=True,
@@ -287,7 +284,7 @@ and ``include_order_pixel`` options above. We desribe some common patterns below
         indexing_column="target_id",
         # target_id is NOT unique
         drop_duplicates=True,
-        # target_id is NOT unique, but including the _healpix_29 will bloat results
+        # including the _healpix_29 will bloat results
         include_healpix_29=False,
         # I want to know where my data is in the sky.
         include_order_pixel=True,
