@@ -14,10 +14,10 @@ sys.path.insert(0, os.path.abspath("../src/"))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "hipscat-import"
+project = "hats-import"
 copyright = "2023, LINCC Frameworks"
 author = "LINCC Frameworks"
-release = version("hipscat-import")
+release = version("hats-import")
 # for example take major/minor
 version = ".".join(release.split(".")[:2])
 
@@ -80,8 +80,8 @@ copybutton_prompt_text = ">> "
 ## lets us suppress the copy button on select code blocks.
 copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 
-# Cross-link hipscat documentation from the API reference:
+# Cross-link hats documentation from the API reference:
 # https://docs.readthedocs.io/en/stable/guides/intersphinx.html
 intersphinx_mapping = {
-    "hipscat": ("http://hipscat.readthedocs.io/en/stable/", None),
+    "hats": ("http://hats.readthedocs.io/en/stable/", None),
 }

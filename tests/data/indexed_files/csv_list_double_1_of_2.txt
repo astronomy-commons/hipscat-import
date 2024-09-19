@@ -1,0 +1,3 @@
+tests/data/small_sky_parts/catalog_00_of_05.csv
+tests/data/small_sky_parts/catalog_01_of_05.csv
+

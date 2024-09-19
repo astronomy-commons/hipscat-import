@@ -3,8 +3,8 @@ from pathlib import Path
 
 import numpy as np
 
-from hipscat_import.catalog.resume_plan import ResumePlan
-from hipscat_import.catalog.sparse_histogram import SparseHistogram
+from hats_import.catalog.resume_plan import ResumePlan
+from hats_import.catalog.sparse_histogram import SparseHistogram
 
 
 class BinningSuite:

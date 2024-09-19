@@ -1,33 +1,33 @@
 <img src="https://github.com/astronomy-commons/lsdb/blob/main/docs/lincc-logo.png?raw=true" width="300" height="100">
 
-# hipscat-import
+# hats-import
 
 [![Template](https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen)](https://lincc-ppt.readthedocs.io/en/stable/)
 
-[![PyPI](https://img.shields.io/pypi/v/hipscat-import?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/hipscat-import/)
-[![Conda](https://img.shields.io/conda/vn/conda-forge/hipscat-import.svg?color=blue&logo=condaforge&logoColor=white)](https://anaconda.org/conda-forge/hipscat-import)
+[![PyPI](https://img.shields.io/pypi/v/hats-import?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/hats-import/)
+[![Conda](https://img.shields.io/conda/vn/conda-forge/hats-import.svg?color=blue&logo=condaforge&logoColor=white)](https://anaconda.org/conda-forge/hats-import)
 
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hipscat-import/smoke-test.yml)](https://github.com/astronomy-commons/hipscat-import/actions/workflows/smoke-test.yml)
-[![codecov](https://codecov.io/gh/astronomy-commons/hipscat-import/branch/main/graph/badge.svg)](https://codecov.io/gh/astronomy-commons/hipscat-import)
-[![Read the Docs](https://img.shields.io/readthedocs/hipscat-import)](https://hipscat-import.readthedocs.io/)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/astronomy-commons/hats-import/smoke-test.yml)](https://github.com/astronomy-commons/hats-import/actions/workflows/smoke-test.yml)
+[![codecov](https://codecov.io/gh/astronomy-commons/hats-import/branch/main/graph/badge.svg)](https://codecov.io/gh/astronomy-commons/hats-import)
+[![Read the Docs](https://img.shields.io/readthedocs/hats-import)](https://hats-import.readthedocs.io/)
 
-## HiPSCat import - Utility for ingesting large survey data into HiPSCat structure.
+## HATS import - Utility for ingesting large survey data into HATS structure.
 
-Check out our [ReadTheDocs site](https://hipscat-import.readthedocs.io/en/stable/)
+Check out our [ReadTheDocs site](https://hats-import.readthedocs.io/en/stable/)
 for more information on partitioning, installation, and contributing.
 
 See related projects:
 
-* HiPSCat ([on GitHub](https://github.com/astronomy-commons/hipscat))
-  ([on ReadTheDocs](https://hipscat.readthedocs.io/en/stable/))
+* HATS ([on GitHub](https://github.com/astronomy-commons/hats))
+  ([on ReadTheDocs](https://hats.readthedocs.io/en/stable/))
 * LSDB ([on GitHub](https://github.com/astronomy-commons/lsdb)) 
   ([on ReadTheDocs](https://lsdb.readthedocs.io/en/stable/))
 
 ## Contributing
 
-[![GitHub issue custom search in repo](https://img.shields.io/github/issues-search/astronomy-commons/hipscat-import?color=purple&label=Good%20first%20issues&query=is%3Aopen%20label%3A%22good%20first%20issue%22)](https://github.com/astronomy-commons/hipscat-import/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+[![GitHub issue custom search in repo](https://img.shields.io/github/issues-search/astronomy-commons/hats-import?color=purple&label=Good%20first%20issues&query=is%3Aopen%20label%3A%22good%20first%20issue%22)](https://github.com/astronomy-commons/hats-import/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
-See the [contribution guide](https://hipscat-import.readthedocs.io/en/stable/guide/contributing.html)
+See the [contribution guide](https://hats-import.readthedocs.io/en/stable/guide/contributing.html)
 for complete installation instructions and contribution best practices.
 
 ## Acknowledgements

@@ -64,8 +64,8 @@ Example import
 
 .. code-block:: python
 
-    from hipscat_import.catalog.arguments import ImportArguments
-    import hipscat_import.pipeline as runner
+    from hats_import.catalog.arguments import ImportArguments
+    import hats_import.pipeline as runner
 
     args = ImportArguments(
         output_artifact_name="sdss_dr16q",

@@ -30,9 +30,9 @@ Example import
 
     import pandas as pd
 
-    import hipscat_import.pipeline as runner
-    from hipscat_import.catalog.arguments import ImportArguments
-    from hipscat_import.catalog.file_readers import CsvReader
+    import hats_import.pipeline as runner
+    from hats_import.catalog.arguments import ImportArguments
+    from hats_import.catalog.file_readers import CsvReader
 
     type_frame = pd.read_csv("tic_types.csv")
     type_map = dict(zip(type_frame["name"], type_frame["type"]))
