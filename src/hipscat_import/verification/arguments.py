@@ -13,39 +13,35 @@ from upath import UPath
 from hipscat_import.runtime_arguments import RuntimeArguments
 
 
-@dataclass
-class VerificationArguments(RuntimeArguments):
+@dataclass(kw_only=True)
+class VerificationArguments:
     """Data class for holding verification arguments"""
 
+    ## Output
+    output_path: str | Path | UPath = field()
+    """Base path where verification reports should be written."""
+
     ## Input
-    input_catalog_path: str | Path | UPath | None = None
+    input_catalog_path: str | Path | UPath = field()
     """Path to an existing catalog that will be inspected."""
-    input_catalog: Optional[Catalog] = None
-    """In-memory representation of a catalog. If not provided, it will be loaded
-    from the input_catalog_path."""
 
     ## Verification options
+    use_schema_file: str | None = field(default=None)
+    """Path to a parquet file containing the expected schema.
+    Suggest to use the same value as when importing the catalog.
+    If not provided, the catalog's _common_metadata file will be used as the source of truth.
+    """
+    expected_total_rows: int | None = field(default=None)
+    """Total number of rows expected in this catalog."""
     field_distribution_cols: List[str] = field(default_factory=list)
     """List of fields to get the overall distribution for. e.g. ["ra", "dec"].
     Should be valid columns in the parquet files."""
-
-    def __post_init__(self):
-        self._check_arguments()
-
-    def _check_arguments(self):
-        super()._check_arguments()
-        if not self.input_catalog_path and not self.input_catalog:
-            raise ValueError("input catalog is required (either input_catalog_path or input_catalog)")
-        if not self.input_catalog:
-            if not is_valid_catalog(self.input_catalog_path):
-                raise ValueError("input_catalog_path not a valid catalog")
-            self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
-        if not self.input_catalog_path:
-            self.input_catalog_path = self.input_catalog.catalog_path
 
     def additional_runtime_provenance_info(self) -> dict:
         return {
             "pipeline": "verification pipeline",
             "input_catalog_path": self.input_catalog_path,
+            "use_schema_file": self.use_schema_file,
+            "expected_total_rows": self.expected_total_rows,
             "field_distribution_cols": self.field_distribution_cols,
         }
