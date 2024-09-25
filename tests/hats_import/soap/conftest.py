@@ -47,7 +47,6 @@ def catalog_info_data() -> dict:
         "catalog_name": "test_name",
         "catalog_type": "object",
         "total_rows": 10,
-        "epoch": "J2000",
         "ra_column": "ra",
         "dec_column": "dec",
     }
@@ -59,7 +58,6 @@ def source_catalog_info() -> dict:
         "catalog_name": "test_source",
         "catalog_type": "source",
         "total_rows": 100,
-        "epoch": "J2000",
         "ra_column": "source_ra",
         "dec_column": "source_dec",
     }

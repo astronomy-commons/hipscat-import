@@ -154,7 +154,7 @@ def test_compute_partition_size(tmp_path, small_sky_object_catalog):
         )
 
 
-def test_to_catalog_info(small_sky_object_catalog, tmp_path):
+def test_to_table_properties(small_sky_object_catalog, tmp_path):
     """Verify creation of catalog parameters for index to be created."""
     args = IndexArguments(
         input_catalog_path=small_sky_object_catalog,
@@ -164,7 +164,7 @@ def test_to_catalog_info(small_sky_object_catalog, tmp_path):
         include_healpix_29=True,
         include_order_pixel=True,
     )
-    catalog_info = args.to_catalog_info(total_rows=10)
+    catalog_info = args.to_table_properties(total_rows=10)
     assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
 

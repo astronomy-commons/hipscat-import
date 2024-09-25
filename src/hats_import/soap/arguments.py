@@ -3,8 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from hats.catalog import Catalog
-from hats.catalog.association_catalog.association_catalog import AssociationCatalogInfo
+from hats.catalog import Catalog, TableProperties
 from hats.catalog.catalog_type import CatalogType
 from hats.io.validation import is_valid_catalog
 from upath import UPath
@@ -66,7 +65,7 @@ class SoapArguments(RuntimeArguments):
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
 
-    def to_catalog_info(self, total_rows) -> AssociationCatalogInfo:
+    def to_table_properties(self, total_rows) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
@@ -74,13 +73,13 @@ class SoapArguments(RuntimeArguments):
             "total_rows": total_rows,
             "primary_column": self.object_id_column,
             "primary_column_association": "object_id",
-            "primary_catalog": self.object_catalog_dir,
+            "primary_catalog": str(self.object_catalog_dir),
             "join_column": self.source_object_id_column,
             "join_column_association": "source_id",
-            "join_catalog": self.source_catalog_dir,
+            "join_catalog": str(self.source_catalog_dir),
             "contains_leaf_files": self.write_leaf_files,
         }
-        return AssociationCatalogInfo(**info)
+        return TableProperties(**info)
 
     def additional_runtime_provenance_info(self) -> dict:
         return {

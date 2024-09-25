@@ -4,8 +4,7 @@ import os
 from pathlib import Path
 
 import pytest
-from hats.catalog import Catalog
-from hats.catalog.catalog_info import CatalogInfo
+from hats.catalog import Catalog, TableProperties
 from hats.pixel_math.healpix_pixel import HealpixPixel
 
 from hats_import.soap.resume_plan import SoapPlan, source_to_object_map
@@ -51,7 +50,7 @@ def test_object_to_source_map(small_sky_object_catalog, small_sky_source_catalog
 def test_mismatch_order_map(catalog_info_data, source_catalog_info):
     """Create some catalogs that will exercise edge case behavior of map-generation."""
     object_catalog = Catalog(
-        CatalogInfo(**catalog_info_data),
+        TableProperties(**catalog_info_data),
         [
             HealpixPixel(1, 16),
             HealpixPixel(2, 68),
@@ -60,7 +59,7 @@ def test_mismatch_order_map(catalog_info_data, source_catalog_info):
             HealpixPixel(2, 71),
         ],
     )
-    source_catalog = Catalog(CatalogInfo(**source_catalog_info), [HealpixPixel(1, 16)])
+    source_catalog = Catalog(TableProperties(**source_catalog_info), [HealpixPixel(1, 16)])
 
     expected = {
         HealpixPixel(1, 16): [

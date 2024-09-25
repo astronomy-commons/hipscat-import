@@ -79,6 +79,7 @@ def test_run_index_on_source(
     args = IndexArguments(
         input_catalog_path=small_sky_source_catalog,
         indexing_column="source_id",
+        extra_columns=["mag", "band"],
         output_path=tmp_path,
         output_artifact_name="small_sky_source_id_index",
         progress_bar=False,
@@ -89,10 +90,13 @@ def test_run_index_on_source(
     catalog = Dataset.read_hats(args.catalog_path)
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
+    assert catalog.catalog_info.extra_columns == ["mag", "band"]
 
     basic_index_parquet_schema = pa.schema(
         [
             pa.field("_healpix_29", pa.uint64()),
+            pa.field("mag", pa.float64()),
+            pa.field("band", pa.large_string()),
             pa.field("Norder", pa.uint8()),
             pa.field("Dir", pa.uint64()),
             pa.field("Npix", pa.uint64()),

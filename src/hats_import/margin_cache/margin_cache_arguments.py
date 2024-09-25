@@ -5,8 +5,7 @@ from pathlib import Path
 from typing import List
 
 import hats.pixel_math.healpix_shim as hp
-from hats.catalog import Catalog
-from hats.catalog.margin_cache.margin_cache_catalog_info import MarginCacheCatalogInfo
+from hats.catalog import Catalog, TableProperties
 from hats.io.validation import is_valid_catalog
 from hats.pixel_math.healpix_pixel import HealpixPixel
 from upath import UPath
@@ -76,19 +75,18 @@ class MarginCacheArguments(RuntimeArguments):
         if margin_pixel_mindist * 60.0 < self.margin_threshold:
             raise ValueError("margin pixels must be larger than margin_threshold")
 
-    def to_catalog_info(self, total_rows) -> MarginCacheCatalogInfo:
+    def to_table_properties(self, total_rows) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
             "total_rows": total_rows,
             "catalog_type": "margin",
-            "epoch": self.catalog.catalog_info.epoch,
             "ra_column": self.catalog.catalog_info.ra_column,
             "dec_column": self.catalog.catalog_info.dec_column,
-            "primary_catalog": self.input_catalog_path,
+            "primary_catalog": str(self.input_catalog_path),
             "margin_threshold": self.margin_threshold,
         }
-        return MarginCacheCatalogInfo(**info)
+        return TableProperties(**info)
 
     def additional_runtime_provenance_info(self) -> dict:
         return {

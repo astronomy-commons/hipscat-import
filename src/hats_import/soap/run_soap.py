@@ -57,14 +57,10 @@ def run(args, client):
         else:
             total_rows = combine_partial_results(args.tmp_path, args.catalog_path)
         step_progress.update(1)
-        catalog_info = args.to_catalog_info(total_rows)
-        write_metadata.write_provenance_info(
-            catalog_base_dir=args.catalog_path,
-            dataset_info=catalog_info,
-            tool_args=args.provenance_info(),
-        )
+        catalog_info = args.to_table_properties(total_rows)
+        catalog_info.to_properties_file(args.catalog_path)
         step_progress.update(1)
-        write_metadata.write_catalog_info(dataset_info=catalog_info, catalog_base_dir=args.catalog_path)
+        ## TODO - optionally write out arguments file
         step_progress.update(1)
         resume_plan.clean_resume_files()
         step_progress.update(1)

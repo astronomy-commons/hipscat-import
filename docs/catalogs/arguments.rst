@@ -346,8 +346,6 @@ parquet files with the catalog data, and will only generate root-level metadata
 files representing the full statistics of the final catalog. This can be useful
 when probing the import process for effectiveness on processing a target dataset.
 
-``epoch`` - ``str`` - astronomical epoch for the data. defaults to ``"J2000"``
-
 ``catalog_type`` - ``"object"`` or ``"source"``. Indicates the level of catalog data,
 using the LSST nomenclature:
 

@@ -65,15 +65,9 @@ def generate_margin_cache(args, client):
         partition_info.write_to_file(partition_info_file)
 
         step_progress.update(1)
-        margin_catalog_info = args.to_catalog_info(int(total_rows))
-        write_metadata.write_provenance_info(
-            catalog_base_dir=args.catalog_path,
-            dataset_info=margin_catalog_info,
-            tool_args=args.provenance_info(),
-        )
-        write_metadata.write_catalog_info(
-            catalog_base_dir=args.catalog_path, dataset_info=margin_catalog_info
-        )
+        margin_catalog_info = args.to_table_properties(int(total_rows))
+        margin_catalog_info.to_properties_file(args.catalog_path)
+        ## TODO - optionally write out arguments file
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)
