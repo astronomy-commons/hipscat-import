@@ -4,7 +4,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 """
 
 from hats.catalog.association_catalog.partition_join_info import PartitionJoinInfo
-from hats.io import parquet_metadata, paths, write_metadata
+from hats.io import parquet_metadata, paths
 
 from hats_import.soap.arguments import SoapArguments
 from hats_import.soap.map_reduce import combine_partial_results, count_joins, reduce_joins

@@ -4,7 +4,6 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-from hats.catalog import PartitionInfo
 from hats.catalog.healpix_dataset.healpix_dataset import HealpixDataset
 from hats.io import paths
 from hats.pixel_math.healpix_pixel import HealpixPixel
@@ -38,13 +37,13 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
 
     assert len(data) == 13
 
-    assert all(data[PartitionInfo.METADATA_ORDER_COLUMN_NAME] == norder)
-    assert all(data[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] == npix)
-    assert all(data[PartitionInfo.METADATA_DIR_COLUMN_NAME] == int(npix / 10000) * 10000)
+    assert all(data[paths.PARTITION_ORDER] == norder)
+    assert all(data[paths.PARTITION_PIXEL] == npix)
+    assert all(data[paths.PARTITION_DIR] == int(npix / 10000) * 10000)
 
-    assert data.dtypes[PartitionInfo.METADATA_ORDER_COLUMN_NAME] == np.uint8
-    assert data.dtypes[PartitionInfo.METADATA_DIR_COLUMN_NAME] == np.uint64
-    assert data.dtypes[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] == np.uint64
+    assert data.dtypes[paths.PARTITION_ORDER] == np.uint8
+    assert data.dtypes[paths.PARTITION_PIXEL] == np.uint64
+    assert data.dtypes[paths.PARTITION_DIR] == np.uint64
 
     npt.assert_array_equal(
         data.columns,

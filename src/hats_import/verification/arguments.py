@@ -42,10 +42,3 @@ class VerificationArguments(RuntimeArguments):
             self.input_catalog = Catalog.read_hats(catalog_path=self.input_catalog_path)
         if not self.input_catalog_path:
             self.input_catalog_path = self.input_catalog.catalog_path
-
-    def additional_runtime_provenance_info(self) -> dict:
-        return {
-            "pipeline": "verification pipeline",
-            "input_catalog_path": self.input_catalog_path,
-            "field_distribution_cols": self.field_distribution_cols,
-        }

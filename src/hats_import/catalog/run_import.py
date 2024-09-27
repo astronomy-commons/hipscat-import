@@ -7,7 +7,7 @@ The actual logic of the map reduce is in the `map_reduce.py` file.
 import os
 import pickle
 
-import hats.io.write_metadata as io
+import hats.io.file_io as io
 from hats.catalog import PartitionInfo
 from hats.io import paths
 from hats.io.parquet_metadata import write_parquet_metadata
@@ -140,7 +140,7 @@ def run(args, client):
             else:
                 partition_info.write_to_metadata_files(args.catalog_path)
             step_progress.update(1)
-            io.write_fits_map(args.catalog_path, raw_histogram)
+            io.write_fits_image(raw_histogram, paths.get_point_map_file_pointer(args.catalog_path))
             step_progress.update(1)
             resume_plan.clean_resume_files()
             step_progress.update(1)

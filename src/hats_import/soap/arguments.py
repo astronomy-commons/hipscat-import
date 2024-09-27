@@ -80,14 +80,3 @@ class SoapArguments(RuntimeArguments):
             "contains_leaf_files": self.write_leaf_files,
         }
         return TableProperties(**info)
-
-    def additional_runtime_provenance_info(self) -> dict:
-        return {
-            "object_catalog_dir": self.object_catalog_dir,
-            "object_id_column": self.object_id_column,
-            "source_catalog_dir": self.source_catalog_dir,
-            "source_object_id_column": self.source_object_id_column,
-            "source_id_column": self.source_id_column,
-            "compute_partition_size": self.compute_partition_size,
-            "write_leaf_files": self.write_leaf_files,
-        }

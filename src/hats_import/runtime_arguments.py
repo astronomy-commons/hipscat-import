@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from importlib.metadata import version
 from pathlib import Path
 
 from hats.io import file_io
@@ -102,37 +101,6 @@ class RuntimeArguments:
             self.resume_tmp = file_io.append_paths_to_pointer(self.resume_tmp, self.output_artifact_name)
         else:
             self.resume_tmp = self.tmp_path
-
-    def provenance_info(self) -> dict:
-        """Fill all known information in a dictionary for provenance tracking.
-
-        Returns:
-            dictionary with all argument_name -> argument_value as key -> value pairs.
-        """
-        runtime_args = {
-            "catalog_name": self.output_artifact_name,
-            "output_path": self.output_path,
-            "output_artifact_name": self.output_artifact_name,
-            "tmp_dir": self.tmp_dir,
-            "dask_tmp": self.dask_tmp,
-            "dask_n_workers": self.dask_n_workers,
-            "dask_threads_per_worker": self.dask_threads_per_worker,
-            "catalog_path": self.catalog_path,
-            "tmp_path": self.tmp_path,
-        }
-
-        runtime_args.update(self.additional_runtime_provenance_info())
-        provenance_info = {
-            "tool_name": "hats_import",
-            "version": version("hats-import"),
-            "runtime_args": runtime_args,
-        }
-
-        return provenance_info
-
-    def additional_runtime_provenance_info(self):
-        """Any additional runtime args to be included in provenance info from subclasses"""
-        return {}
 
 
 def find_input_paths(input_path="", file_matcher="", input_file_list=None):

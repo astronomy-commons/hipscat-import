@@ -94,13 +94,3 @@ class IndexArguments(RuntimeArguments):
             info["extra_columns"] = self.extra_columns
 
         return TableProperties(**info)
-
-    def additional_runtime_provenance_info(self) -> dict:
-        return {
-            "input_catalog_path": self.input_catalog_path,
-            "indexing_column": self.indexing_column,
-            "extra_columns": self.extra_columns,
-            "include_healpix_29": self.include_healpix_29,
-            "include_order_pixel": self.include_order_pixel,
-            "include_radec": self.include_radec,
-        }

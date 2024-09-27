@@ -87,11 +87,3 @@ class MarginCacheArguments(RuntimeArguments):
             "margin_threshold": self.margin_threshold,
         }
         return TableProperties(**info)
-
-    def additional_runtime_provenance_info(self) -> dict:
-        return {
-            "input_catalog_path": self.input_catalog_path,
-            "margin_threshold": self.margin_threshold,
-            "margin_order": self.margin_order,
-            "debug_filter_pixel_list": self.debug_filter_pixel_list,
-        }

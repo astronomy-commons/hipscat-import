@@ -98,21 +98,6 @@ class InputReader(abc.ABC):
             DataFrame containing chunk of file info.
         """
 
-    def provenance_info(self) -> dict:
-        """Create dictionary of parameters for provenance tracking.
-
-        If any `storage_options` have been provided as kwargs, we will replace the
-        value with ``REDACTED`` for the purpose of writing to provenance info, as it
-        may contain user names or API keys.
-
-        Returns:
-            dictionary with all argument_name -> argument_value as key -> value pairs.
-        """
-        all_args = vars(self)
-        if "kwargs" in all_args and "storage_options" in all_args["kwargs"]:
-            all_args["kwargs"]["storage_options"] = "REDACTED"
-        return {"input_reader_type": type(self).__name__, **vars(self)}
-
     def regular_file_exists(self, input_file, **_kwargs):
         """Check that the `input_file` points to a single regular file
 

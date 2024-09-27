@@ -150,13 +150,6 @@ You can find the full API documentation for
                 smaller_table = filter_nonsense(smaller_table)
                 yield smaller_table.to_pandas()
 
-        def provenance_info(self) -> dict:
-            provenance_info = {
-                "input_reader_type": "StarrReader",
-                "chunksize": self.chunksize,
-            }
-            return provenance_info
-
     ...
 
     args = ImportArguments(

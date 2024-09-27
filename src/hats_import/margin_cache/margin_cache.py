@@ -1,5 +1,5 @@
 from hats.catalog import PartitionInfo
-from hats.io import file_io, parquet_metadata, paths, write_metadata
+from hats.io import file_io, parquet_metadata, paths
 
 import hats_import.margin_cache.margin_cache_map_reduce as mcmr
 from hats_import.margin_cache.margin_cache_resume_plan import MarginCachePlan
