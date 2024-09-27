@@ -65,7 +65,7 @@ class SoapArguments(RuntimeArguments):
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
 
-    def to_table_properties(self, total_rows) -> TableProperties:
+    def to_table_properties(self, total_rows: int) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,

@@ -75,7 +75,7 @@ class MarginCacheArguments(RuntimeArguments):
         if margin_pixel_mindist * 60.0 < self.margin_threshold:
             raise ValueError("margin pixels must be larger than margin_threshold")
 
-    def to_table_properties(self, total_rows) -> TableProperties:
+    def to_table_properties(self, total_rows: int) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
