@@ -17,15 +17,12 @@ def run(args, client):
 
     # All done - write out the metadata
     with print_progress(
-        total=4,
+        total=3,
         stage_name="Finishing",
         use_progress_bar=args.progress_bar,
         simple_progress_bar=args.simple_progress_bar,
     ) as step_progress:
         index_catalog_info = args.to_table_properties(int(rows_written))
-        step_progress.update(1)
-        ## TODO - optionally write out arguments file
-        step_progress.update(1)
         index_catalog_info.to_properties_file(args.catalog_path)
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
