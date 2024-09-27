@@ -136,7 +136,6 @@ class ImportArguments(RuntimeArguments):
             "catalog_name": self.output_artifact_name,
             "catalog_type": self.catalog_type,
             "total_rows": total_rows,
-
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
             "hats_cols_sort": self.sort_columns,

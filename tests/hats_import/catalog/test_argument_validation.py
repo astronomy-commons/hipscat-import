@@ -220,7 +220,7 @@ def test_to_table_properties(blank_data_dir, tmp_path):
     assert catalog_info.default_columns == ["id", "mjd"]
     assert catalog_info.__pydantic_extra__["obs_regime"] == "Optical"
 
-    
+
 def test_check_healpix_order_range():
     """Test method check_healpix_order_range"""
     check_healpix_order_range(5, "order_field")
