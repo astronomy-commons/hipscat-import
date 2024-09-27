@@ -16,7 +16,7 @@ from hats_import.hipscat_conversion.arguments import ConversionArguments
 from hats_import.pipeline_resume_plan import print_progress
 
 
-def run(args, client):
+def run(args: ConversionArguments, client):
     """Run index creation pipeline."""
     if not args:
         raise TypeError("args is required and should be type ConversionArguments")
@@ -50,9 +50,9 @@ def run(args, client):
             + hats_import.__version__
         )
         catalog_info["hats_builder"] = builder_str
-        if "runtime_args" in provenance_info["tool_args"]:
+        if runtime_args := provenance_info["tool_args"].get("runtime_args"):
             runtime_args = provenance_info["tool_args"]["runtime_args"]
-            catalog_info["hats_cols_sort"] = runtime_args.get("sort_columns", None)
+            catalog_info["hats_cols_sort"] = runtime_args.get("sort_columns")
             catalog_info["hats_cols_survey_id"] = runtime_args.get("sort_columns", None)
             catalog_info["hats_max_rows"] = runtime_args.get("pixel_threshold", None)
 
