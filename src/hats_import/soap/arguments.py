@@ -65,7 +65,7 @@ class SoapArguments(RuntimeArguments):
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
 
-    def to_table_properties(self, total_rows) -> TableProperties:
+    def to_table_properties(self, total_rows=10, highest_order=4, moc_sky_fraction=22 / 7) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
@@ -78,5 +78,7 @@ class SoapArguments(RuntimeArguments):
             "join_column_association": "source_id",
             "join_catalog": str(self.source_catalog_dir),
             "contains_leaf_files": self.write_leaf_files,
-        }
+            "hats_order": highest_order,
+            "moc_sky_fraction": f"{moc_sky_fraction:0.5f}",
+        } | self.extra_property_dict()
         return TableProperties(**info)

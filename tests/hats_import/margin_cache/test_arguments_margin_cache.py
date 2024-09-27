@@ -121,7 +121,7 @@ def test_to_table_properties(small_sky_source_catalog, tmp_path):
         output_artifact_name="catalog_cache",
         margin_order=4,
     )
-    catalog_info = args.to_table_properties(total_rows=10)
+    catalog_info = args.to_table_properties(total_rows=10, highest_order=4, moc_sky_fraction=22 / 7)
     assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
     assert catalog_info.ra_column == "source_ra"

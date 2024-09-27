@@ -63,11 +63,13 @@ def generate_margin_cache(args, client):
         partition_info = PartitionInfo.read_from_file(metadata_path)
         partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
         partition_info.write_to_file(partition_info_file)
-
         step_progress.update(1)
-        margin_catalog_info = args.to_table_properties(int(total_rows))
+        margin_catalog_info = args.to_table_properties(
+            int(total_rows),
+            partition_info.get_highest_order(),
+            partition_info.calculate_fractional_coverage(),
+        )
         margin_catalog_info.to_properties_file(args.catalog_path)
-        ## TODO - optionally write out arguments file
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)

@@ -3,7 +3,7 @@ Methods in this file set up a dask pipeline using futures.
 The actual logic of the map reduce is in the `map_reduce.py` file.
 """
 
-from hats.catalog.association_catalog.partition_join_info import PartitionJoinInfo
+from hats.catalog import PartitionInfo, PartitionJoinInfo
 from hats.io import parquet_metadata, paths
 
 from hats_import.soap.arguments import SoapArguments
@@ -57,7 +57,10 @@ def run(args, client):
         else:
             total_rows = combine_partial_results(args.tmp_path, args.catalog_path)
         step_progress.update(1)
-        catalog_info = args.to_table_properties(total_rows)
+        partition_info = PartitionInfo.read_from_dir(args.catalog_path)
+        catalog_info = args.to_table_properties(
+            total_rows, partition_info.get_highest_order(), partition_info.calculate_fractional_coverage()
+        )
         catalog_info.to_properties_file(args.catalog_path)
         step_progress.update(1)
         ## TODO - optionally write out arguments file

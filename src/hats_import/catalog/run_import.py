@@ -122,11 +122,6 @@ def run(args, client):
     # All done - write out the metadata
     if resume_plan.should_run_finishing:
         with resume_plan.print_progress(total=5, stage_name="Finishing") as step_progress:
-            catalog_info = args.to_table_properties(total_rows)
-            catalog_info.to_properties_file(args.catalog_path)
-            step_progress.update(1)
-            ## TODO - optionally write out arguments file
-            step_progress.update(1)
             partition_info = PartitionInfo.from_healpix(resume_plan.get_destination_pixels())
             partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
             partition_info.write_to_file(partition_info_file)
@@ -139,6 +134,11 @@ def run(args, client):
                     )
             else:
                 partition_info.write_to_metadata_files(args.catalog_path)
+            step_progress.update(1)
+            catalog_info = args.to_table_properties(
+                total_rows, partition_info.get_highest_order(), partition_info.calculate_fractional_coverage()
+            )
+            catalog_info.to_properties_file(args.catalog_path)
             step_progress.update(1)
             io.write_fits_image(raw_histogram, paths.get_point_map_file_pointer(args.catalog_path))
             step_progress.update(1)
