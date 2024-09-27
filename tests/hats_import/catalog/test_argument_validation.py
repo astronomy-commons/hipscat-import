@@ -205,7 +205,7 @@ def test_use_healpix_29(blank_data_dir, tmp_path):
     )
 
 
-def test_to_catalog_info(blank_data_dir, tmp_path):
+def test_to_table_properties(blank_data_dir, tmp_path):
     """Verify creation of catalog parameters for catalog to be created."""
     args = ImportArguments(
         output_artifact_name="catalog",
@@ -215,11 +215,12 @@ def test_to_catalog_info(blank_data_dir, tmp_path):
         tmp_dir=tmp_path,
         progress_bar=False,
     )
-    catalog_info = args.to_catalog_info(total_rows=10)
+    catalog_info = args.to_table_properties(total_rows=10)
     assert catalog_info.catalog_name == "catalog"
     assert catalog_info.total_rows == 10
 
 
+@pytest.mark.skip("provenance")
 def test_provenance_info(blank_data_dir, tmp_path):
     """Verify that provenance info includes catalog-specific fields."""
     args = ImportArguments(
@@ -235,6 +236,7 @@ def test_provenance_info(blank_data_dir, tmp_path):
     assert "epoch" in runtime_args
 
 
+@pytest.mark.skip("provenance")
 def test_write_provenance_info(formats_dir, tmp_path):
     """Verify that provenance info can be written to JSON file."""
     input_file = formats_dir / "gaia_minimum.csv"

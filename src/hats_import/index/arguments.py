@@ -6,8 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-from hats.catalog import Catalog
-from hats.catalog.index.index_catalog_info import IndexCatalogInfo
+from hats.catalog import Catalog, TableProperties
 from hats.io.validation import is_valid_catalog
 from upath import UPath
 
@@ -82,17 +81,19 @@ class IndexArguments(RuntimeArguments):
         if self.compute_partition_size < 100_000:
             raise ValueError("compute_partition_size must be at least 100_000")
 
-    def to_catalog_info(self, total_rows) -> IndexCatalogInfo:
+    def to_table_properties(self, total_rows: int) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
             "total_rows": total_rows,
             "catalog_type": "index",
-            "primary_catalog": self.input_catalog_path,
+            "primary_catalog": str(self.input_catalog_path),
             "indexing_column": self.indexing_column,
-            "extra_columns": self.extra_columns,
         }
-        return IndexCatalogInfo(**info)
+        if len(self.extra_columns) > 0:
+            info["extra_columns"] = self.extra_columns
+
+        return TableProperties(**info)
 
     def additional_runtime_provenance_info(self) -> dict:
         return {

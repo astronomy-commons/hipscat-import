@@ -122,15 +122,10 @@ def run(args, client):
     # All done - write out the metadata
     if resume_plan.should_run_finishing:
         with resume_plan.print_progress(total=5, stage_name="Finishing") as step_progress:
-            catalog_info = args.to_catalog_info(total_rows)
-            io.write_provenance_info(
-                catalog_base_dir=args.catalog_path,
-                dataset_info=catalog_info,
-                tool_args=args.provenance_info(),
-            )
+            catalog_info = args.to_table_properties(total_rows)
+            catalog_info.to_properties_file(args.catalog_path)
             step_progress.update(1)
-
-            io.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=catalog_info)
+            ## TODO - optionally write out arguments file
             step_progress.update(1)
             partition_info = PartitionInfo.from_healpix(resume_plan.get_destination_pixels())
             partition_info_file = paths.get_partition_info_pointer(args.catalog_path)

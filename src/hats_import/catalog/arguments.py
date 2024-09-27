@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
 
-from hats.catalog.catalog import CatalogInfo
+from hats.catalog import TableProperties
 from hats.pixel_math import hipscat_id
 from upath import UPath
 
@@ -19,9 +19,6 @@ from hats_import.runtime_arguments import RuntimeArguments, find_input_paths
 @dataclass
 class ImportArguments(RuntimeArguments):
     """Container class for holding partitioning arguments"""
-
-    epoch: str = "J2000"
-    """astronomical epoch for the data. defaults to "J2000" """
 
     catalog_type: str = "object"
     """level of catalog data, object (things in the sky) or source (detections)"""
@@ -131,17 +128,16 @@ class ImportArguments(RuntimeArguments):
         # Basic checks complete - make more checks and create directories where necessary
         self.input_paths = find_input_paths(self.input_path, "**/*.*", self.input_file_list)
 
-    def to_catalog_info(self, total_rows) -> CatalogInfo:
+    def to_table_properties(self, total_rows: int) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
             "catalog_type": self.catalog_type,
             "total_rows": total_rows,
-            "epoch": self.epoch,
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
         }
-        return CatalogInfo(**info)
+        return TableProperties(**info)
 
     def additional_runtime_provenance_info(self) -> dict:
         file_reader_info = {"type": self.file_reader}
@@ -149,7 +145,6 @@ class ImportArguments(RuntimeArguments):
             file_reader_info = self.file_reader.provenance_info()
         return {
             "catalog_name": self.output_artifact_name,
-            "epoch": self.epoch,
             "catalog_type": self.catalog_type,
             "input_path": self.input_path,
             "input_paths": self.input_paths,

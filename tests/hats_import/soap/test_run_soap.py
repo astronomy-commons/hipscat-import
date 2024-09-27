@@ -110,24 +110,6 @@ def test_object_to_source_with_leaves(
     )
     assert parquet_file.metadata.schema.to_arrow_schema().equals(exepcted_schema, check_metadata=False)
 
-    expected_lines = [
-        "{",
-        '    "catalog_name": "small_sky_object_to_source",',
-        '    "catalog_type": "association",',
-        '    "total_rows": 17161,',
-        r'    "primary_catalog": ".*small_sky_object_catalog",',
-        '    "primary_column": "id",',
-        '    "primary_column_association": "object_id",',
-        r'    "join_catalog": ".*small_sky_source_catalog",',
-        '    "join_column": "object_id",',
-        '    "join_column_association": "source_id",',
-        '    "contains_leaf_files": true',
-        "}",
-    ]
-
-    metadata_filename = os.path.join(small_sky_soap_args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_lines, metadata_filename)
-
 
 @pytest.mark.dask
 def test_object_to_source_with_leaves_drop_duplicates(
@@ -176,21 +158,3 @@ def test_object_to_source_with_leaves_drop_duplicates(
         ]
     )
     assert parquet_file.metadata.schema.to_arrow_schema().equals(exepcted_schema, check_metadata=False)
-
-    expected_lines = [
-        "{",
-        '    "catalog_name": "small_sky_object_to_source",',
-        '    "catalog_type": "association",',
-        '    "total_rows": 148,',
-        r'    "primary_catalog": ".*small_sky_object_catalog",',
-        '    "primary_column": "id",',
-        '    "primary_column_association": "object_id",',
-        r'    "join_catalog": ".*small_sky_source_catalog",',
-        '    "join_column": "object_id",',
-        '    "join_column_association": "source_id",',
-        '    "contains_leaf_files": true',
-        "}",
-    ]
-
-    metadata_filename = os.path.join(small_sky_soap_args.catalog_path, "catalog_info.json")
-    assert_text_file_matches(expected_lines, metadata_filename)

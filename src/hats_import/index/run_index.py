@@ -17,19 +17,13 @@ def run(args, client):
 
     # All done - write out the metadata
     with print_progress(
-        total=4,
+        total=3,
         stage_name="Finishing",
         use_progress_bar=args.progress_bar,
         simple_progress_bar=args.simple_progress_bar,
     ) as step_progress:
-        index_catalog_info = args.to_catalog_info(int(rows_written))
-        write_metadata.write_provenance_info(
-            catalog_base_dir=args.catalog_path,
-            dataset_info=index_catalog_info,
-            tool_args=args.provenance_info(),
-        )
-        step_progress.update(1)
-        write_metadata.write_catalog_info(catalog_base_dir=args.catalog_path, dataset_info=index_catalog_info)
+        index_catalog_info = args.to_table_properties(int(rows_written))
+        index_catalog_info.to_properties_file(args.catalog_path)
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)

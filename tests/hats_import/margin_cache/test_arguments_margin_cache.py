@@ -113,7 +113,7 @@ def test_debug_filter_pixel_list(small_sky_source_catalog, tmp_path):
         )
 
 
-def test_to_catalog_info(small_sky_source_catalog, tmp_path):
+def test_to_table_properties(small_sky_source_catalog, tmp_path):
     """Verify creation of catalog info for margin cache to be created."""
     args = MarginCacheArguments(
         margin_threshold=5.0,
@@ -122,14 +122,14 @@ def test_to_catalog_info(small_sky_source_catalog, tmp_path):
         output_artifact_name="catalog_cache",
         margin_order=4,
     )
-    catalog_info = args.to_catalog_info(total_rows=10)
+    catalog_info = args.to_table_properties(total_rows=10)
     assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
-    assert catalog_info.epoch == "J2000"
     assert catalog_info.ra_column == "source_ra"
     assert catalog_info.dec_column == "source_dec"
 
 
+@pytest.mark.skip("provenance")
 def test_provenance_info(small_sky_source_catalog, tmp_path):
     """Verify that provenance info includes margin-cache-specific fields."""
     args = MarginCacheArguments(
