@@ -39,7 +39,7 @@ def test_margin_cache_gen(small_sky_source_catalog, tmp_path, dask_client):
 
     assert all(data[paths.PARTITION_ORDER] == norder)
     assert all(data[paths.PARTITION_PIXEL] == npix)
-    assert all(data[paths.PARTITION_DIR] == int(npix / 10000) * 10000)
+    assert all(data[paths.PARTITION_DIR] == int(npix / 10_000) * 10_000)
 
     assert data.dtypes[paths.PARTITION_ORDER] == np.uint8
     assert data.dtypes[paths.PARTITION_PIXEL] == np.uint64
