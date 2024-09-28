@@ -51,10 +51,9 @@ def run(args: ConversionArguments, client):
         )
         catalog_info["hats_builder"] = builder_str
         if runtime_args := provenance_info["tool_args"].get("runtime_args"):
-            runtime_args = provenance_info["tool_args"]["runtime_args"]
             catalog_info["hats_cols_sort"] = runtime_args.get("sort_columns")
-            catalog_info["hats_cols_survey_id"] = runtime_args.get("sort_columns", None)
-            catalog_info["hats_max_rows"] = runtime_args.get("pixel_threshold", None)
+            catalog_info["hats_cols_survey_id"] = runtime_args.get("sort_columns")
+            catalog_info["hats_max_rows"] = runtime_args.get("pixel_threshold")
 
     partition_info = PartitionInfo.read_from_dir(args.input_catalog_path)
     catalog_info["hats_order"] = partition_info.get_highest_order()
