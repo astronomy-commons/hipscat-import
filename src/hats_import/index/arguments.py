@@ -85,22 +85,11 @@ class IndexArguments(RuntimeArguments):
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
-            "total_rows": total_rows,
             "catalog_type": "index",
+            "total_rows": total_rows,
             "primary_catalog": str(self.input_catalog_path),
             "indexing_column": self.indexing_column,
-        }
-        if len(self.extra_columns) > 0:
-            info["extra_columns"] = self.extra_columns
+            "extra_columns": self.extra_columns,
+        } | self.extra_property_dict()
 
         return TableProperties(**info)
-
-    def additional_runtime_provenance_info(self) -> dict:
-        return {
-            "input_catalog_path": self.input_catalog_path,
-            "indexing_column": self.indexing_column,
-            "extra_columns": self.extra_columns,
-            "include_healpix_29": self.include_healpix_29,
-            "include_order_pixel": self.include_order_pixel,
-            "include_radec": self.include_radec,
-        }

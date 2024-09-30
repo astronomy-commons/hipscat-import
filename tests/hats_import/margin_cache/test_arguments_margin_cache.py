@@ -1,7 +1,6 @@
 """Tests of margin cache generation arguments"""
 
 import pytest
-from hats.io import write_metadata
 from hats.pixel_math.healpix_pixel import HealpixPixel
 
 from hats_import.margin_cache.margin_cache_arguments import MarginCacheArguments
@@ -122,28 +121,8 @@ def test_to_table_properties(small_sky_source_catalog, tmp_path):
         output_artifact_name="catalog_cache",
         margin_order=4,
     )
-    catalog_info = args.to_table_properties(total_rows=10)
+    catalog_info = args.to_table_properties(total_rows=10, highest_order=4, moc_sky_fraction=22 / 7)
     assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
     assert catalog_info.ra_column == "source_ra"
     assert catalog_info.dec_column == "source_dec"
-
-
-@pytest.mark.skip("provenance")
-def test_provenance_info(small_sky_source_catalog, tmp_path):
-    """Verify that provenance info includes margin-cache-specific fields."""
-    args = MarginCacheArguments(
-        margin_threshold=5.0,
-        input_catalog_path=small_sky_source_catalog,
-        output_path=tmp_path,
-        output_artifact_name="catalog_cache",
-        margin_order=4,
-        debug_filter_pixel_list=[HealpixPixel(1, 44)],
-    )
-
-    runtime_args = args.provenance_info()["runtime_args"]
-    assert "margin_threshold" in runtime_args
-
-    write_metadata.write_provenance_info(
-        catalog_base_dir=args.catalog_path, dataset_info=args.to_catalog_info(20_000), tool_args=runtime_args
-    )

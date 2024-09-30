@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from importlib.metadata import version
+from datetime import datetime, timezone
 from pathlib import Path
 
 from hats.io import file_io
 from upath import UPath
+
+import hats_import
 
 # pylint: disable=too-many-instance-attributes
 
@@ -22,6 +24,11 @@ class RuntimeArguments:
     """base path where new catalog should be output"""
     output_artifact_name: str = ""
     """short, convenient name for the catalog"""
+    addl_hats_properties: dict = None
+    """Any additional keyword arguments you would like to provide when writing
+    the `properties` file for the final HATS table. e.g. 
+    {"hats_cols_default":"id, mjd", "hats_cols_survey_id":"unique_id", 
+    "creator_did": "ivo://CDS/P/2MASS/J"}"""
 
     ## Execution
     tmp_dir: str | Path | UPath | None = None
@@ -103,36 +110,19 @@ class RuntimeArguments:
         else:
             self.resume_tmp = self.tmp_path
 
-    def provenance_info(self) -> dict:
-        """Fill all known information in a dictionary for provenance tracking.
+    def extra_property_dict(self):
+        properties = {}
+        properties["hats_builder"] = f"hats-import v{hats_import.__version__}"
 
-        Returns:
-            dictionary with all argument_name -> argument_value as key -> value pairs.
-        """
-        runtime_args = {
-            "catalog_name": self.output_artifact_name,
-            "output_path": self.output_path,
-            "output_artifact_name": self.output_artifact_name,
-            "tmp_dir": self.tmp_dir,
-            "dask_tmp": self.dask_tmp,
-            "dask_n_workers": self.dask_n_workers,
-            "dask_threads_per_worker": self.dask_threads_per_worker,
-            "catalog_path": self.catalog_path,
-            "tmp_path": self.tmp_path,
-        }
+        now = datetime.now(tz=timezone.utc)
+        properties["hats_creation_date"] = now.strftime("%Y-%m-%dT%H:%M%Z")
+        properties["hats_estsize"] = int(_estimate_dir_size(self.catalog_path) / 1024)
+        properties["hats_release_date"] = "2024-09-18"
+        properties["hats_version"] = "v0.1"
 
-        runtime_args.update(self.additional_runtime_provenance_info())
-        provenance_info = {
-            "tool_name": "hats_import",
-            "version": version("hats-import"),
-            "runtime_args": runtime_args,
-        }
-
-        return provenance_info
-
-    def additional_runtime_provenance_info(self):
-        """Any additional runtime args to be included in provenance info from subclasses"""
-        return {}
+        if self.addl_hats_properties:
+            properties = properties | self.addl_hats_properties
+        return properties
 
 
 def find_input_paths(input_path="", file_matcher="", input_file_list=None):
@@ -166,3 +156,13 @@ def find_input_paths(input_path="", file_matcher="", input_file_list=None):
     if len(input_paths) == 0:
         raise FileNotFoundError("No input files found")
     return input_paths
+
+
+def _estimate_dir_size(dir):
+    total_size = 0
+    for item in dir.iterdir():
+        if item.is_dir():
+            total_size += _estimate_dir_size(item)
+        else:
+            total_size += item.stat().st_size
+    return total_size

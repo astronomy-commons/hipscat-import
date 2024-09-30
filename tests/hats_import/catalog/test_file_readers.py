@@ -1,6 +1,5 @@
 """Test dataframe-generating file readers"""
 
-import hats.io.write_metadata as io
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -230,34 +229,6 @@ def test_csv_reader_pipe_delimited(formats_pipe_csv, tmp_path):
     assert np.all(column_types == expected_column_types)
 
 
-@pytest.mark.skip("provenance")
-def test_csv_reader_provenance_info(tmp_path, basic_catalog_info):
-    """Test that we get some provenance info and it is parseable into JSON."""
-    reader = CsvReader(
-        header=None,
-        sep="|",
-        column_names=["letters", "ints", "empty", "numeric"],
-        type_map={
-            "letters": object,
-            "ints": int,
-            "empty": "Int64",
-            "numeric": int,
-        },
-        storage_options={"user_name": "user_pii", "user_key": "SECRETS!"},
-    )
-    provenance_info = reader.provenance_info()
-    catalog_base_dir = tmp_path / "test_catalog"
-    catalog_base_dir.mkdir(parents=True)
-    io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
-
-    with open(catalog_base_dir / "provenance_info.json", "r", encoding="utf-8") as file:
-        data = file.read()
-        assert "test_catalog" in data
-        assert "REDACTED" in data
-        assert "user_pii" not in data
-        assert "SECRETS" not in data
-
-
 def test_indexed_csv_reader(indexed_files_dir):
     # Chunksize covers all the inputs.
     total_chunks = 0
@@ -331,16 +302,6 @@ def test_indexed_parquet_reader(indexed_files_dir):
     assert total_chunks == 29
 
 
-@pytest.mark.skip("provenance")
-def test_parquet_reader_provenance_info(tmp_path, basic_catalog_info):
-    """Test that we get some provenance info and it is parseable into JSON."""
-    reader = ParquetReader(chunksize=1)
-    provenance_info = reader.provenance_info()
-    catalog_base_dir = tmp_path / "test_catalog"
-    catalog_base_dir.mkdir(parents=True)
-    io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)
-
-
 def test_parquet_reader_columns(parquet_shards_shard_44_0):
     """Verify we can read a subset of columns."""
     column_subset = ["id", "dec"]
@@ -389,13 +350,3 @@ def test_read_fits_columns(formats_fits):
         FitsReader(skip_column_names=["ra_error", "dec_error"]).read(formats_fits, read_columns=["ra", "dec"])
     )
     assert list(frame.columns) == ["ra", "dec"]
-
-
-@pytest.mark.skip("provenance")
-def test_fits_reader_provenance_info(tmp_path, basic_catalog_info):
-    """Test that we get some provenance info and it is parseable into JSON."""
-    reader = FitsReader()
-    provenance_info = reader.provenance_info()
-    catalog_base_dir = tmp_path / "test_catalog"
-    catalog_base_dir.mkdir(parents=True)
-    io.write_provenance_info(catalog_base_dir, basic_catalog_info, provenance_info)

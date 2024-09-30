@@ -167,18 +167,3 @@ def test_to_table_properties(small_sky_object_catalog, tmp_path):
     catalog_info = args.to_table_properties(total_rows=10)
     assert catalog_info.catalog_name == args.output_artifact_name
     assert catalog_info.total_rows == 10
-
-
-def test_provenance_info(small_sky_object_catalog, tmp_path):
-    """Verify that provenance info includes index-specific fields."""
-    args = IndexArguments(
-        input_catalog_path=small_sky_object_catalog,
-        indexing_column="id",
-        output_path=tmp_path,
-        output_artifact_name="small_sky_object_index",
-        include_healpix_29=True,
-        include_order_pixel=True,
-    )
-
-    runtime_args = args.provenance_info()["runtime_args"]
-    assert "input_catalog_path" in runtime_args

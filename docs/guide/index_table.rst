@@ -120,7 +120,7 @@ string sorting will be smart enough to collate the various strings appropriately
 
 .. code-block:: python
 
-    divisions = [f"Gaia DR3 {i}" for i in range(10000, 99999, 12)]
+    divisions = [f"Gaia DR3 {i}" for i in range(10_000, 99_999, 12)]
     divisions.append("Gaia DR3 999999988604363776")
 
 Getting hints from ``_metadata``

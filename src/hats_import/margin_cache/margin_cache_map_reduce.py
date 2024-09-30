@@ -4,7 +4,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset as ds
 from hats import pixel_math
-from hats.catalog.partition_info import PartitionInfo
 from hats.io import file_io, paths
 from hats.pixel_math.healpix_pixel import HealpixPixel
 
@@ -112,22 +111,22 @@ def _to_pixel_shard(
         shard_path = paths.pixel_catalog_file(partition_dir, source_pixel)
 
         rename_columns = {
-            PartitionInfo.METADATA_ORDER_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_ORDER_COLUMN_NAME}",
-            PartitionInfo.METADATA_DIR_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_DIR_COLUMN_NAME}",
-            PartitionInfo.METADATA_PIXEL_COLUMN_NAME: f"margin_{PartitionInfo.METADATA_PIXEL_COLUMN_NAME}",
+            paths.PARTITION_ORDER: paths.MARGIN_ORDER,
+            paths.PARTITION_DIR: paths.MARGIN_DIR,
+            paths.PARTITION_PIXEL: paths.MARGIN_PIXEL,
         }
 
         margin_data = margin_data.rename(columns=rename_columns)
 
-        margin_data[PartitionInfo.METADATA_ORDER_COLUMN_NAME] = pixel.order
-        margin_data[PartitionInfo.METADATA_DIR_COLUMN_NAME] = pixel.dir
-        margin_data[PartitionInfo.METADATA_PIXEL_COLUMN_NAME] = pixel.pixel
+        margin_data[paths.PARTITION_ORDER] = pixel.order
+        margin_data[paths.PARTITION_DIR] = pixel.dir
+        margin_data[paths.PARTITION_PIXEL] = pixel.pixel
 
         margin_data = margin_data.astype(
             {
-                PartitionInfo.METADATA_ORDER_COLUMN_NAME: np.uint8,
-                PartitionInfo.METADATA_DIR_COLUMN_NAME: np.uint64,
-                PartitionInfo.METADATA_PIXEL_COLUMN_NAME: np.uint64,
+                paths.PARTITION_ORDER: np.uint8,
+                paths.PARTITION_DIR: np.uint64,
+                paths.PARTITION_PIXEL: np.uint64,
             }
         )
         margin_data = margin_data.sort_index()
@@ -152,9 +151,9 @@ def reduce_margin_shards(
             schema = file_io.read_parquet_metadata(original_catalog_metadata).schema.to_arrow_schema()
 
             schema = (
-                schema.append(pa.field("margin_Norder", pa.uint8()))
-                .append(pa.field("margin_Dir", pa.uint64()))
-                .append(pa.field("margin_Npix", pa.uint64()))
+                schema.append(pa.field(paths.MARGIN_ORDER, pa.uint8()))
+                .append(pa.field(paths.MARGIN_DIR, pa.uint64()))
+                .append(pa.field(paths.MARGIN_PIXEL, pa.uint64()))
             )
             data = ds.dataset(shard_dir, format="parquet", schema=schema)
             full_df = data.to_table().to_pandas()

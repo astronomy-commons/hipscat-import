@@ -1,6 +1,6 @@
 """Create columnar index of hats table using dask for parallelization"""
 
-from hats.io import file_io, parquet_metadata, write_metadata
+from hats.io import file_io, parquet_metadata
 
 import hats_import.index.map_reduce as mr
 from hats_import.index.arguments import IndexArguments

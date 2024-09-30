@@ -53,8 +53,12 @@ def test_good_paths(tmp_path, small_sky_object_catalog):
     assert str(args.tmp_path).startswith(tmp_path_str)
 
 
+@pytest.mark.timeout(5)
 def test_catalog_object(tmp_path, small_sky_object_catalog):
-    """Required arguments are provided, and paths are found."""
+    """Required arguments are provided, and paths are found.
+
+    NB: This is currently the last test in alpha-order, and may require additional
+    time to teardown fixtures."""
     small_sky_catalog_object = Catalog.read_hats(catalog_path=small_sky_object_catalog)
     tmp_path_str = str(tmp_path)
     args = VerificationArguments(
@@ -65,18 +69,3 @@ def test_catalog_object(tmp_path, small_sky_object_catalog):
     assert args.input_catalog_path == small_sky_object_catalog
     assert str(args.output_path) == tmp_path_str
     assert str(args.tmp_path).startswith(tmp_path_str)
-
-
-@pytest.mark.timeout(5)
-def test_provenance_info(small_sky_object_catalog, tmp_path):
-    """Verify that provenance info includes verification-specific fields.
-    NB: This is currently the last test in alpha-order, and may require additional
-    time to teardown fixtures."""
-    args = VerificationArguments(
-        input_catalog_path=small_sky_object_catalog,
-        output_path=tmp_path,
-        output_artifact_name="small_sky_object_verification_report",
-    )
-
-    runtime_args = args.provenance_info()["runtime_args"]
-    assert "input_catalog_path" in runtime_args

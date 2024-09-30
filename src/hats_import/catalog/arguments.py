@@ -128,7 +128,9 @@ class ImportArguments(RuntimeArguments):
         # Basic checks complete - make more checks and create directories where necessary
         self.input_paths = find_input_paths(self.input_path, "**/*.*", self.input_file_list)
 
-    def to_table_properties(self, total_rows: int) -> TableProperties:
+    def to_table_properties(
+        self, total_rows: int, highest_order: int, moc_sky_fraction: float
+    ) -> TableProperties:
         """Catalog-type-specific dataset info."""
         info = {
             "catalog_name": self.output_artifact_name,
@@ -136,31 +138,12 @@ class ImportArguments(RuntimeArguments):
             "total_rows": total_rows,
             "ra_column": self.ra_column,
             "dec_column": self.dec_column,
-        }
+            "hats_cols_sort": self.sort_columns,
+            "hats_max_rows": self.pixel_threshold,
+            "hats_order": highest_order,
+            "moc_sky_fraction": f"{moc_sky_fraction:0.5f}",
+        } | self.extra_property_dict()
         return TableProperties(**info)
-
-    def additional_runtime_provenance_info(self) -> dict:
-        file_reader_info = {"type": self.file_reader}
-        if isinstance(self.file_reader, InputReader):
-            file_reader_info = self.file_reader.provenance_info()
-        return {
-            "catalog_name": self.output_artifact_name,
-            "catalog_type": self.catalog_type,
-            "input_path": self.input_path,
-            "input_paths": self.input_paths,
-            "input_file_list": self.input_file_list,
-            "ra_column": self.ra_column,
-            "dec_column": self.dec_column,
-            "use_healpix_29": self.use_healpix_29,
-            "sort_columns": self.sort_columns,
-            "constant_healpix_order": self.constant_healpix_order,
-            "lowest_healpix_order": self.lowest_healpix_order,
-            "highest_healpix_order": self.highest_healpix_order,
-            "pixel_threshold": self.pixel_threshold,
-            "mapping_healpix_order": self.mapping_healpix_order,
-            "debug_stats_only": self.debug_stats_only,
-            "file_reader_info": file_reader_info,
-        }
 
 
 def check_healpix_order_range(order, field_name, lower_bound=0, upper_bound=hipscat_id.SPATIAL_INDEX_ORDER):
