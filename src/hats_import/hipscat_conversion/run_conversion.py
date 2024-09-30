@@ -41,6 +41,7 @@ def run(args: ConversionArguments, client):
         raise ValueError("Conversion only implemented for object, source, margin, and association tables")
 
     catalog_info.pop("epoch", None)
+    catalog_info = catalog_info | args.extra_property_dict()
     if "tool_args" in provenance_info:
         builder_str = (
             provenance_info["tool_args"]["tool_name"]
