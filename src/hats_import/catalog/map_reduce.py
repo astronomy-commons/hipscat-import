@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 from hats import pixel_math
 from hats.io import file_io, paths
 from hats.pixel_math.healpix_pixel import HealpixPixel
-from hats.pixel_math.hipscat_id import SPATIAL_INDEX_COLUMN, hipscat_id_to_healpix
+from hats.pixel_math.spatial_index import SPATIAL_INDEX_COLUMN, spatial_index_to_healpix
 from upath import UPath
 
 from hats_import.catalog.resume_plan import ResumePlan
@@ -51,9 +51,9 @@ def _iterate_input_file(
     for chunk_number, data in enumerate(file_reader.read(input_file, read_columns=read_columns)):
         if use_healpix_29:
             if data.index.name == SPATIAL_INDEX_COLUMN:
-                mapped_pixels = hipscat_id_to_healpix(data.index, target_order=highest_order)
+                mapped_pixels = spatial_index_to_healpix(data.index, target_order=highest_order)
             else:
-                mapped_pixels = hipscat_id_to_healpix(data[SPATIAL_INDEX_COLUMN], target_order=highest_order)
+                mapped_pixels = spatial_index_to_healpix(data[SPATIAL_INDEX_COLUMN], target_order=highest_order)
         else:
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
@@ -166,10 +166,7 @@ def split_pixels(
             unique_pixels, unique_inverse = np.unique(aligned_pixels, return_inverse=True)
 
             for unique_index, [order, pixel, _] in enumerate(unique_pixels):
-                mapped_indexes = np.where(unique_inverse == unique_index)
-                data_indexes = data.index[mapped_indexes[0].tolist()]
-
-                filtered_data = data.filter(items=data_indexes, axis=0)
+                filtered_data = data.iloc[unique_inverse == unique_index]
 
                 pixel_dir = get_pixel_cache_directory(cache_shard_path, HealpixPixel(order, pixel))
                 file_io.make_directory(pixel_dir, exist_ok=True)
@@ -180,7 +177,7 @@ def split_pixels(
                     filtered_data.to_parquet(output_file.path, index=True, filesystem=output_file.fs)
                 else:
                     filtered_data.to_parquet(output_file.path, index=False, filesystem=output_file.fs)
-                del filtered_data, data_indexes
+                del filtered_data
 
         ResumePlan.splitting_key_done(tmp_path=resume_path, splitting_key=splitting_key)
     except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -220,7 +217,7 @@ def reduce_pixel_shards(
         - if we generate the field, we will promote any previous
           *named* pandas index field(s) to a column with
           that name.
-        - see ``hipscat.pixel_math.hipscat_id``
+        - see ``hipscat.pixel_math.spatial_index``
           for more in-depth discussion of this field.
 
     Args:
@@ -286,7 +283,7 @@ def reduce_pixel_shards(
             if _has_named_index(dataframe):
                 dataframe = dataframe.reset_index()
 
-            dataframe[SPATIAL_INDEX_COLUMN] = pixel_math.compute_hipscat_id(
+            dataframe[SPATIAL_INDEX_COLUMN] = pixel_math.compute_spatial_index(
                 dataframe[ra_column].values,
                 dataframe[dec_column].values,
             )

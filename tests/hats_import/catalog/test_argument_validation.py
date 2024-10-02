@@ -229,8 +229,8 @@ def test_check_healpix_order_range():
     with pytest.raises(ValueError, match="positive"):
         check_healpix_order_range(5, "order_field", lower_bound=-1)
 
-    with pytest.raises(ValueError, match="19"):
-        check_healpix_order_range(5, "order_field", upper_bound=20)
+    with pytest.raises(ValueError, match="29"):
+        check_healpix_order_range(5, "order_field", upper_bound=30)
 
     with pytest.raises(ValueError, match="order_field"):
         check_healpix_order_range(-1, "order_field")

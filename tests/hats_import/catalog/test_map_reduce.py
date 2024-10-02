@@ -150,7 +150,7 @@ def test_map_headers(tmp_path, formats_headers_csv):
 
 def test_map_with_healpix_29(tmp_path, formats_dir, small_sky_single_file):
     (tmp_path / "histograms").mkdir(parents=True)
-    input_file = formats_dir / "hipscat_index.csv"
+    input_file = formats_dir / "spatial_index.csv"
     mr.map_to_pixels(
         input_file=input_file,
         pickled_reader_file=pickle_file_reader(tmp_path, get_file_reader("csv")),
@@ -408,7 +408,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
 
     Logically, the input data has a mix of orderings in files, object IDs, and timestamps.
     Each source is partitioned according to the linked object's radec, and so will be
-    ordered within the same hipscat_index value.
+    ordered within the same spatial_index value.
 
     First, we take some time to set up these silly data points, then we test out
     reducing them into a single parquet file using a mix of reduction options.
@@ -520,7 +520,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
         resort_ids=False,
     )
 
-    ######################## Sort option 3: by object id and time WITHOUT hipscat index.
+    ######################## Sort option 3: by object id and time WITHOUT spatial index.
     ## The 1500 block of ids goes back to the end, because we're not using
     ## spatial properties for sorting, only numeric.
     ## sort order is effectively (object id, time)

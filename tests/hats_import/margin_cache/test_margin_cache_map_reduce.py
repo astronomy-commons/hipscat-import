@@ -171,13 +171,13 @@ def test_reduce_margin_shards(tmp_path):
     norder = np.full(360, 1)
     ndir = np.full(360, 0)
     npix = np.full(360, 0)
-    hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
+    hats_indexes = pixel_math.compute_spatial_index(ras, dec)
     margin_order = np.full(360, 0)
     margin_dir = np.full(360, 0)
     margin_pixels = hp.ang2pix(2**3, ras, dec, lonlat=True, nest=True)
 
     test_df = pd.DataFrame(
-        data=zip(hipscat_indexes, ras, dec, norder, ndir, npix, margin_order, margin_dir, margin_pixels),
+        data=zip(hats_indexes, ras, dec, norder, ndir, npix, margin_order, margin_dir, margin_pixels),
         columns=[
             "_healpix_29",
             "weird_ra",

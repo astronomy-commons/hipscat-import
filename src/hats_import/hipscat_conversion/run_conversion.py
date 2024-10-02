@@ -3,7 +3,7 @@
 import json
 import tempfile
 
-import hipscat.pixel_math.healpix_shim as hp
+import hats.pixel_math.healpix_shim as hp
 import numpy as np
 import pyarrow.parquet as pq
 from dask.distributed import as_completed, get_worker

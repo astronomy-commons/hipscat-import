@@ -171,10 +171,10 @@ def basic_data_shard_df():
     dec = np.full(360, 0.0)
     norder = np.full(360, 1)
     npix = np.full(360, 0)
-    hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
+    spatial_indexes = pixel_math.compute_spatial_index(ras, dec)
 
     test_df = pd.DataFrame(
-        data=zip(hipscat_indexes, ras, dec, norder, npix),
+        data=zip(spatial_indexes, ras, dec, norder, npix),
         columns=[
             "_healpix_29",
             "weird_ra",
@@ -192,10 +192,10 @@ def polar_data_shard_df():
     dec = np.full(360, 89.9)
     norder = np.full(360, 2)
     npix = np.full(360, 0)
-    hipscat_indexes = pixel_math.compute_hipscat_id(ras, dec)
+    spatial_indexes = pixel_math.compute_spatial_index(ras, dec)
 
     test_df = pd.DataFrame(
-        data=zip(hipscat_indexes, ras, dec, norder, npix),
+        data=zip(spatial_indexes, ras, dec, norder, npix),
         columns=[
             "_healpix_29",
             "weird_ra",
