@@ -3,7 +3,7 @@
 import dask.dataframe as dd
 import numpy as np
 from hats.io import file_io, paths
-from hats.pixel_math.hipscat_id import SPATIAL_INDEX_COLUMN
+from hats.pixel_math.spatial_index import SPATIAL_INDEX_COLUMN
 
 
 def read_leaf_file(input_file, include_columns, include_healpix_29, drop_duplicates, schema):

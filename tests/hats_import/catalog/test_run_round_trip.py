@@ -16,7 +16,7 @@ import pyarrow.dataset as pds
 import pyarrow.parquet as pq
 import pytest
 from hats.catalog.catalog import Catalog
-from hats.pixel_math.hipscat_id import hipscat_id_to_healpix
+from hats.pixel_math.spatial_index import spatial_index_to_healpix
 
 import hats_import.catalog.run_import as runner
 from hats_import.catalog.arguments import ImportArguments
@@ -111,7 +111,7 @@ def test_import_mixed_schema_csv(
             pa.field("Norder", pa.uint8()),
             pa.field("Dir", pa.uint64()),
             pa.field("Npix", pa.uint64()),
-            pa.field("_healpix_29", pa.uint64()),
+            pa.field("_healpix_29", pa.int64()),
         ]
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
@@ -153,7 +153,7 @@ def test_import_preserve_index(
         ["obj_id", "band", "ra", "dec", "mag"],
     )
 
-    ## Don't generate a hipscat index. Verify that the original index remains.
+    ## Don't generate a hats spatial index. Verify that the original index remains.
     args = ImportArguments(
         output_artifact_name="pandasindex",
         input_file_list=[formats_pandasindex],
@@ -179,7 +179,7 @@ def test_import_preserve_index(
         ["obj_id", "band", "ra", "dec", "mag", "Norder", "Dir", "Npix"],
     )
 
-    ## DO generate a hipscat index. Verify that the original index is preserved in a column.
+    ## DO generate a hats spatial index. Verify that the original index is preserved in a column.
     args = ImportArguments(
         output_artifact_name="pandasindex_preserve",
         input_file_list=[formats_pandasindex],
@@ -550,7 +550,7 @@ def test_import_healpix_29_no_pandas(
     tmp_path,
 ):
     """Test basic execution, using a previously-computed _healpix_29 column for spatial partitioning."""
-    input_file = formats_dir / "hipscat_index.csv"
+    input_file = formats_dir / "spatial_index.csv"
     args = ImportArguments(
         output_artifact_name="using_healpix_29",
         input_file_list=[input_file],
@@ -626,10 +626,10 @@ def test_import_gaia_minimum(
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=5.parquet")
     data_frame = pd.read_parquet(output_file)
 
-    # Make sure that the hipscat index values match the pixel for the partition (0,5)
+    # Make sure that the spatial index values match the pixel for the partition (0,5)
     assert data_frame.index.name == "_healpix_29"
-    hipscat_index_pixels = hipscat_id_to_healpix(data_frame.index.values, 0)
-    npt.assert_array_equal(hipscat_index_pixels, [5, 5, 5])
+    spatial_index_pixels = spatial_index_to_healpix(data_frame.index.values, 0)
+    npt.assert_array_equal(spatial_index_pixels, [5, 5, 5])
 
     column_names = data_frame.columns
     assert "Norder" in column_names
@@ -729,7 +729,7 @@ def test_gaia_ecsv(
             pa.field("Norder", pa.uint8()),
             pa.field("Dir", pa.uint64()),
             pa.field("Npix", pa.uint64()),
-            pa.field("_healpix_29", pa.uint64()),
+            pa.field("_healpix_29", pa.int64()),
         ]
     )
 

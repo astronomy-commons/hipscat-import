@@ -287,7 +287,7 @@ def test_dask_runner(
             pa.field("Norder", pa.uint8()),
             pa.field("Dir", pa.uint64()),
             pa.field("Npix", pa.uint64()),
-            pa.field("_healpix_29", pa.uint64()),
+            pa.field("_healpix_29", pa.int64()),
         ]
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
@@ -310,7 +310,7 @@ def test_dask_runner(
         }
     )
     assert data_frame.dtypes.equals(expected_dtypes)
-    assert data_frame.index.dtype == np.uint64
+    assert data_frame.index.dtype == np.int64
 
 
 @pytest.mark.dask
