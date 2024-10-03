@@ -146,7 +146,9 @@ class ImportArguments(RuntimeArguments):
         return TableProperties(**info)
 
 
-def check_healpix_order_range(order, field_name, lower_bound=0, upper_bound=spatial_index.SPATIAL_INDEX_ORDER):
+def check_healpix_order_range(
+    order, field_name, lower_bound=0, upper_bound=spatial_index.SPATIAL_INDEX_ORDER
+):
     """Helper method to check if the ``order`` is within the range determined by the
     ``lower_bound`` and ``upper_bound``, inclusive.
 

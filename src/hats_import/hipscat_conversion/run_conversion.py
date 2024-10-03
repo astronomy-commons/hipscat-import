@@ -2,6 +2,7 @@
 
 import json
 import tempfile
+from typing import no_type_check
 
 import hats.pixel_math.healpix_shim as hp
 import numpy as np
@@ -13,10 +14,11 @@ from hats.io import file_io, parquet_metadata, paths
 
 import hats_import
 from hats_import.hipscat_conversion.arguments import ConversionArguments
-from hats_import.runtime_arguments import _estimate_dir_size
 from hats_import.pipeline_resume_plan import print_progress
+from hats_import.runtime_arguments import _estimate_dir_size
 
 
+@no_type_check
 def run(args: ConversionArguments, client):
     """Run index creation pipeline."""
     if not args:

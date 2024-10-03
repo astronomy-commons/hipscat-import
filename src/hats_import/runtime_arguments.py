@@ -5,12 +5,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
 
 from hats.io import file_io
 from upath import UPath
-
-import hats_import
 
 # pylint: disable=too-many-instance-attributes
 
@@ -24,7 +23,7 @@ class RuntimeArguments:
     """base path where new catalog should be output"""
     output_artifact_name: str = ""
     """short, convenient name for the catalog"""
-    addl_hats_properties: dict = None
+    addl_hats_properties: dict | None = None
     """Any additional keyword arguments you would like to provide when writing
     the `properties` file for the final HATS table. e.g. 
     {"hats_cols_default":"id, mjd", "hats_cols_survey_id":"unique_id", 
@@ -111,8 +110,10 @@ class RuntimeArguments:
             self.resume_tmp = self.tmp_path
 
     def extra_property_dict(self):
+        """Generate additional HATS properties for this import run as a dictionary."""
         properties = {}
-        properties["hats_builder"] = f"hats-import v{hats_import.__version__}"
+
+        properties["hats_builder"] = f"hats-import v{version('hats-import')}"
 
         now = datetime.now(tz=timezone.utc)
         properties["hats_creation_date"] = now.strftime("%Y-%m-%dT%H:%M%Z")
@@ -158,9 +159,9 @@ def find_input_paths(input_path="", file_matcher="", input_file_list=None):
     return input_paths
 
 
-def _estimate_dir_size(dir):
+def _estimate_dir_size(target_dir):
     total_size = 0
-    for item in dir.iterdir():
+    for item in target_dir.iterdir():
         if item.is_dir():
             total_size += _estimate_dir_size(item)
         else:

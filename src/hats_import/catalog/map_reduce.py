@@ -53,7 +53,9 @@ def _iterate_input_file(
             if data.index.name == SPATIAL_INDEX_COLUMN:
                 mapped_pixels = spatial_index_to_healpix(data.index, target_order=highest_order)
             else:
-                mapped_pixels = spatial_index_to_healpix(data[SPATIAL_INDEX_COLUMN], target_order=highest_order)
+                mapped_pixels = spatial_index_to_healpix(
+                    data[SPATIAL_INDEX_COLUMN], target_order=highest_order
+                )
         else:
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(

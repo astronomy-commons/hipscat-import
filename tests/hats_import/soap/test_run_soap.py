@@ -64,7 +64,7 @@ def test_object_to_self(dask_client, tmp_path, small_sky_object_catalog):
 
 @pytest.mark.dask
 def test_object_to_source_with_leaves(
-    dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog, assert_text_file_matches
+    dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog
 ):
     """Test creating association between object and source catalogs."""
     small_sky_soap_args = SoapArguments(
@@ -113,7 +113,7 @@ def test_object_to_source_with_leaves(
 
 @pytest.mark.dask
 def test_object_to_source_with_leaves_drop_duplicates(
-    dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog, assert_text_file_matches
+    dask_client, tmp_path, small_sky_object_catalog, small_sky_source_catalog
 ):
     """Test creating association between object and source catalogs."""
     small_sky_soap_args = SoapArguments(
