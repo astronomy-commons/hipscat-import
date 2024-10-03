@@ -40,7 +40,6 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-timeout",
-    "mypy", # Used for static type checking of files
     "ray", # Used for dask-on-ray testing.
     "types-PyYAML", # type stubs for pyyaml
 ]

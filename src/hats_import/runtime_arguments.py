@@ -52,6 +52,12 @@ class RuntimeArguments:
     """number of threads per dask worker"""
     resume_tmp: str | Path | UPath | None = None
     """directory for intermediate resume files, when needed. see RTD for more info."""
+    delete_intermediate_parquet_files: bool = True
+    """should we delete the smaller intermediate parquet files generated in the
+    splitting stage, once the relevant reducing stage is complete?"""
+    delete_resume_log_files: bool = True
+    """should we delete task-level done files once each stage is complete?
+    if False, we will keep all done marker files at the end of the pipeline."""
 
     completion_email_address: str = ""
     """if provided, send an email to the indicated email address once the 
@@ -124,6 +130,18 @@ class RuntimeArguments:
         if self.addl_hats_properties:
             properties = properties | self.addl_hats_properties
         return properties
+
+    def resume_kwargs_dict(self):
+        """Convenience method to convert fields for resume functionality."""
+        return {
+            "resume": self.resume,
+            "progress_bar": self.progress_bar,
+            "simple_progress_bar": self.simple_progress_bar,
+            "tmp_path": self.resume_tmp,
+            "tmp_base_path": self.tmp_base_path,
+            "delete_resume_log_files": self.delete_resume_log_files,
+            "delete_intermediate_parquet_files": self.delete_intermediate_parquet_files,
+        }
 
 
 def find_input_paths(input_path="", file_matcher="", input_file_list=None):
