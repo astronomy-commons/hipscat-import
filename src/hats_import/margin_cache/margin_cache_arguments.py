@@ -30,12 +30,6 @@ class MarginCacheArguments(RuntimeArguments):
     fine_filtering: bool = True
     """should we perform the precise boundary checking? if false, some results may be
     greater than `margin_threshold` away from the border (but within `margin_order`)."""
-    delete_intermediate_parquet_files: bool = True
-    """should we delete the smaller intermediate parquet files generated in the
-    splitting stage, once the relevant reducing stage is complete?"""
-    delete_resume_log_files: bool = True
-    """should we delete task-level done files once each stage is complete?
-    if False, we will keep all done marker files at the end of the pipeline."""
 
     input_catalog_path: str | Path | UPath | None = None
     """the path to the hats-formatted input catalog."""

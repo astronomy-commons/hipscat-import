@@ -53,7 +53,9 @@ def _iterate_input_file(
             if data.index.name == SPATIAL_INDEX_COLUMN:
                 mapped_pixels = spatial_index_to_healpix(data.index, target_order=highest_order)
             else:
-                mapped_pixels = spatial_index_to_healpix(data[SPATIAL_INDEX_COLUMN], target_order=highest_order)
+                mapped_pixels = spatial_index_to_healpix(
+                    data[SPATIAL_INDEX_COLUMN], target_order=highest_order
+                )
         else:
             # Set up the pixel data
             mapped_pixels = hp.ang2pix(
@@ -80,7 +82,7 @@ def map_to_pixels(
 
     Args:
         input_file (UPath): file to read for catalog data.
-        file_reader (hipscat_import.catalog.file_readers.InputReader): instance of input
+        file_reader (hats_import.catalog.file_readers.InputReader): instance of input
             reader that specifies arguments necessary for reading from the input file.
         resume_path (UPath): where to write resume partial results.
         mapping_key (str): unique counter for this input file, used
@@ -217,7 +219,7 @@ def reduce_pixel_shards(
         - if we generate the field, we will promote any previous
           *named* pandas index field(s) to a column with
           that name.
-        - see ``hipscat.pixel_math.spatial_index``
+        - see ``hats.pixel_math.spatial_index``
           for more in-depth discussion of this field.
 
     Args:

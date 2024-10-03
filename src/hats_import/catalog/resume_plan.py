@@ -59,15 +59,7 @@ class ResumePlan(PipelineResumePlan):
         import_args=None,
     ):
         if import_args:
-            super().__init__(
-                resume=import_args.resume,
-                progress_bar=import_args.progress_bar,
-                simple_progress_bar=import_args.simple_progress_bar,
-                tmp_path=import_args.resume_tmp,
-                tmp_base_path=import_args.tmp_base_path,
-                delete_resume_log_files=import_args.delete_resume_log_files,
-                delete_intermediate_parquet_files=import_args.delete_intermediate_parquet_files,
-            )
+            super().__init__(**import_args.resume_kwargs_dict())
             if import_args.debug_stats_only:
                 run_stages = ["mapping", "finishing"]
             self.input_paths = import_args.input_paths

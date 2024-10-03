@@ -71,13 +71,6 @@ class ImportArguments(RuntimeArguments):
     """healpix order to use when mapping. will be
     ``highest_healpix_order`` unless a positive value is provided for
     ``constant_healpix_order``"""
-    delete_intermediate_parquet_files: bool = True
-    """should we delete the smaller intermediate parquet files generated in the
-    splitting stage, once the relevant reducing stage is complete?"""
-    delete_resume_log_files: bool = True
-    """should we delete task-level done files once each stage is complete?
-    if False, we will keep all sub-histograms from the mapping stage, and all
-    done marker files at the end of the pipeline."""
     run_stages: List[str] = field(default_factory=list)
     """list of parallel stages to run. options are ['mapping', 'splitting', 'reducing',
     'finishing']. ['planning', 'binning'] stages are not optional.
@@ -146,7 +139,9 @@ class ImportArguments(RuntimeArguments):
         return TableProperties(**info)
 
 
-def check_healpix_order_range(order, field_name, lower_bound=0, upper_bound=spatial_index.SPATIAL_INDEX_ORDER):
+def check_healpix_order_range(
+    order, field_name, lower_bound=0, upper_bound=spatial_index.SPATIAL_INDEX_ORDER
+):
     """Helper method to check if the ``order`` is within the range determined by the
     ``lower_bound`` and ``upper_bound``, inclusive.
 

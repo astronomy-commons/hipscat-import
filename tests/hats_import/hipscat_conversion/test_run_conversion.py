@@ -48,6 +48,7 @@ def test_run_conversion_object(
     catalog = hats.read_hats(args.catalog_path)
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
+    assert int(catalog.catalog_info.__pydantic_extra__["hats_estsize"]) > 0
 
     # Check that the catalog parquet file exists and contains correct object IDs
     output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")

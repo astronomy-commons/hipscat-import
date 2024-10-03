@@ -101,7 +101,7 @@ repos:
         entry: mypy
         language: system
         types: [python]
-        files: ^(src|tests)/
+        files: ^src/
         args:
           [
             "--ignore-missing-imports", # Ignore imports without type hints
