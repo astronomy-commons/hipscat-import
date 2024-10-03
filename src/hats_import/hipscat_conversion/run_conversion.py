@@ -13,6 +13,7 @@ from hats.io import file_io, parquet_metadata, paths
 
 import hats_import
 from hats_import.hipscat_conversion.arguments import ConversionArguments
+from hats_import.runtime_arguments import _estimate_dir_size
 from hats_import.pipeline_resume_plan import print_progress
 
 
@@ -93,6 +94,8 @@ def run(args: ConversionArguments, client):
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)
+        ## Update total size with newly-written parquet files.
+        properties.__pydantic_extra__["hats_estsize"] = int(_estimate_dir_size(args.catalog_path) / 1024)
         properties.to_properties_file(args.catalog_path)
         partition_info.write_to_file(args.catalog_path / "partition_info.csv")
         step_progress.update(1)
