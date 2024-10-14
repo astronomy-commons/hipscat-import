@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 
 import numpy as np
+from hipscat.pixel_math.sparse_histogram import SparseHistogram
 
 from hipscat_import.catalog.resume_plan import ResumePlan
-from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
 class BinningSuite:
