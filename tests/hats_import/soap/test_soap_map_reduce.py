@@ -140,7 +140,9 @@ def test_reduce_joins(small_sky_soap_args, soap_intermediate_dir, small_sky_soap
 
     reduce_joins(small_sky_soap_args, HealpixPixel(0, 11), object_key="0_11")
 
-    parquet_file_name = os.path.join(small_sky_soap_args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    parquet_file_name = (
+        small_sky_soap_args.catalog_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    )
     assert os.path.exists(parquet_file_name), f"file not found [{parquet_file_name}]"
 
     parquet_file = pq.ParquetFile(parquet_file_name)

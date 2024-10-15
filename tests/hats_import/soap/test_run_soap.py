@@ -88,7 +88,9 @@ def test_object_to_source_with_leaves(
     assert catalog.catalog_info.total_rows == 17161
     assert catalog.catalog_info.contains_leaf_files
 
-    parquet_file_name = os.path.join(small_sky_soap_args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    parquet_file_name = (
+        small_sky_soap_args.catalog_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    )
     assert os.path.exists(parquet_file_name), f"file not found [{parquet_file_name}]"
 
     parquet_file = pq.ParquetFile(parquet_file_name)
@@ -137,7 +139,9 @@ def test_object_to_source_with_leaves_drop_duplicates(
     assert catalog.catalog_info.total_rows == 148
     assert catalog.catalog_info.contains_leaf_files
 
-    parquet_file_name = os.path.join(small_sky_soap_args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    parquet_file_name = (
+        small_sky_soap_args.catalog_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    )
     assert os.path.exists(parquet_file_name), f"file not found [{parquet_file_name}]"
 
     parquet_file = pq.ParquetFile(parquet_file_name)

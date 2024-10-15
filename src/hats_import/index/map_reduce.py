@@ -35,7 +35,7 @@ def create_index(args, client):
     if args.include_order_pixel:
         include_columns.extend(["Norder", "Dir", "Npix"])
 
-    index_dir = file_io.get_upath(args.catalog_path / "index")
+    index_dir = file_io.get_upath(args.catalog_path / "dataset" / "index")
 
     data = dd.from_map(
         read_leaf_file,

@@ -1,7 +1,5 @@
 """test stuff."""
 
-import os
-
 import hats
 import numpy.testing as npt
 import pyarrow as pa
@@ -51,7 +49,7 @@ def test_run_conversion_object(
     assert int(catalog.catalog_info.__pydantic_extra__["hats_estsize"]) > 0
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    output_file = args.catalog_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -72,9 +70,9 @@ def test_run_conversion_object(
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_common_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
 
 
@@ -101,7 +99,7 @@ def test_run_conversion_source(
     assert catalog.on_disk
     assert catalog.catalog_path == args.catalog_path
 
-    output_file = os.path.join(args.catalog_path, "Norder=2", "Dir=0", "Npix=185.parquet")
+    output_file = args.catalog_path / "dataset" / "Norder=2" / "Dir=0" / "Npix=185.parquet"
 
     source_columns = [
         "_healpix_29",
@@ -120,7 +118,7 @@ def test_run_conversion_source(
     ]
     schema = pq.read_metadata(output_file).schema
     npt.assert_array_equal(schema.names, source_columns)
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema
     npt.assert_array_equal(schema.names, source_columns)
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_common_metadata")).schema
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema
     npt.assert_array_equal(schema.names, source_columns)

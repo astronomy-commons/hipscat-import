@@ -49,7 +49,7 @@ def test_to_pixel_shard_equator(tmp_path, basic_data_shard_df):
         fine_filtering=True,
     )
 
-    path = tmp_path / "order_1" / "dir_0" / "pixel_21" / "Norder=1" / "Dir=0" / "Npix=0.parquet"
+    path = tmp_path / "order_1" / "dir_0" / "pixel_21" / "dataset" / "Norder=1" / "Dir=0" / "Npix=0.parquet"
 
     assert os.path.exists(path)
 
@@ -69,7 +69,7 @@ def test_to_pixel_shard_polar(tmp_path, polar_data_shard_df):
         fine_filtering=True,
     )
 
-    path = tmp_path / "order_2" / "dir_0" / "pixel_15" / "Norder=2" / "Dir=0" / "Npix=0.parquet"
+    path = tmp_path / "order_2" / "dir_0" / "pixel_15" / "dataset" / "Norder=2" / "Dir=0" / "Npix=0.parquet"
 
     assert os.path.exists(path)
 
@@ -103,9 +103,9 @@ def test_map_pixel_shards_fine(tmp_path, test_data_dir, small_sky_source_catalog
     intermediate_dir = tmp_path / "intermediate"
     os.makedirs(intermediate_dir / "mapping")
     margin_cache_map_reduce.map_pixel_shards(
-        small_sky_source_catalog / "Norder=1" / "Dir=0" / "Npix=47.parquet",
+        small_sky_source_catalog / "dataset" / "Norder=1" / "Dir=0" / "Npix=47.parquet",
         mapping_key="1_47",
-        original_catalog_metadata=small_sky_source_catalog / "_common_metadata",
+        original_catalog_metadata=small_sky_source_catalog / "dataset" / "_common_metadata",
         margin_pair_file=test_data_dir / "margin_pairs" / "small_sky_source_pairs.csv",
         margin_threshold=3600,
         output_path=intermediate_dir,
@@ -115,12 +115,30 @@ def test_map_pixel_shards_fine(tmp_path, test_data_dir, small_sky_source_catalog
         fine_filtering=True,
     )
 
-    path = intermediate_dir / "order_2" / "dir_0" / "pixel_182" / "Norder=1" / "Dir=0" / "Npix=47.parquet"
+    path = (
+        intermediate_dir
+        / "order_2"
+        / "dir_0"
+        / "pixel_182"
+        / "dataset"
+        / "Norder=1"
+        / "Dir=0"
+        / "Npix=47.parquet"
+    )
     assert os.path.exists(path)
     res_df = pd.read_parquet(path)
     assert len(res_df) == 107
 
-    path = intermediate_dir / "order_2" / "dir_0" / "pixel_185" / "Norder=1" / "Dir=0" / "Npix=47.parquet"
+    path = (
+        intermediate_dir
+        / "order_2"
+        / "dir_0"
+        / "pixel_185"
+        / "dataset"
+        / "Norder=1"
+        / "Dir=0"
+        / "Npix=47.parquet"
+    )
     assert os.path.exists(path)
     res_df = pd.read_parquet(path)
     assert len(res_df) == 37
@@ -132,9 +150,9 @@ def test_map_pixel_shards_coarse(tmp_path, test_data_dir, small_sky_source_catal
     intermediate_dir = tmp_path / "intermediate"
     os.makedirs(intermediate_dir / "mapping")
     margin_cache_map_reduce.map_pixel_shards(
-        small_sky_source_catalog / "Norder=1" / "Dir=0" / "Npix=47.parquet",
+        small_sky_source_catalog / "dataset" / "Norder=1" / "Dir=0" / "Npix=47.parquet",
         mapping_key="1_47",
-        original_catalog_metadata=small_sky_source_catalog / "_common_metadata",
+        original_catalog_metadata=small_sky_source_catalog / "dataset" / "_common_metadata",
         margin_pair_file=test_data_dir / "margin_pairs" / "small_sky_source_pairs.csv",
         margin_threshold=3600,
         output_path=intermediate_dir,
@@ -144,12 +162,30 @@ def test_map_pixel_shards_coarse(tmp_path, test_data_dir, small_sky_source_catal
         fine_filtering=False,
     )
 
-    path = intermediate_dir / "order_2" / "dir_0" / "pixel_182" / "Norder=1" / "Dir=0" / "Npix=47.parquet"
+    path = (
+        intermediate_dir
+        / "order_2"
+        / "dir_0"
+        / "pixel_182"
+        / "dataset"
+        / "Norder=1"
+        / "Dir=0"
+        / "Npix=47.parquet"
+    )
     assert os.path.exists(path)
     res_df = pd.read_parquet(path)
     assert len(res_df) == 1386
 
-    path = intermediate_dir / "order_2" / "dir_0" / "pixel_185" / "Norder=1" / "Dir=0" / "Npix=47.parquet"
+    path = (
+        intermediate_dir
+        / "order_2"
+        / "dir_0"
+        / "pixel_185"
+        / "dataset"
+        / "Norder=1"
+        / "Dir=0"
+        / "Npix=47.parquet"
+    )
     assert os.path.exists(path)
     res_df = pd.read_parquet(path)
     assert len(res_df) == 1978

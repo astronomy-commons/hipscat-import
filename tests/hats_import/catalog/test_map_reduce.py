@@ -325,7 +325,7 @@ def test_reduce_order0(parquet_shards_dir, assert_parquet_file_ids, tmp_path):
         delete_input_files=False,
     )
 
-    output_file = tmp_path / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    output_file = tmp_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -348,7 +348,7 @@ def test_reduce_healpix_29(parquet_shards_dir, assert_parquet_file_ids, tmp_path
         delete_input_files=False,
     )
 
-    output_file = tmp_path / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    output_file = tmp_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -416,7 +416,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
     (tmp_path / "reducing").mkdir(parents=True)
     shard_dir = tmp_path / "reduce_shards" / "order_0" / "dir_0" / "pixel_11"
     shard_dir.mkdir(parents=True)
-    output_file = tmp_path / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    output_file = tmp_path / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     file1_string = """source_id,object_id,time,ra,dec
 1200,700,3000,282.5,-58.5
