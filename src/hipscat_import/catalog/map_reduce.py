@@ -10,10 +10,10 @@ from hipscat import pixel_math
 from hipscat.io import file_io, paths
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
 from hipscat.pixel_math.hipscat_id import HIPSCAT_ID_COLUMN, hipscat_id_to_healpix
+from hipscat.pixel_math.sparse_histogram import SparseHistogram
 from upath import UPath
 
 from hipscat_import.catalog.resume_plan import ResumePlan
-from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import get_pixel_cache_directory, print_task_failure
 
 # pylint: disable=too-many-locals,too-many-arguments

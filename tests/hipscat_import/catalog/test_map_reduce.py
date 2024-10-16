@@ -11,11 +11,11 @@ import numpy.testing as npt
 import pandas as pd
 import pyarrow as pa
 import pytest
+from hipscat.pixel_math.sparse_histogram import SparseHistogram
 
 import hipscat_import.catalog.map_reduce as mr
 from hipscat_import.catalog.file_readers import get_file_reader
 from hipscat_import.catalog.resume_plan import ResumePlan
-from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
 def pickle_file_reader(tmp_path, file_reader) -> str:

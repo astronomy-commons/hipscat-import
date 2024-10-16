@@ -12,10 +12,10 @@ from hipscat import pixel_math
 from hipscat.io import file_io
 from hipscat.pixel_math import empty_histogram
 from hipscat.pixel_math.healpix_pixel import HealpixPixel
+from hipscat.pixel_math.sparse_histogram import SparseHistogram
 from numpy import frombuffer
 from upath import UPath
 
-from hipscat_import.catalog.sparse_histogram import SparseHistogram
 from hipscat_import.pipeline_resume_plan import PipelineResumePlan
 
 

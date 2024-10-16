@@ -10,12 +10,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 from hipscat.catalog.catalog import Catalog
+from hipscat.pixel_math.sparse_histogram import SparseHistogram
 
 import hipscat_import.catalog.run_import as runner
 from hipscat_import.catalog.arguments import ImportArguments
 from hipscat_import.catalog.file_readers import CsvReader
 from hipscat_import.catalog.resume_plan import ResumePlan
-from hipscat_import.catalog.sparse_histogram import SparseHistogram
 
 
 def test_empty_args():
