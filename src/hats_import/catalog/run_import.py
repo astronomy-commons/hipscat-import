@@ -121,7 +121,7 @@ def run(args, client):
 
     # All done - write out the metadata
     if resume_plan.should_run_finishing:
-        with resume_plan.print_progress(total=5, stage_name="Finishing") as step_progress:
+        with resume_plan.print_progress(total=4, stage_name="Finishing") as step_progress:
             partition_info = PartitionInfo.from_healpix(resume_plan.get_destination_pixels())
             partition_info_file = paths.get_partition_info_pointer(args.catalog_path)
             partition_info.write_to_file(partition_info_file)

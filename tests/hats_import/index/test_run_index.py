@@ -1,7 +1,5 @@
 """test stuff."""
 
-import os
-
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -49,7 +47,7 @@ def test_run_index(
 
     basic_index_parquet_schema = pa.schema(
         [
-            pa.field("_healpix_29", pa.uint64()),
+            pa.field("_healpix_29", pa.int64()),
             pa.field("Norder", pa.uint8()),
             pa.field("Dir", pa.uint64()),
             pa.field("Npix", pa.uint64()),
@@ -57,14 +55,14 @@ def test_run_index(
         ]
     )
 
-    outfile = os.path.join(args.catalog_path, "index", "part.0.parquet")
+    outfile = args.catalog_path / "dataset" / "index" / "part.0.parquet"
     schema = pq.read_metadata(outfile).schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_common_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
 
@@ -94,7 +92,7 @@ def test_run_index_on_source(
 
     basic_index_parquet_schema = pa.schema(
         [
-            pa.field("_healpix_29", pa.uint64()),
+            pa.field("_healpix_29", pa.int64()),
             pa.field("mag", pa.float64()),
             pa.field("band", pa.large_string()),
             pa.field("Norder", pa.uint8()),
@@ -104,14 +102,14 @@ def test_run_index_on_source(
         ]
     )
 
-    outfile = os.path.join(args.catalog_path, "index", "part.0.parquet")
+    outfile = args.catalog_path / "dataset" / "index" / "part.0.parquet"
     schema = pq.read_metadata(outfile).schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_common_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
 
@@ -148,7 +146,7 @@ def test_run_index_on_source_object_id(
         ]
     )
 
-    outfile = os.path.join(args.catalog_path, "index", "part.0.parquet")
+    outfile = args.catalog_path / "dataset" / "index" / "part.0.parquet"
     schema = pq.read_metadata(outfile).schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
@@ -159,8 +157,8 @@ def test_run_index_on_source_object_id(
 
     assert_parquet_file_index(outfile, doubled_up)
 
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)
 
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_common_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(basic_index_parquet_schema, check_metadata=False)

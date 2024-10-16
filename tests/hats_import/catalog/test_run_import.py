@@ -61,7 +61,7 @@ def test_resume_dask_runner(
 
     ResumePlan.touch_key_done_file(resume_tmp, ResumePlan.REDUCING_STAGE, "0_11")
 
-    shutil.copytree(resume_dir / "Norder=0", tmp_path / "resume_catalog" / "Norder=0")
+    shutil.copytree(resume_dir / "Norder=0", tmp_path / "resume_catalog" / "dataset" / "Norder=0")
 
     args = ImportArguments(
         output_artifact_name="resume_catalog",
@@ -88,7 +88,7 @@ def test_resume_dask_runner(
     assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = Path(args.catalog_path) / "Norder=0" / "Dir=0" / "Npix=11.parquet"
+    output_file = Path(args.catalog_path) / "dataset" / "Norder=0" / "Dir=0" / "Npix=11.parquet"
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -186,9 +186,8 @@ def test_resume_dask_runner_diff_pixel_order(
     assert len(catalog.get_healpix_pixels()) == 4
 
     for n_pix in range(44, 48):
-        filename = os.path.join("Norder=1", "Dir=0", f"Npix={n_pix}.parquet")
-        output_filepath = os.path.join(args.catalog_path, filename)
-        expected_filepath = os.path.join(resume_dir, filename)
+        output_filepath = args.catalog_path / "dataset" / "Norder=1" / "Dir=0" / f"Npix={n_pix}.parquet"
+        expected_filepath = resume_dir / "Norder=1" / "Dir=0" / f"Npix={n_pix}.parquet"
         expected_file = pd.read_parquet(expected_filepath, engine="pyarrow")
         assert_parquet_file_ids(output_filepath, "id", expected_file["id"].to_numpy())
 
@@ -271,7 +270,7 @@ def test_dask_runner(
     assert len(catalog.get_healpix_pixels()) == 1
 
     # Check that the catalog parquet file exists and contains correct object IDs
-    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    output_file = os.path.join(args.catalog_path, "dataset", "Norder=0", "Dir=0", "Npix=11.parquet")
 
     expected_ids = [*range(700, 831)]
     assert_parquet_file_ids(output_file, "id", expected_ids)
@@ -292,7 +291,7 @@ def test_dask_runner(
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
-    schema = pq.read_metadata(os.path.join(args.catalog_path, "_metadata")).schema.to_arrow_schema()
+    schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
 
     # Check that, when re-loaded as a pandas dataframe, the appropriate numeric types are used.
@@ -333,7 +332,7 @@ def test_dask_runner_stats_only(dask_client, small_sky_parts_dir, tmp_path):
     assert os.path.exists(metadata_filename)
 
     # Check that the catalog parquet file DOES NOT exist
-    output_file = os.path.join(args.catalog_path, "Norder=0", "Dir=0", "Npix=11.parquet")
+    output_file = os.path.join(args.catalog_path, "dataset", "Norder=0", "Dir=0", "Npix=11.parquet")
 
     assert not os.path.exists(output_file)
 

@@ -92,7 +92,11 @@ def run(args: ConversionArguments, client):
         simple_progress_bar=args.simple_progress_bar,
     ) as step_progress:
         total_rows = parquet_metadata.write_parquet_metadata(args.catalog_path)
-        assert total_rows == properties.total_rows
+        if total_rows != properties.total_rows:
+            raise ValueError(
+                f"Unexpected number of rows (original: {properties.total_rows}"
+                f" written to parquet: {total_rows})"
+            )
         step_progress.update(1)
         file_io.remove_directory(args.tmp_path, ignore_errors=True)
         step_progress.update(1)
@@ -107,7 +111,13 @@ def run(args: ConversionArguments, client):
 
 def _convert_partition_file(pixel, args, schema, ra_column, dec_column):
     try:
-        input_file = paths.pixel_catalog_file(args.input_catalog_path, pixel)
+        # Paths are changed between hipscat and HATS!
+        input_file = (
+            args.input_catalog_path
+            / f"Norder={pixel.order}"
+            / f"Dir={pixel.dir}"
+            / f"Npix={pixel.pixel}.parquet"
+        )
 
         table = pq.read_table(input_file, schema=schema)
         num_rows = len(table)
