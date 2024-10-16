@@ -1,0 +1,156 @@
+# region ---- Tests and their targets
+# fixture's 'assert_passed' will be coerced to a dict indexed by test and/or target.
+test_targets:
+  num_rows:
+    - _metadata
+    - user total
+  schema:
+    schema:
+      - _common_metadata
+      - _metadata
+      - file footers
+    'schema metadata':
+      - "b'pandas' in _common_metadata"
+      - _common_metadata
+      - _metadata
+      - file footers
+# endregion
+# region ---- Fixture params and their definitions
+# valid_truth should pass all tests
+valid_truth:
+  input_dir: valid_truth
+  truth_schema: valid_truth/_common_metadata
+  truth_total_rows: 131
+  assert_passed: True
+# no_rowgroup_stats is used for test_rowgroup_stats, test_is_valid_catalog, and verification_runner
+no_rowgroup_stats:
+  input_dir: no_rowgroup_stats
+  assert_passed: False
+# schema* is used for test_schemas
+schema:
+  # Case: test bad_schemas catalog given valid_truth schema as truth_schema
+  input_dir: bad_schemas
+  truth_schema: valid_truth/_common_metadata
+  assert_passed:
+    schema:
+      _common_metadata: False  # _common_metadata has wrong dtypes
+      _metadata: True
+      file footers:
+        False:
+          - .extra_column.parquet
+          - .missing_column.parquet
+          - .wrong_dtypes.parquet
+    'schema metadata':
+      "b'pandas' in _common_metadata": True
+      _common_metadata: True
+      _metadata: False  # _metadata is missing b'pandas' metadata
+      file footers:
+        False:
+          - .no_metadata.parquet
+schema_with_cmd_truth:
+  # Case: test bad_schemas catalog given a truth_schema that has the wrong dtypes
+  input_dir: bad_schemas
+  truth_schema: bad_schemas/_common_metadata
+  assert_passed:
+    schema:
+      _common_metadata: True
+      _metadata: False  # truth_schema has wrong dtypes
+      file footers:
+        False:
+          - .extra_column.parquet
+          - .missing_column.parquet
+          - .no_metadata.parquet
+          - .parquet
+    'schema metadata':
+      "b'pandas' in _common_metadata": False  # b'pandas' dtypes != truth_schema dtypes
+      _common_metadata: True
+      _metadata: False  # _metadata is missing b'pandas' metadata
+      file footers:
+        False:
+          - .no_metadata.parquet
+schema_with_import_truth:
+  # Case: Test bad_schemas catalog given a truth_schema with custom metadata that should be preserved, but
+  #       missing hipscat fields and b'pandas' metadata. This schema could have been used during catalog import.
+  input_dir: bad_schemas
+  truth_schema: bad_schemas/_common_metadata.import
+  assert_passed:
+    schema:
+      _common_metadata: False  # _common_metadata has wrong dtypes
+      _metadata: True
+      file footers:
+        False:
+          - .extra_column.parquet
+          - .missing_column.parquet
+          - .wrong_dtypes.parquet
+    'schema metadata':
+      "b'pandas' in _common_metadata": True
+      _common_metadata: False  # _common_metadata is missing the custom metadata
+      _metadata: False  # _metadata is missing all metadata
+      file footers:
+        False:
+          # Every files fails because the custom metadata is missing.
+          - .extra_column.parquet
+          - .missing_column.parquet
+          - .no_metadata.parquet
+          - .parquet
+          - .wrong_dtypes.parquet
+schema_with_no_truth:
+  # Case: Test bad_schemas catalog given no truth_schema
+  input_dir: bad_schemas
+  truth_schema: null  # _common_metadata will be used as the source of truth
+  assert_passed:
+    schema:
+      _common_metadata: null  # this test should not run
+      _metadata: False  # truth_schema has wrong dtypes
+      file footers:
+        False:
+          - .extra_column.parquet
+          - .missing_column.parquet
+          - .no_metadata.parquet
+          - .parquet
+    'schema metadata':
+      "b'pandas' in _common_metadata": False  # b'pandas' dtypes != truth_schema dtypes
+      _common_metadata: null  # this test should not run
+      _metadata: False  # _metadata is missing b'pandas' metadata
+      file footers:
+        False:
+          - .no_metadata.parquet
+schema_with_md_truth:
+  # Case: Test bad_schemas catalog given a truth_schema with no metadata
+  input_dir: bad_schemas
+  truth_schema: bad_schemas/_metadata
+  assert_passed:
+    schema:
+      _common_metadata: False  # _common_metadata has wrong dtypes
+      _metadata: True
+      file footers:
+        False:
+          - .extra_column.parquet
+          - .missing_column.parquet
+          - .wrong_dtypes.parquet
+    'schema metadata':
+      "b'pandas' in _common_metadata": True
+      _common_metadata: True
+      _metadata: False  # _metadata is missing b'pandas' metadata
+      file footers:
+        False:
+          - .no_metadata.parquet
+# wrong_files is used for test_file_sets
+wrong_files:
+  input_dir: wrong_files_and_rows
+  assert_passed:
+    False:
+      - .missing_file.parquet
+      - .extra_file.parquet
+# wrong_rows is used for test_num_rows
+wrong_rows:
+  input_dir: wrong_files_and_rows
+  truth_total_rows: 131
+  assert_passed:
+    _metadata:
+      False:
+        - .missing_file.parquet
+        - .extra_file.parquet
+        - .extra_rows.parquet
+    'user total': False
+# endregion
