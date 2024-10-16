@@ -6,11 +6,13 @@ from email.message import EmailMessage
 from dask.distributed import Client
 
 import hats_import.catalog.run_import as catalog_runner
+import hats_import.hipscat_conversion.run_conversion as conversion_runner
 import hats_import.index.run_index as index_runner
 import hats_import.margin_cache.margin_cache as margin_runner
 import hats_import.soap.run_soap as soap_runner
 import hats_import.verification.run_verification as verification_runner
 from hats_import.catalog.arguments import ImportArguments
+from hats_import.hipscat_conversion.arguments import ConversionArguments
 from hats_import.index.arguments import IndexArguments
 from hats_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 from hats_import.runtime_arguments import RuntimeArguments
@@ -50,6 +52,8 @@ def pipeline_with_client(args: RuntimeArguments, client: Client):
             soap_runner.run(args, client)
         elif isinstance(args, VerificationArguments):
             verification_runner.run(args)
+        elif isinstance(args, ConversionArguments):
+            conversion_runner.run(args, client)
         else:
             raise ValueError("unknown args type")
 
