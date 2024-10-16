@@ -94,7 +94,7 @@ def run(args: ConversionArguments, client):
         total_rows = parquet_metadata.write_parquet_metadata(args.catalog_path)
         if total_rows != properties.total_rows:
             raise ValueError(
-                f"Unexepcted number of rows (original: {properties.total_rows}"
+                f"Unexpected number of rows (original: {properties.total_rows}"
                 f" written to parquet: {total_rows})"
             )
         step_progress.update(1)
