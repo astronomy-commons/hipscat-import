@@ -10,6 +10,8 @@ import pandas as pd
 import pytest
 from hipscat import pixel_math
 
+from tests.hipscat_import.verification.fixture import VerifierFixture
+
 # pylint: disable=missing-function-docstring, redefined-outer-name
 
 
@@ -300,3 +302,52 @@ def assert_parquet_file_index():
         npt.assert_array_equal(values, expected_values)
 
     return assert_parquet_file_index
+
+
+@pytest.fixture
+def malformed_catalog_dirs(test_data_dir):
+    base_dir = test_data_dir / "malformed_catalogs"
+    catalog_dirs = {dr.name: dr for dr in base_dir.iterdir() if dr.is_dir()}
+    # valid_truth dir contains a README pointing to the valid catalog used to generate malformed ones
+    # resolve the path
+    catalog_dirs["valid_truth"] = test_data_dir / (catalog_dirs["valid_truth"] / "README").read_text()
+    return catalog_dirs
+
+
+@pytest.fixture(params=["valid_truth", "wrong_files"])
+def verifier_for_file_sets(request, malformed_catalog_dirs, tmp_path):
+    return VerifierFixture.from_param(request.param, malformed_catalog_dirs, tmp_path)
+
+
+@pytest.fixture(params=["valid_truth", "no_rowgroup_stats"])
+def verifier_for_is_valid_catalog(request, malformed_catalog_dirs, tmp_path):
+    return VerifierFixture.from_param(request.param, malformed_catalog_dirs, tmp_path)
+
+
+@pytest.fixture(params=["valid_truth", "wrong_rows"])
+def verifier_for_num_rows(request, malformed_catalog_dirs, tmp_path):
+    return VerifierFixture.from_param(request.param, malformed_catalog_dirs, tmp_path)
+
+
+@pytest.fixture(params=["valid_truth", "no_rowgroup_stats"])
+def verifier_for_rowgroup_stats(request, malformed_catalog_dirs, tmp_path):
+    return VerifierFixture.from_param(request.param, malformed_catalog_dirs, tmp_path)
+
+
+@pytest.fixture(params=["valid_truth", "no_rowgroup_stats"])
+def verifier_for_runner(request, malformed_catalog_dirs, tmp_path):
+    return VerifierFixture.from_param(request.param, malformed_catalog_dirs, tmp_path)
+
+
+@pytest.fixture(
+    params=[
+        "valid_truth",
+        "schema",
+        "schema_with_md_truth",
+        "schema_with_cmd_truth",
+        "schema_with_import_truth",
+        "schema_with_no_truth",
+    ]
+)
+def verifier_for_schemas(request, malformed_catalog_dirs, tmp_path):
+    return VerifierFixture.from_param(request.param, malformed_catalog_dirs, tmp_path)

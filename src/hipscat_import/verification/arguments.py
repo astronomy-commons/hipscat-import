@@ -2,50 +2,51 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
 
-from hipscat.catalog import Catalog
-from hipscat.io.validation import is_valid_catalog
+import attrs
 from upath import UPath
 
-from hipscat_import.runtime_arguments import RuntimeArguments
+# from hipscat_import.runtime_arguments import RuntimeArguments
 
 
-@dataclass
-class VerificationArguments(RuntimeArguments):
-    """Data class for holding verification arguments"""
+def _dir_exists(instance: VerificationArguments, attribute: attrs.Attribute, value: UPath):
+    """This function will be used as a validator for attributes of VerificationArguments."""
+    if not value.is_dir():
+        raise ValueError(f"{attribute.name} must be an existing directory")
 
-    ## Input
-    input_catalog_path: str | Path | UPath | None = None
-    """Path to an existing catalog that will be inspected."""
-    input_catalog: Optional[Catalog] = None
-    """In-memory representation of a catalog. If not provided, it will be loaded
-    from the input_catalog_path."""
 
-    ## Verification options
-    field_distribution_cols: List[str] = field(default_factory=list)
-    """List of fields to get the overall distribution for. e.g. ["ra", "dec"].
-    Should be valid columns in the parquet files."""
+def _path_exists(instance: VerificationArguments, attribute: attrs.Attribute, value: UPath):
+    """This function will be used as a validator for attributes of VerificationArguments."""
+    if not value.exists():
+        raise ValueError(f"{attribute.name} must be an existing file or directory")
 
-    def __post_init__(self):
-        self._check_arguments()
 
-    def _check_arguments(self):
-        super()._check_arguments()
-        if not self.input_catalog_path and not self.input_catalog:
-            raise ValueError("input catalog is required (either input_catalog_path or input_catalog)")
-        if not self.input_catalog:
-            if not is_valid_catalog(self.input_catalog_path):
-                raise ValueError("input_catalog_path not a valid catalog")
-            self.input_catalog = Catalog.read_from_hipscat(catalog_path=self.input_catalog_path)
-        if not self.input_catalog_path:
-            self.input_catalog_path = self.input_catalog.catalog_path
+@attrs.define(kw_only=True)
+class VerificationArguments:
+    """Container for verification arguments."""
 
+    input_catalog_path: str | Path | UPath = attrs.field(converter=UPath, validator=_dir_exists)
+    """Path to an existing catalog that will be inspected. This must be a directory
+    containing the Parquet dataset and metadata sidecars."""
+    output_path: str | Path | UPath = attrs.field(converter=UPath)
+    """Base path where output files should be written."""
+    output_report_filename: str = attrs.field(factory=lambda: "verifier_results.csv")
+    """Filename for the verification report that will be generated."""
+    output_distributions_filename: str = attrs.field(factory=lambda: "field_distributions.csv")
+    """Filename for the field distributions that will be calculated."""
+    truth_total_rows: int | None = attrs.field(default=None)
+    """Total number of rows expected in this catalog."""
+    truth_schema: str | Path | UPath | None = attrs.field(
+        default=None,
+        converter=attrs.converters.optional(UPath),
+        validator=attrs.validators.optional(_path_exists),
+    )
+    """Path to a Parquet file or dataset containing the expected schema.
+    If you provided the 'use_schema_file' argument when importing the catalog, use the same value here.
+    If not provided, the catalog's _common_metadata file will be used as the source of truth.
+    """
+
+    # [FIXME] Connect this with RuntimeArguments.provenance_info. Even then, does this ever get written to file?
     def additional_runtime_provenance_info(self) -> dict:
-        return {
-            "pipeline": "verification pipeline",
-            "input_catalog_path": self.input_catalog_path,
-            "field_distribution_cols": self.field_distribution_cols,
-        }
+        return {"pipeline": "verification pipeline", **{k: str(v) for k, v in vars(self).items()}}
