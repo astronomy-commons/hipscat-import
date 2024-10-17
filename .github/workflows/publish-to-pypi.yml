@@ -30,11 +30,14 @@ jobs:
       run: |
         sudo apt-get update
         python -m pip install --upgrade pip
-        pip install .
-    - name: Create lock requirements file
+    - name: Create lock requirements file in virtual environment
       run: |
-        pip list --format=freeze --exclude "hats-import" > requirements.txt
-        pip uninstall -y hats-import
+        . .venv/bin/activate
+        python -m pip install .
+        python -m pip list --format=freeze --exclude "hats-import" > requirements.txt
+        python -m pip install .[dev]
+        python -m pytest tests
+        python -m pip uninstall -y hats-import
     - name: Install build tools
       run: pip install build
     - name: Build package
