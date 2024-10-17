@@ -279,7 +279,7 @@ def reduce_pixel_shards(
 
         dataframe = merged_table.to_pandas()
         if sort_columns:
-            dataframe = dataframe.sort_values(sort_columns.split(","))
+            dataframe = dataframe.sort_values(sort_columns.split(","), kind="stable")
         if add_healpix_29:
             ## If we had a meaningful index before, preserve it as a column.
             if _has_named_index(dataframe):

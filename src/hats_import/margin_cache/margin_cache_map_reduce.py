@@ -129,7 +129,7 @@ def _to_pixel_shard(
                 paths.PARTITION_PIXEL: np.uint64,
             }
         )
-        margin_data = margin_data.sort_index()
+        margin_data = margin_data.sort_index(kind="stable")
 
         margin_data.to_parquet(shard_path.path, filesystem=shard_path.fs)
 
