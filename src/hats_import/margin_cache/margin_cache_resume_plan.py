@@ -161,5 +161,5 @@ def _find_partition_margin_pixel_pairs(combined_pixels, margin_order):
     margin_pairs_df = pd.DataFrame(
         zip(norders, part_pix, margin_pix),
         columns=["partition_order", "partition_pixel", "margin_pixel"],
-    ).sort_values("margin_pixel", kind="stable")
+    ).sort_values("margin_pixel")
     return margin_pairs_df
