@@ -32,9 +32,10 @@ jobs:
         python -m pip install --upgrade pip
     - name: Create lock requirements file in virtual environment
       run: |
-        . .venv/bin/activate
+        python -m venv .venv
+        source .venv/bin/activate
         python -m pip install .
-        python -m pip list --format=freeze --exclude "hats-import" > requirements.txt
+        python -m pip list --format=freeze --exclude "hats-import" --exclude pip > requirements.txt
         python -m pip install .[dev]
         python -m pytest tests
         python -m pip uninstall -y hats-import
