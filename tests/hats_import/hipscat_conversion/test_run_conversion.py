@@ -8,6 +8,7 @@ import pytest
 
 import hats_import.hipscat_conversion.run_conversion as runner
 from hats_import.hipscat_conversion.arguments import ConversionArguments
+from hats.io.file_io import file_io
 
 
 def test_empty_args():
@@ -74,6 +75,12 @@ def test_run_conversion_object(
     assert schema.equals(expected_parquet_schema, check_metadata=False)
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+
+    data = file_io.read_parquet_file_to_pandas(
+        output_file,
+        columns=["id" , "ra", "dec"],
+        engine="pyarrow",
+    )
 
 
 @pytest.mark.dask
