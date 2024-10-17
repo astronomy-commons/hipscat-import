@@ -37,8 +37,8 @@ class ImportArguments(RuntimeArguments):
     """use an existing healpix-based hats spatial index as the position, instead of ra/dec"""
     sort_columns: str | None = None
     """column for survey identifier, or other sortable column. if sorting by multiple columns,
-    they should be comma-separated. if `add_healpix_29=True`, this sorting will be used to
-    resolve the counter within the same higher-order pixel space"""
+    they should be comma-separated. If `add_healpix_29=True`, `_healpix_29` will be the primary sort key, 
+    but the provided sorting will be used for any rows within the same higher-order pixel space."""
     add_healpix_29: bool = True
     """add the healpix-based hats spatial index field alongside the data"""
     use_schema_file: str | Path | UPath | None = None

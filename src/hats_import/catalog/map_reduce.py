@@ -329,7 +329,7 @@ def _modify_arrow_schema(schema, add_healpix_29):
         pandas_index_column = schema.get_field_index("__index_level_0__")
         if pandas_index_column != -1:
             schema = schema.remove(pandas_index_column)
-        schema = schema.insert(0, pa.field(SPATIAL_INDEX_COLUMN, pa.uint64()))
+        schema = schema.insert(0, pa.field(SPATIAL_INDEX_COLUMN, pa.int64()))
     schema = (
         schema.append(pa.field("Norder", pa.uint8()))
         .append(pa.field("Dir", pa.uint64()))

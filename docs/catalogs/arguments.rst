@@ -204,7 +204,7 @@ catalog, the right ascension and declination. At this time, this is the only
 supported system for celestial coordinates.
 
 If you're importing data that has previously been hats-sharded, you may use
-``use_healpix_29 = True``. This will use that previously compused hats spatial
+``use_healpix_29 = True``. This will use that previously computed hats spatial
 index as the position, instead of ra/dec.
 
 Healpix order and thresholds
