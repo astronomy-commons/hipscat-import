@@ -2,7 +2,7 @@ Index Table
 ===============================================================================
 
 This page discusses topics around setting up a pipeline to generate a secondary
-index lookup for a field on an existing hipscat catalog on disk.
+index lookup for a field on an existing hats catalog on disk.
 
 This is useful if you would like to have quick access to rows of your table using
 a survey-provided unique identifier that is NOT spatially correlated. To find 
@@ -15,7 +15,7 @@ and where to put the output files. A minimal arguments block will look something
 
 .. code-block:: python
 
-    from hipscat_import.index.arguments import IndexArguments
+    from hats_import.index.arguments import IndexArguments
 
     args = IndexArguments(
         input_catalog_path="./my_data/my_catalog",
@@ -27,8 +27,8 @@ and where to put the output files. A minimal arguments block will look something
 More details on each of these parameters is provided in sections below.
 
 For the curious, see the API documentation for 
-:py:class:`hipscat_import.index.arguments.IndexArguments`,
-and its superclass :py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
+:py:class:`hats_import.index.arguments.IndexArguments`,
+and its superclass :py:class:`hats_import.runtime_arguments.RuntimeArguments`.
 
 Dask setup
 -------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ to the pipeline, ignoring the above arguments. This would look like:
 .. code-block:: python
 
     from dask.distributed import Client
-    from hipscat_import.pipeline import pipeline_with_client
+    from hats_import.pipeline import pipeline_with_client
 
     args = IndexArguments(...)
     with Client('scheduler:port') as client:
@@ -62,7 +62,7 @@ potentially avoid some python threading issues with dask:
 
 .. code-block:: python
 
-    from hipscat_import.pipeline import pipeline
+    from hats_import.pipeline import pipeline
 
     def index_pipeline():
         args = IndexArguments(...)
@@ -75,7 +75,7 @@ Input Catalog
 -------------------------------------------------------------------------------
 
 For this pipeline, you will need to have already transformed your catalog into 
-hipscat parquet format. Provide the path to the catalog data with the argument
+hats parquet format. Provide the path to the catalog data with the argument
 ``input_catalog_path``.
 
 ``indexing_column`` is required, and is the column that you would like to create
@@ -120,7 +120,7 @@ string sorting will be smart enough to collate the various strings appropriately
 
 .. code-block:: python
 
-    divisions = [f"Gaia DR3 {i}" for i in range(10000, 99999, 12)]
+    divisions = [f"Gaia DR3 {i}" for i in range(10_000, 99_999, 12)]
     divisions.append("Gaia DR3 999999988604363776")
 
 Getting hints from ``_metadata``
@@ -149,8 +149,8 @@ list along to your ``ImportArguments``!
 
     import numpy as np
     import os
-    from hipscat.io.parquet_metadata import write_parquet_metadata
-    from hipscat.io import file_io
+    from hats.io.parquet_metadata import write_parquet_metadata
+    from hats.io import file_io
 
     ## Specify the catalog and column you're making your index over.
     input_catalog_path="/data/input_catalog"
@@ -249,10 +249,8 @@ arguments for a few of those.
 ``compute_partition_size`` - ``int`` - partition size used when 
 computing the leaf parquet files.
 
-``include_hipscat_index`` - ``bool`` - whether or not to include the 64-bit
-hipscat spatial index in the index table. Defaults to ``True``. It can be 
-useful to keep this value if the ``_hipscat_index`` is your only unique
-identifier, or you intend to re-partition your data.
+``include_healpix_29`` - ``bool`` - whether or not to include the 64-bit
+hats spatial index in the index table. Defaults to ``True``. 
 
 ``include_order_pixel`` - ``bool`` - whether to include partitioning columns, 
 ``Norder``, ``Dir``, and ``Npix``. You probably want to keep these!
@@ -261,7 +259,7 @@ when trying to use the index table.
 
 ``drop_duplicates`` - ``bool`` - drop duplicate occurrences of all fields
 that are included in the index table. This is enabled by default, but can be
-**very** slow. This has an interaction with the above ``include_hipscat_index``
+**very** slow. This has an interaction with the above ``include_healpix_29``
 and ``include_order_pixel`` options above. We desribe some common patterns below:
 
 - I want to create an index over the target ID in my catalog. There are no
@@ -270,8 +268,7 @@ and ``include_order_pixel`` options above. We desribe some common patterns below
     .. code-block:: python
 
         indexing_column="target_id",
-        # target_id is unique, and I don't need to keep extra data
-        include_hipscat_index=False,
+        include_healpix_29=False,
         # I want to know where my data is in the sky.
         include_order_pixel=True,
         # target_id is unique, and I don't need to do extra work to de-duplicate
@@ -287,7 +284,7 @@ and ``include_order_pixel`` options above. We desribe some common patterns below
         indexing_column="target_id",
         # target_id is NOT unique
         drop_duplicates=True,
-        # target_id is NOT unique, but including the _hipscat_index will bloat results
-        include_hipscat_index=False,
+        # including the _healpix_29 will bloat results
+        include_healpix_29=False,
         # I want to know where my data is in the sky.
         include_order_pixel=True,

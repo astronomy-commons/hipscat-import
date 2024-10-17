@@ -6,14 +6,14 @@ For more discussion of the whys and hows of margin caches, please see
 for more information.
 
 This page discusses topics around setting up a pipeline to generate a margin
-cache from an existing hipscat catalog on disk.
+cache from an existing hats catalog on disk.
 
 At a minimum, you need arguments that include where to find the input files,
 and where to put the output files. A minimal arguments block will look something like:
 
 .. code-block:: python
 
-    from hipscat_import.margin_cache.margin_cache_arguments import MarginCacheArguments
+    from hats_import.margin_cache.margin_cache_arguments import MarginCacheArguments
 
     args = MarginCacheArguments(
         input_catalog_path="./my_data/my_catalog",
@@ -26,8 +26,8 @@ and where to put the output files. A minimal arguments block will look something
 More details on each of these parameters is provided in sections below.
 
 For the curious, see the API documentation for 
-:py:class:`hipscat_import.margin_cache.margin_cache_arguments.MarginCacheArguments`,
-and its superclass :py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
+:py:class:`hats_import.margin_cache.margin_cache_arguments.MarginCacheArguments`,
+and its superclass :py:class:`hats_import.runtime_arguments.RuntimeArguments`.
 
 Dask setup
 -------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ to the pipeline, ignoring the above arguments. This would look like:
 .. code-block:: python
 
     from dask.distributed import Client
-    from hipscat_import.pipeline import pipeline_with_client
+    from hats_import.pipeline import pipeline_with_client
 
     args = MarginCacheArguments(...)
     with Client('scheduler:port') as client:
@@ -61,7 +61,7 @@ potentially avoid some python threading issues with dask:
 
 .. code-block:: python
 
-    from hipscat_import.pipeline import pipeline
+    from hats_import.pipeline import pipeline
 
     def margin_pipeline():
         args = MarginCacheArguments(...)
@@ -74,10 +74,10 @@ Input Catalog
 -------------------------------------------------------------------------------
 
 For this pipeline, you will need to have already transformed your catalog into 
-hipscat parquet format. Provide the path to the catalog data with the argument
+hats parquet format. Provide the path to the catalog data with the argument
 ``input_catalog_path``.
 
-The input hipscat catalog will provide its own right ascension and declination
+The input hats catalog will provide its own right ascension and declination
 that will be used when computing margin populations.
 
 Margin calculation parameters

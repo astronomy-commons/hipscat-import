@@ -30,9 +30,9 @@ Example import of objects (otmo)
 
     import pandas as pd
 
-    import hipscat_import.pipeline as runner
-    from hipscat_import.catalog.arguments import ImportArguments
-    from hipscat_import.catalog.file_readers import CsvReader
+    import hats_import.pipeline as runner
+    from hats_import.catalog.arguments import ImportArguments
+    from hats_import.catalog.file_readers import CsvReader
 
     # Load the column names and types from a side file.
     type_frame = pd.read_csv("ps1_otmo_types.csv")

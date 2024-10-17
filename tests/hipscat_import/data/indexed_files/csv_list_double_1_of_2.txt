@@ -1,3 +1,0 @@
-tests/hipscat_import/data/small_sky_parts/catalog_00_of_05.csv
-tests/hipscat_import/data/small_sky_parts/catalog_01_of_05.csv
-

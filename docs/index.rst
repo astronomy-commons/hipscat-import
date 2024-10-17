@@ -1,25 +1,25 @@
-HiPSCat Import
+HATS Import
 ========================================================================================
 
-Utility for ingesting large survey data into HiPSCat structure.
+Utility for ingesting large survey data into HATS structure.
 
 Installation
 -------------------------------------------------------------------------------
 
 We recommend installing in a virtual environment, like venv or conda. You may
-need to install or upgrade versions of dependencies to work with hipscat-import.
+need to install or upgrade versions of dependencies to work with hats-import.
 
 .. code-block:: console
 
-    pip install hipscat-import
+    pip install hats-import
 
 .. tip::
     Installing on Mac
 
-    ``healpy`` is a very necessary dependency for hipscat libraries at this time, but
+    ``healpy`` is a very necessary dependency for hats libraries at this time, but
     native prebuilt binaries for healpy on Apple Silicon Macs 
     `do not yet exist <https://healpy.readthedocs.io/en/latest/install.html#binary-installation-with-pip-recommended-for-most-other-python-users>`_, 
-    so it's recommended to install via conda before proceeding to hipscat-import.
+    so it's recommended to install via conda before proceeding to hats-import.
 
     .. code-block:: console
 
@@ -29,7 +29,7 @@ need to install or upgrade versions of dependencies to work with hipscat-import.
 Setting up a pipeline
 -------------------------------------------------------------------------------
 
-For each type of dataset the hipscat-import tool can generate, there is an argument
+For each type of dataset the hats-import tool can generate, there is an argument
 container class that you will need to instantiate and populate with relevant arguments.
 
 See dataset-specific notes on arguments:
@@ -45,7 +45,7 @@ threading issues with dask:
 .. code-block:: python
 
     from dask.distributed import Client
-    from hipscat_import.pipeline import pipeline_with_client
+    from hats_import.pipeline import pipeline_with_client
 
     def main():
         args = ...

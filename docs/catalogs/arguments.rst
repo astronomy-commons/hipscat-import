@@ -9,7 +9,7 @@ A minimal arguments block will look something like:
 
 .. code-block:: python
 
-    from hipscat_import.catalog.arguments import ImportArguments
+    from hats_import.catalog.arguments import ImportArguments
 
     args = ImportArguments(
         sort_columns="ObjectID",
@@ -25,8 +25,8 @@ A minimal arguments block will look something like:
 More details on each of these parameters is provided in sections below.
 
 For the curious, see the API documentation for 
-:py:class:`hipscat_import.catalog.arguments.ImportArguments`, and its superclass
-:py:class:`hipscat_import.runtime_arguments.RuntimeArguments`.
+:py:class:`hats_import.catalog.arguments.ImportArguments`, and its superclass
+:py:class:`hats_import.runtime_arguments.RuntimeArguments`.
 
 Pipeline setup
 -------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ to the pipeline, ignoring the above arguments. This would look like:
 .. code-block:: python
 
     from dask.distributed import Client
-    from hipscat_import.pipeline import pipeline_with_client
+    from hats_import.pipeline import pipeline_with_client
 
     args = ...  # ImportArguments()
     with Client('scheduler:port') as client:
@@ -63,7 +63,7 @@ potentially avoid some python threading issues with dask:
 
 .. code-block:: python
 
-    from hipscat_import.pipeline import pipeline
+    from hats_import.pipeline import pipeline
 
     def import_pipeline():
         args = ...
@@ -88,14 +88,14 @@ files are found, we will restore the pipeline's previous progress.
 
 If you want to start the pipeline from scratch you can simply set `resume=False`.
 Alternatively, go to the temp directory you've specified and remove any intermediate
-files created by the previous runs of the ``hipscat-import`` pipeline. You should also
+files created by the previous runs of the ``hats-import`` pipeline. You should also
 remove the output directory if it has any content. The resume argument performs these
 cleaning operations automatically for you.
 
 Reading input files
 -------------------------------------------------------------------------------
 
-Catalog import reads through a list of files and converts them into a hipscatted catalog.
+Catalog import reads through a list of files and converts them into a hats-sharded catalog.
 
 Which files?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -134,7 +134,7 @@ to parse a whitespace separated file. Otherwise, you can use a short string to
 specify an existing file reader type e.g. ``file_reader="csv"``.
 
 You can find the full API documentation for 
-:py:class:`hipscat_import.catalog.file_readers.InputReader`
+:py:class:`hats_import.catalog.file_readers.InputReader`
 
 .. code-block:: python
 
@@ -149,13 +149,6 @@ You can find the full API documentation for
             for smaller_table in starr_file.to_batches(max_chunksize=self.chunksize):
                 smaller_table = filter_nonsense(smaller_table)
                 yield smaller_table.to_pandas()
-
-        def provenance_info(self) -> dict:
-            provenance_info = {
-                "input_reader_type": "StarrReader",
-                "chunksize": self.chunksize,
-            }
-            return provenance_info
 
     ...
 
@@ -206,18 +199,18 @@ Which fields?
 
 Specify the ``ra_column`` and ``dec_column`` for the dataset.
 
-There are two fields that we require in order to make a valid hipscatted
+There are two fields that we require in order to make a valid hats-sharded
 catalog, the right ascension and declination. At this time, this is the only 
 supported system for celestial coordinates.
 
-If you're importing data that has previously been hipscatted, you may use
-``use_hipscat_index = True``. This will use that previously compused hipscat spatial
+If you're importing data that has previously been hats-sharded, you may use
+``use_healpix_29 = True``. This will use that previously computed hats spatial
 index as the position, instead of ra/dec.
 
 Healpix order and thresholds
 -------------------------------------------------------------------------------
 
-When creating a new catalog through the hipscat-import process, we try to 
+When creating a new catalog through the hats-import process, we try to 
 create partitions with approximately the same number of rows per partition. 
 This isn't perfect, because the sky is uneven, but we still try to create 
 smaller-area pixels in more dense areas, and larger-area pixels in less dense 
@@ -322,19 +315,19 @@ How?
 You may want to tweak parameters of the final catalog output, and we have helper 
 arguments for a few of those.
 
-``add_hipscat_index`` - ``bool`` - whether or not to add the hipscat spatial index
-as a column in the resulting catalog. The ``_hipscat_index`` field is designed to make many 
+``add_healpix_29`` - ``bool`` - whether or not to add the hats spatial index
+as a column in the resulting catalog. The ``_healpix_29`` field is designed to make many 
 dask operations more performant, but if you do not intend to publish your dataset
 and do not intend to use dask, then you can suppress generation of this column to
 save a little space in your final disk usage.
 
-The ``_hipscat_index`` uses a high healpix order and a uniqueness counter to create
+The ``_healpix_29`` uses a high healpix order to create
 values that can order all points in the sky, according to a nested healpix scheme.
 
 ``sort_columns`` - ``str`` - column for survey identifier, or other sortable column. 
 If sorting by multiple columns, they should be comma-separated. 
-If ``add_hipscat_index=True``, this sorting will be used to resolve the 
-index counter within the same higher-order pixel space.
+If ``add_healpix_29=True``, ``_healpix_29`` will be the primary sort key, but the 
+provided sorting will be used for any rows within the same higher-order pixel space.
 
 ``use_schema_file`` - ``str`` - path to a parquet file with schema metadata. 
 This will be used for column metadata when writing the files, if specified.
@@ -345,8 +338,6 @@ check out our notebook :doc:`/notebooks/unequal_schema`.
 parquet files with the catalog data, and will only generate root-level metadata
 files representing the full statistics of the final catalog. This can be useful
 when probing the import process for effectiveness on processing a target dataset.
-
-``epoch`` - ``str`` - astronomical epoch for the data. defaults to ``"J2000"``
 
 ``catalog_type`` - ``"object"`` or ``"source"``. Indicates the level of catalog data,
 using the LSST nomenclature:

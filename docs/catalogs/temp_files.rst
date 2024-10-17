@@ -1,7 +1,7 @@
 Temporary files and disk usage
 ===============================================================================
 
-This page aims to characterize intermediate files created by the hipscat-import 
+This page aims to characterize intermediate files created by the hats-import 
 catalog creation process. Most users are going to be ok with setting the ``tmp_dir``
 and not thinking much more about it.
 
@@ -90,7 +90,7 @@ Some more explanation:
 What's happening when
 -------------------------------------------------------------------------------
 
-The hipscat-import catalog creation process generates a lot of temporary files. Some find this 
+The hats-import catalog creation process generates a lot of temporary files. Some find this 
 surprising, so we try to provide a narrative of what's happening and why.
 
 Planning stage
@@ -159,7 +159,7 @@ This is when storage shifts from intermediate files to the real output files.
 Finishing stage
 ...............................................................................
 
-Here, we will write out a few additional final files (e.g. ``catalog_info.json``, ``_metadata``).
+Here, we will write out a few additional final files (e.g. ``properties``, ``_metadata``).
 Additionally, we will clean up any straggling intermediate resume files. 
 This includes all text log files, and the summed histogram file. 
 After this stage, we should have zero intermediate files.
@@ -196,10 +196,10 @@ final catalog can be very different from the on-disk size of the input files.
 
 In our internal testing, we converted a number of different kinds of catalogs, 
 and share some of the results with you, to give some suggestion of the disk requirements
-you may face when converting your own catalogs to hipscat format.
+you may face when converting your own catalogs to hats format.
 
 ============= =============== =========== =============== =========================
-Catalog	      Input size (-h) Input size  Hipscatted size Ratio
+Catalog	      Input size (-h) Input size  HATS size       Ratio
 ============= =============== =========== =============== =========================
 allwise       1.2T             1196115700       310184460   0.26 (a lot smaller)
 neowise	      3.9T             4177447284      4263269112   1.02 (about the same)
@@ -213,4 +213,4 @@ Notes:
 - allwise, neowise, and tic were all originally compressed CSV files.
 - sdss was originally a series of fits files
 - zubercal was originally 500k parquet files, and is reduced in the example to 
-  around 70k hipscat parquet files.
+  around 70k hats parquet files.

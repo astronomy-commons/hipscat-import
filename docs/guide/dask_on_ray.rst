@@ -8,7 +8,7 @@ See more on Ray's site:
 
 https://docs.ray.io/en/latest/ray-more-libs/dask-on-ray.html
 
-How to use in hipscat-import pipelines
+How to use in hats-import pipelines
 -------------------------------------------------------------------------------
 
 Install ray
@@ -27,7 +27,7 @@ You should also disable ray when you're done, just to clean things up.
     from dask.distributed import Client
     from ray.util.dask import disable_dask_on_ray, enable_dask_on_ray
 
-    from hipscat_import.pipeline import pipeline_with_client
+    from hats_import.pipeline import pipeline_with_client
 
     with ray.init(
         num_cpus=args.dask_n_workers,

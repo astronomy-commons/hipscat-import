@@ -1,4 +1,4 @@
-Contributing to hipscat-import
+Contributing to hats-import
 ===============================================================================
 
 Find (or make) a new GitHub issue
