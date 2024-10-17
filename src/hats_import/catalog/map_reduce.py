@@ -289,14 +289,14 @@ def reduce_pixel_shards(
                 dataframe[ra_column].values,
                 dataframe[dec_column].values,
             )
-            dataframe = dataframe.set_index(SPATIAL_INDEX_COLUMN).sort_index()
+            dataframe = dataframe.set_index(SPATIAL_INDEX_COLUMN).sort_index(kind="stable")
 
             # Adjust the schema to make sure that the _healpix_29 will
             # be saved as a uint64
         elif use_healpix_29:
             if dataframe.index.name != SPATIAL_INDEX_COLUMN:
                 dataframe = dataframe.set_index(SPATIAL_INDEX_COLUMN)
-            dataframe = dataframe.sort_index()
+            dataframe = dataframe.sort_index(kind="stable")
 
         dataframe["Norder"] = np.full(rows_written, fill_value=healpix_pixel.order, dtype=np.uint8)
         dataframe["Dir"] = np.full(rows_written, fill_value=healpix_pixel.dir, dtype=np.uint64)
