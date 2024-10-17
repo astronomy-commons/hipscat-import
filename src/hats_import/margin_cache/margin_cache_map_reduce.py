@@ -34,7 +34,7 @@ def map_pixel_shards(
         # that **can** be contained in source pixel, then by `margin_order` pixels for rows
         # in source data
         margin_pairs = pd.read_csv(margin_pair_file)
-        explosion_factor = 4 ** (margin_order - source_pixel.order)
+        explosion_factor = 4 ** int(margin_order - source_pixel.order)
         margin_pixel_range_start = source_pixel.pixel * explosion_factor
         margin_pixel_range_end = (source_pixel.pixel + 1) * explosion_factor
         margin_pairs = margin_pairs.query(
