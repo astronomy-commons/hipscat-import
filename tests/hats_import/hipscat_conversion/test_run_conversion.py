@@ -71,14 +71,17 @@ def test_run_conversion_object(
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+    assert schema.metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+    assert schema.metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+    assert schema.metadata is None
 
     data = file_io.read_parquet_file_to_pandas(
         output_file,
-        columns=["id" , "ra", "dec"],
+        columns=["id", "ra", "dec"],
         engine="pyarrow",
     )
 
@@ -125,7 +128,10 @@ def test_run_conversion_source(
     ]
     schema = pq.read_metadata(output_file).schema
     npt.assert_array_equal(schema.names, source_columns)
+    assert schema.to_arrow_schema().metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema
     npt.assert_array_equal(schema.names, source_columns)
+    assert schema.to_arrow_schema().metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema
     npt.assert_array_equal(schema.names, source_columns)
+    assert schema.to_arrow_schema().metadata is None

@@ -141,7 +141,7 @@ def _convert_partition_file(pixel, args, schema, ra_column, dec_column):
             .append_column("Dir", [np.full(num_rows, fill_value=pixel.dir, dtype=np.int64)])
             .append_column("Npix", [np.full(num_rows, fill_value=pixel.pixel, dtype=np.int64)])
         )
-        table.schema = table.schema.remove_metadata()
+        table = table.replace_schema_metadata()
 
         destination_file = paths.pixel_catalog_file(args.catalog_path, pixel)
         destination_file.parent.mkdir(parents=True, exist_ok=True)
@@ -152,6 +152,7 @@ def _convert_partition_file(pixel, args, schema, ra_column, dec_column):
         except Exception:  # pylint: disable=broad-exception-caught
             pass
         dask_print(exception)
+        raise exception
 
 
 def _write_nested_fits_map(input_dir, output_dir):
