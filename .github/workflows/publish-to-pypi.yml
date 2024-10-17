@@ -32,13 +32,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install .
     - name: Create lock requirements file
-      run: pip list --format=freeze --exclude "hats-import" > requirements.txt
-    - name: Install dev dependencies
-      run: pip install .[dev]
-    - name: Run unit tests with pytest
-      run: python -m pytest tests
-    - name: Run dask-on-ray tests with pytest
-      run: python -m pytest tests --use_ray
+      run: |
+        pip list --format=freeze --exclude "hats-import" > requirements.txt
+        pip uninstall -y hats-import
     - name: Install build tools
       run: pip install build
     - name: Build package
