@@ -11,7 +11,8 @@ name: Upload Python Package
 on:
   release:
     types: [published]
-
+  workflow_dispatch:
+    
 permissions:
   contents: read
 
@@ -32,15 +33,18 @@ jobs:
         python -m pip install --upgrade pip
     - name: Create lock requirements file in virtual environment
       run: |
-        . .venv/bin/activate
+        python -m venv .venv
+        source .venv/bin/activate
         python -m pip install .
-        python -m pip list --format=freeze --exclude "hats-import" > requirements.txt
+        python -m pip list --format=freeze --exclude "hats-import" --exclude pip > requirements.txt
         python -m pip install .[dev]
         python -m pytest tests
         python -m pip uninstall -y hats-import
     - name: Install build tools
       run: pip install build
     - name: Build package
-      run: python -m build
+      run: |
+        git update-index --assume-unchanged requirements.txt
+        python -m build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
