@@ -502,10 +502,7 @@ def test_reduce_with_sorting_complex(assert_parquet_file_ids, tmp_path):
     )
 
     data_frame = pd.read_parquet(output_file, engine="pyarrow")
-    expected_dataframe = combined_data.sort_values(
-        ["norder19_healpix", "object_id", "time"],
-        kind="stable"
-    )
+    expected_dataframe = combined_data.sort_values(["norder19_healpix", "object_id", "time"], kind="stable")
     pd.testing.assert_frame_equal(
         expected_dataframe[comparison_columns].reset_index(drop=True),
         data_frame[comparison_columns].reset_index(drop=True),
