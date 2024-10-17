@@ -11,8 +11,7 @@ name: Upload Python Package
 on:
   release:
     types: [published]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
     
 permissions:
   contents: read
