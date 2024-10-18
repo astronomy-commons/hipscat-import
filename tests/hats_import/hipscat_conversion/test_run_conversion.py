@@ -5,10 +5,10 @@ import numpy.testing as npt
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from hats.io.file_io import file_io
 
 import hats_import.hipscat_conversion.run_conversion as runner
 from hats_import.hipscat_conversion.arguments import ConversionArguments
-from hats.io.file_io import file_io
 
 
 def test_empty_args():
@@ -81,9 +81,11 @@ def test_run_conversion_object(
 
     data = file_io.read_parquet_file_to_pandas(
         output_file,
-        columns=["id", "ra", "dec"],
+        columns=["id", "ra", "dec", "_healpix_29"],
         engine="pyarrow",
     )
+    assert "_healpix_29" in data.columns
+    assert data.index.name is None
 
 
 @pytest.mark.dask
