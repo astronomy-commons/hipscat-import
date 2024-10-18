@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from hats.io.file_io import file_io
 
 import hats_import.hipscat_conversion.run_conversion as runner
 from hats_import.hipscat_conversion.arguments import ConversionArguments
@@ -70,10 +71,21 @@ def test_run_conversion_object(
     )
     schema = pq.read_metadata(output_file).schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+    assert schema.metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+    assert schema.metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema.to_arrow_schema()
     assert schema.equals(expected_parquet_schema, check_metadata=False)
+    assert schema.metadata is None
+
+    data = file_io.read_parquet_file_to_pandas(
+        output_file,
+        columns=["id", "ra", "dec", "_healpix_29"],
+        engine="pyarrow",
+    )
+    assert "_healpix_29" in data.columns
+    assert data.index.name is None
 
 
 @pytest.mark.dask
@@ -118,7 +130,10 @@ def test_run_conversion_source(
     ]
     schema = pq.read_metadata(output_file).schema
     npt.assert_array_equal(schema.names, source_columns)
+    assert schema.to_arrow_schema().metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_metadata").schema
     npt.assert_array_equal(schema.names, source_columns)
+    assert schema.to_arrow_schema().metadata is None
     schema = pq.read_metadata(args.catalog_path / "dataset" / "_common_metadata").schema
     npt.assert_array_equal(schema.names, source_columns)
+    assert schema.to_arrow_schema().metadata is None
